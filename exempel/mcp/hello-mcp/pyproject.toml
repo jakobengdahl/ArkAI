@@ -1,0 +1,11 @@
+[project]
+name = "hello-mcp"
+version = "0.1.0"
+description = "Minimal MCP-server som exponerar ArkAI:s minnesbank"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.2.0",
+]
+
+[tool.uv]
+package = false
