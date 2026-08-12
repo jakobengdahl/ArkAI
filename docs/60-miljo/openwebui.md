@@ -40,27 +40,58 @@ Stoppa med `./verktyg/starta-openwebui.sh --stoppa`.
 
 ## Nå gränssnittet
 
-### Rekommenderat: egen ingress
+### Enda vägen som fungerar: egen ingress
 
 När du startar VS Code-tjänsten i Onyxia, gå till **Network access** och slå på
 *"Enable access to your service through specific ports"* med porten `8081`. Tjänsten
-får då en egen URL vid sidan av VS Code-URL:en.
+får då en egen URL — ett eget värdnamn där Open WebUI ligger i roten, vilket är vad
+den kräver.
 
-Inställningen går bara att sätta vid start. Har du redan en tjänst igång får du
-starta om den — hemkatalogen är persistent, så du tappar inget arbete.
+Inställningen går **bara** att sätta när tjänsten startar. Har du redan en tjänst
+igång får du starta om den. Hemkatalogen är persistent, så du tappar inget arbete —
+installationen och `DATA_DIR` finns kvar.
 
-### Nödutgång: code-servers proxy
+URL:en visas i Onyxia på tjänstens sida efter start.
 
-Glömde du porten och vill inte starta om? code-server har en inbyggd proxy:
+### code-servers proxy fungerar inte — och kan inte fås att fungera
+
+Det är frestande att tro att man kan slippa omstarten via code-servers inbyggda
+proxy:
 
 ```
-https://<din-vscode-url>/proxy/8081/
+https://<din-vscode-url>/proxy/8081/      # ger en trasig sida
+https://<din-vscode-url>/absproxy/8081/   # likaså
 ```
 
-Den fungerar eftersom du redan är inloggad i code-server i webbläsaren. Var
-beredd på att den kan bråka med Open WebUI:s statiska filer och WebSocket-anslutning
-— gränssnittet är byggt för att ligga i roten av en domän. Fungerar det inte, prova
-`/absproxy/8081/`. Fungerar inte det heller: starta om tjänsten med rätt portinställning.
+Det gör man inte. Verifierat 2026-08-12 med Open WebUI 0.11.0:
+
+- Gränssnittet refererar allt med **absoluta sökvägar** — `/_app/immutable/...` för
+  JavaScript och CSS, `/api/...` för anropen.
+- `/proxy/<port>/` strippar prefixet innan anropet går vidare, så Open WebUI vet inte
+  att den ligger under en sökväg och svarar med rotabsoluta sökvägar. Webbläsaren
+  löser dem mot domänroten och träffar code-server i stället.
+- Paketet har **inget stöd för bassökväg**. `root_path`, `BASE_PATH` eller
+  motsvarande finns inte någonstans i koden, så det går inte att konfigurera bort.
+  Sökvägarna är dessutom inbyggda i SvelteKit-bygget, inte genererade vid körning.
+- `/absproxy/` skickar med hela sökvägen men löser inget, eftersom appen ändå inte
+  kan hantera prefixet.
+
+Det finns alltså ingen inställning att leta efter. Starta om tjänsten med
+portexponeringen.
+
+### Om du inte vill starta om just nu
+
+Instansen fungerar utmärkt från terminalen — API:et bryr sig inte om sökvägar:
+
+```bash
+curl -s http://127.0.0.1:8081/health
+curl -s http://127.0.0.1:8081/api/config | jq '{name, version}'
+```
+
+Och för att bara *chatta* finns plattformens centrala instans på
+[llm.lab.sspcloud.fr](sspcloud-llm.md), som redan ligger i roten av sitt eget
+värdnamn. Din egen instans behövs när du vill variera upplägget — inte för att
+prata med en modell.
 
 ## Konfiguration
 

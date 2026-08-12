@@ -88,19 +88,39 @@ konfigurationsinställning, och det ledde till en dokumenterad "begränsning" so
 finns. Kontrollera hur tjänsten startades innan du drar slutsatser om plattformen.
 [Minnespost](../../minnesbank/verktyg/onyxia-behorigheter-satts-vid-start.md).
 
-**Verifiering via code-servers proxy.** `/proxy/8081/` och `/absproxy/8081/` finns
-båda som rutter men kräver en inloggad session. Ett försök att logga in med `curl`
-mot `/login` fick ingen giltig cookie, så det gick inte att bekräfta att Open WebUI:s
-statiska filer fungerar under ett sökvägsprefix. Det är en känd svårighet för
-SPA-applikationer som förväntar sig att ligga i roten.
+**code-servers proxy fungerar inte — och kan inte fås att fungera.** Det här
+dokumenterades först som en "nödutgång" för att slippa starta om tjänsten. Det var
+fel, och det upptäcktes när någon faktiskt provade i en webbläsare:
+`https://<vscode-url>/proxy/8081/` ger en trasig sida.
+
+Orsaken, verifierad i efterhand:
+
+```console
+$ curl -s http://127.0.0.1:8081/ | grep -oE 'href="[^"]*"' | head -2
+href="/_app/immutable/assets/0.D-1LH_Ar.css"
+href="/_app/immutable/chunks/2bcKf0iY.js"
+```
+
+Gränssnittet refererar allt absolut — `/_app/immutable/...` för statiska filer,
+`/api/...` för anropen. `/proxy/<port>/` strippar prefixet innan anropet går vidare,
+så Open WebUI vet inte att den ligger under en sökväg. Webbläsaren löser
+`/_app/...` mot domänroten och träffar code-server.
+
+Det går inte att konfigurera bort. En genomsökning av paketet efter
+`root_path`, `BASE_PATH` och liknande gav noll träffar — det finns inget stöd för
+bassökväg, och sökvägarna är dessutom inbyggda i SvelteKit-bygget snarare än
+genererade vid körning. `/absproxy/` löser inget av samma skäl.
+
+Lärdomen är generell och gäller fler verktyg än det här:
+[minnespost](../../minnesbank/verktyg/spa-fungerar-inte-bakom-sokvagsproxy.md).
 
 ## Vad vi inte kunde svara på
 
-- Fungerar Open WebUI under code-servers `/proxy/8081/`? Obekräftat. Behöver testas
-  från en webbläsare med inloggad session.
-- Fungerar den egna ingressen som Onyxias **Network access → Ports** ger?
-  Inställningen fanns i chartens schema (`networking.user.enabled` + `port`), men går
-  bara att sätta vid start. Behöver testas nästa gång en tjänst startas.
+- Fungerar den egna ingressen som Onyxias **Network access → Ports** ger? Enligt
+  chartens mall (`library-chart.ingressUser`) får porten ett eget värdnamn med
+  `path: /`, vilket är precis vad Open WebUI kräver. Men inställningen går bara att
+  sätta vid start, så det är obekräftat i praktiken. **Nästa tjänststart bör
+  verifiera detta.**
 - Hur mycket resurser drar den under verklig användning? Bara uppstart mättes.
 
 ## Nästa steg

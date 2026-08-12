@@ -19,6 +19,7 @@ en fil; ta bort raden när du tar bort filen.
 - [API-nycklar ligger i klartext i hemkatalogen](verktyg/api-nycklar-i-hemkatalogen.md) — rensa innan du delar konfigurationsfiler
 - [SSP Cloud har egen LLM-inferens](verktyg/sspcloud-llm-inferens.md) — OpenAI-kompatibelt API, personlig nyckel
 - [Open WebUI kräver Python 3.11](verktyg/openwebui-kraver-python-311.md) — imagen har 3.13, lös det med uv
+- [Webbappar fungerar inte bakom code-servers /proxy/](verktyg/spa-fungerar-inte-bakom-sokvagsproxy.md) — exponera porten med eget värdnamn vid start
 - [MCP:s Python-SDK bytte API i 2.0](verktyg/mcp-sdk-2-bytte-api.md) — FastMCP heter MCPServer, nätets exempel är föråldrade
 
 ## Domänkunskap
