@@ -3,9 +3,18 @@
 En öppen experimentyta för att lära oss vad AI faktiskt kan göra i vårt arbete med
 arkitektur — och vad som krävs för att ta det hela vägen från demo till drift.
 
+Vi arbetar i en offentlig myndighet med statistikproduktion: insamling, bearbetning
+och analys av data som blir faktabaserat beslutsunderlag för samhället. Processerna
+följer i stora drag [GSBPM](https://statswiki.unece.org/display/GSBPM), vilket gör
+dem ovanligt väl beskrivna — och därmed ovanligt tacksamma att resonera om när man
+ska avgöra var AI faktiskt hjälper. Det vi gör här rör inte kärnverksamheten och
+inga riktiga data.
+
 Repot är **publikt**. Läs [RIKTLINJER-INNEHALL.md](RIKTLINJER-INNEHALL.md) innan du
-skriver något här. Kort version: inga verksamhetsinterna detaljer, inga namn på
-personer eller system, inga hemligheter. Vi beskriver *mönster*, inte vår verksamhet.
+skriver något här. Kort version: inga interna detaljer om system eller personer,
+inga riktiga data, inga hemligheter. Att beskriva vilken sorts arbete vi gör är
+däremot både tillåtet och nödvändigt — annars går det inte att bedöma om ett
+användningsfall är relevant.
 
 ## Vad vi försöker ta reda på
 
@@ -30,21 +39,30 @@ Fråga 3 och 4 är de svåra. Fråga 1 och 2 är förarbetet.
 | [docs/60-miljo/](docs/60-miljo/) | Labbmiljön: SSP Cloud/Onyxia, Open WebUI, verktyg, git-auth |
 | [minnesbank/](minnesbank/) | Det **delade** minnet — vårt viktigaste experiment |
 | [exempel/](exempel/) | Körbar kod: MCP-server, skills |
-| [verktyg/](verktyg/) | Skript för att sätta upp och starta saker i labbet |
+| [verktyg/](verktyg/) | Panelen, startskripten och katalogen över det som går att köra |
 
 [AGENTS.md](AGENTS.md) är instruktionerna AI-verktyg läser när de jobbar i repot.
 Läsvärd även för människor — konventionerna är desamma.
 
 ## Kom igång
 
+Labbet körs i SSP Cloud och startas med en **URL** som har alla inställningar
+förifyllda — port, minne, startskript, hemligheter. Se
+[docs/60-miljo/starta-labbet.md](docs/60-miljo/starta-labbet.md).
+
+När miljön är uppe installerar den sig själv i ett synligt terminalfönster, och
+**labbpanelen** öppnas i VS Code: repots dokumentation renderad, plus knappar för
+att installera och starta tjänster. Se
+[docs/60-miljo/panelen.md](docs/60-miljo/panelen.md).
+
+Utanför SSP Cloud, eller om du hellre skriver kommandon:
+
 ```bash
 git clone https://github.com/jakobengdahl/ArkAI.git
 cd ArkAI
-./verktyg/kontrollera-miljo.sh     # vad finns, vad saknas
+./verktyg/labb-start.sh            # installerar grunden och startar panelen
+./verktyg/kor.sh lista             # vad som går att köra
 ```
-
-Kör du i SSP Cloud? Börja med [docs/60-miljo/README.md](docs/60-miljo/README.md).
-Där står också de tre sakerna som brukar överraska i miljön.
 
 Ny och vill läsa dig in? [docs/README.md](docs/README.md) har en läsordning.
 

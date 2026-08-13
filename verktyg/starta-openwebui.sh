@@ -50,8 +50,13 @@ echo "  inloggning ${WEBUI_AUTH}"
 echo "  logg      $LOGG"
 echo
 
+# Binder till alla gränssnitt, inte bara loopback. Onyxias portexponering går
+# via en Service som når podden på dess pod-IP — en tjänst som bara lyssnar på
+# 127.0.0.1 svarar 502 genom ingressen. Podden är inte nåbar utifrån på annat
+# sätt, men andra i namnrymden når den: sätt WEBUI_AUTH=True i .env innan du
+# exponerar porten.
 if [ "${1:-}" = "--bakgrund" ]; then
-  nohup open-webui serve --host 127.0.0.1 --port "$PORT" >"$LOGG" 2>&1 &
+  nohup open-webui serve --host 0.0.0.0 --port "$PORT" >"$LOGG" 2>&1 &
   echo "PID $!. Väntar på att tjänsten svarar..."
   for i in $(seq 1 60); do
     sleep 2
@@ -63,5 +68,5 @@ if [ "${1:-}" = "--bakgrund" ]; then
   echo "Svarade inte inom 120 s. Kolla loggen: tail -50 $LOGG"
   exit 1
 else
-  exec open-webui serve --host 127.0.0.1 --port "$PORT"
+  exec open-webui serve --host 0.0.0.0 --port "$PORT"
 fi

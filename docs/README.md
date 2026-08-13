@@ -1,5 +1,8 @@
 # Dokumentationen
 
+[START.md](START.md) är startsidan i [labbpanelen](60-miljo/panelen.md) — samma
+filer som här, men renderade och med knappar för det som går att köra.
+
 Katalogerna är numrerade för att hamna i läsordning, inte för att man måste läsa dem
 i tur och ordning.
 
@@ -36,8 +39,9 @@ en minnespost är en instruktion till framtiden. Bara den ena överlever.
 
 1. [00-oversikt/vision-och-mal.md](00-oversikt/vision-och-mal.md) — vad vi försöker
 2. [RIKTLINJER-INNEHALL.md](../RIKTLINJER-INNEHALL.md) — repot är publikt
-3. [60-miljo/sspcloud-onyxia.md](60-miljo/sspcloud-onyxia.md) — miljön
-4. [minnesbank/README.md](../minnesbank/README.md) — hur vi delar det vi lär oss
-5. [30-experiment/](30-experiment/) — vad som redan gjorts
+3. [60-miljo/starta-labbet.md](60-miljo/starta-labbet.md) — starta miljön och kom igång
+4. [60-miljo/sspcloud-onyxia.md](60-miljo/sspcloud-onyxia.md) — plattformen bakom
+5. [minnesbank/README.md](../minnesbank/README.md) — hur vi delar det vi lär oss
+6. [30-experiment/](30-experiment/) — vad som redan gjorts
 
 Sedan: ta något från "På tur" i experimentlistan.

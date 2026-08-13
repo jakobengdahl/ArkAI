@@ -1,0 +1,43 @@
+{
+  "version": "2.0.0",
+  "_kommentar": [
+    "ArkAI-labbet. Den här filen gäller när du öppnat repomappen direkt i VS Code.",
+    "Öppnar du ~/work (det Onyxia gör) är det ~/work/.vscode/tasks.json som styr —",
+    "den skrivs av verktyg/onyxia-init.sh vid start.",
+    "Kör manuellt: Ctrl+Shift+P → Tasks: Run Task"
+  ],
+  "tasks": [
+    {
+      "label": "Labbet: installera",
+      "detail": "Installerar grunden och de tjänster som ska finnas från start",
+      "type": "shell",
+      "command": "${workspaceFolder}/verktyg/labb-start.sh",
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "labb", "focus": false },
+      "runOptions": { "runOn": "folderOpen" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Labbet: panelen",
+      "detail": "Startar labbpanelen, eller följer loggen om den redan kör",
+      "type": "shell",
+      "command": "${workspaceFolder}/verktyg/starta-panelen.sh",
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "labb", "focus": false },
+      "runOptions": { "runOn": "folderOpen" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Labbet: kontrollera miljön",
+      "type": "shell",
+      "command": "${workspaceFolder}/verktyg/kontrollera-miljo.sh",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Labbet: kontrollera innehåll före commit",
+      "type": "shell",
+      "command": "${workspaceFolder}/verktyg/kontrollera-innehall.sh",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    }
+  ]
+}

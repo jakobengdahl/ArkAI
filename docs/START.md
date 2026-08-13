@@ -1,0 +1,54 @@
+# Labbet
+
+En experimentyta för att ta reda på vad AI faktiskt kan göra i vårt arbete — och
+vad som krävs för att ta något hela vägen från demo till drift.
+
+Den här sidan är startsidan i [labbpanelen](60-miljo/panelen.md). Blocken nedan är
+tomma när du läser filen på GitHub och fyllda när du läser den i panelen.
+
+## Kör igång en uppsättning
+
+Varje uppsättning är en kombination av tjänster som är tänkta att fungera ihop.
+Panelen installerar det som saknas, startar i rätt ordning och skriver den delade
+MCP-konfigurationen. Du kan trycka igen — det som redan kör lämnas i fred.
+
+<!-- panel:uppsattningar -->
+
+## Vad kör just nu
+
+<!-- panel:status -->
+
+## Enskilda tjänster
+
+<!-- panel:tjanster -->
+
+## Vad vi försöker ta reda på
+
+1. **Vilka användningsfall** i vårt arbete tjänar på AI — och vilka gör det inte?
+2. **Vilka AI-tekniker** finns, och vad är de faktiskt bra på?
+3. **Hur matchar man rätt teknik mot rätt användningsfall?**
+4. **Vad krävs för att gå från PoC till produktion** — styrning, drift, kostnad, risk?
+
+Fråga 3 och 4 är de svåra. Fråga 1 och 2 är förarbetet.
+
+Ny här? [Läsordningen](README.md) tar dig igenom repot. Har du en halvtimme och vill
+göra något: kör uppsättningen *Chattbot + verktyg* ovan och läs
+[chattbot + verktyg](20-tekniker/chattbot-plus-verktyg.md) medan den installeras.
+
+## Miljön
+
+<!-- panel:miljo -->
+
+### Tjänster i din namnrymd
+
+Det här kör redan, oberoende av den här podden. Somligt ligger bakom inloggning.
+
+<!-- panel:namnrymd -->
+
+## När du hittat något
+
+Ett experiment ska sluta med ett skrivet svar — även när svaret är "det här funkade
+inte". Lärdomen som nästa person behöver *innan* de börjar hör hemma i
+[minnesbanken](../minnesbank/MINNE.md), inte bara i experimentfilen.
+
+Se [BIDRA.md](../BIDRA.md) för hur du lägger till något.

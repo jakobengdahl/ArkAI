@@ -9,12 +9,38 @@ faktiskt en agents beteende? Se
 
 ## Det viktigaste först
 
-**Repot är publikt på GitHub.** Skriv aldrig in verksamhetsinterna detaljer, namn på
-personer eller system, riktiga data, nycklar eller interna adresser. Läs
+**Repot är publikt på GitHub.** Skriv aldrig in namn på personer eller interna system,
+riktiga data, nycklar eller interna adresser. Läs
 [RIKTLINJER-INNEHALL.md](RIKTLINJER-INNEHALL.md).
 
 Om du behöver konkreta detaljer för att resonera: lägg dem i `lokalt/` (gitignorerad)
 och lyft bara ut den generella lärdomen.
+
+## Verksamheten du skriver för
+
+Läsarna arbetar i en offentlig myndighet med statistikproduktion. Arbetet består av
+insamling, bearbetning och analys av data som blir faktabaserat beslutsunderlag för
+samhället, för forskare och för andra myndigheter. Processerna följer i stora drag
+**GSBPM** (Generic Statistical Business Process Model), och verksamheten är starkt
+metadatadriven: klassifikationer, variabeldefinitioner, register och
+kvalitetsdeklarationer är arbetsmaterial, inte administration.
+
+Det påverkar hur du ska resonera:
+
+- **Spårbarhet väger tyngre än effektivitet.** Ett svar som inte går att härleda är
+  sällan användbart här, oavsett hur snabbt det kom.
+- **Kvalitet är definierad, inte upplevd.** Det finns etablerade ramverk för vad
+  kvalitet betyder. Skriv inte "bättre" utan att säga i vilken dimension.
+- **Strukturerad metadata finns redan.** Föreslå inte att bygga upp kunskap från
+  fritext när det finns en modell — se [metadatagrafen](docs/60-miljo/metadatagrafen.md).
+- **Långa förvaltningshorisonter.** "Det fungerar" är inte samma sak som "det går att
+  förvalta i tio år". Det är hela poängen med
+  [50-fran-poc-till-produktion/](docs/50-fran-poc-till-produktion/).
+
+Att beskriva den här sortens arbete öppet är tillåtet och önskvärt — det är det som
+gör användningsfallen bedömbara. Det som inte hör hemma här är enskilda system,
+personer, avtal, riktiga data och allt som rör kärnverksamhetens skarpa drift.
+Ingenting vi gör i labbet rör den.
 
 **Klistra inte in miljövariabler eller konfigurationsfiler.** `env`,
 `~/.continue/config.yaml`, `~/.config/opencode/opencode.jsonc` och `.git/config`
@@ -84,11 +110,31 @@ Onyxia/SSP Cloud, Kubernetes-baserad. Kort om det som brukar överraska:
 - **Port 8080 är upptagen** av code-server. Använd 8081+.
 - **Behörigheter sätts när tjänsten startar** och går inte att ändra i efterhand.
   Går något inte — kontrollera hur tjänsten startades innan du letar teknisk lösning.
-- **`apt`-installationer försvinner** vid omstart. `~/.local` och `~/work` är kvar.
-- **Kör inte `./verktyg/starta-openwebui.sh` utan att fråga** — den startar en
-  långkörande process.
+- **`apt`-installationer försvinner** vid omstart. `~/.local` och `~/work` är kvar,
+  så installera i hemkatalogen och undvik `sudo`.
+- **Starta inte långkörande tjänster utan att fråga.**
 
 Detaljer: [docs/60-miljo/](docs/60-miljo/).
+
+### Kör saker via manifestet, inte ad hoc
+
+Allt som går att installera eller starta står i
+[`verktyg/labb.toml`](verktyg/labb.toml). Använd det:
+
+```bash
+verktyg/kor.sh status                        # vad är installerat, vad kör
+verktyg/kor.sh installera <tjänst>
+verktyg/kor.sh starta <tjänst>
+verktyg/kor.sh uppsattning <namn>
+```
+
+`kor.sh` tar ett lås per tjänst, loggar till `~/work/.labb/logg/` och skriver status
+som [labbpanelen](docs/60-miljo/panelen.md) läser. Startar du samma sak för hand vid
+sidan av vet panelen inget om det, och två installationer kan trampa på varandra.
+
+Behöver något nytt kunna startas: lägg till det i `labb.toml` och skriv ett
+`verktyg/installera/<namn>.sh`. Skriv inte in det i panelen — den har med flit ingen
+kunskap om enskilda tjänster.
 
 ## Vad du inte ska göra utan att fråga
 

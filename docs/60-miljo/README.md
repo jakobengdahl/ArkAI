@@ -4,25 +4,37 @@ Allt om SSP Cloud/Onyxia, verktygen och hur man får saker att köra.
 
 | Fil | Vad det är |
 |---|---|
+| [starta-labbet.md](starta-labbet.md) | **Börja här.** URL:en som startar miljön, Vault-hemligheten, profilerna |
+| [panelen.md](panelen.md) | Labbpanelen: dokumentationen renderad plus knappar för det som går att köra |
 | [sspcloud-onyxia.md](sspcloud-onyxia.md) | Plattformen: tjänster, behörigheter, S3, Vault |
 | [git-och-auth.md](git-och-auth.md) | Git, GitHub CLI, tokens — och fallgropen med token i remote-URL:en |
-| [verktygslada.md](verktygslada.md) | Installera om verktygen efter en omstart |
+| [verktygslada.md](verktygslada.md) | Vad som installeras hur, och vad som överlever en omstart |
 | [sspcloud-llm.md](sspcloud-llm.md) | Plattformens LLM-inferens och API-nyckel |
 | [ai-verktyg-i-imagen.md](ai-verktyg-i-imagen.md) | opencode och Continue är förinstallerade |
 | [openwebui.md](openwebui.md) | Open WebUI: installation, start, åtkomst |
+| [metadatagrafen.md](metadatagrafen.md) | Pilotinstansen med metadata som graf, och dess MCP-server |
 | [delade-resurser.md](delade-resurser.md) | Projekt, S3, Vault — hur vi delar med varandra |
 
 ## I en ny tjänst
 
+Startade du via [labbets URL](starta-labbet.md) är allt redan gjort: panelen kör,
+och installationen pågår i ett terminalfönster. Annars:
+
 ```bash
 cd ~/work/ArkAI
-./verktyg/kontrollera-miljo.sh      # vad finns, vad saknas
-./verktyg/satt-upp-git-auth.sh      # git + gh, token ur remote-URL:en
-export PATH="$HOME/.local/bin:$PATH"
+./verktyg/labb-start.sh            # installerar grunden och startar panelen
 ```
 
-Bara `gh`, `node` och nätverksverktygen behöver installeras om — se
-[verktygslada.md](verktygslada.md). Resten ligger persistent under `~/`.
+Vill du se vad som finns utan att ändra något:
+
+```bash
+./verktyg/kontrollera-miljo.sh     # vad finns, vad saknas
+./verktyg/kor.sh status            # vad är installerat och vad kör
+```
+
+Verktygen installeras under `~/.local`, alltså på den persistenta volymen. Andra
+gången du startar en tjänst tar grundinstallationen sekunder — se
+[verktygslada.md](verktygslada.md).
 
 ## Tre saker som brukar överraska
 

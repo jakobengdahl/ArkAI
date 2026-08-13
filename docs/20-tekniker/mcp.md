@@ -60,6 +60,30 @@ WebUI. Räkna med en halvtimme för att få den att svara första gången.
 De flesta MCP-servrar distribueras via npm och körs med `npx`, så Node behövs — se
 [../60-miljo/verktygslada.md](../60-miljo/verktygslada.md).
 
+## En delad konfiguration, flera klienter
+
+Labbet håller alla inkopplade servrar i **en** fil, `~/work/.labb/mcp.json`, som
+genereras ur [`verktyg/labb.toml`](../../verktyg/labb.toml) och speglar vad som
+faktiskt kör. Kodagenter, agent-gateways och chattgränssnitt läser samma fil.
+
+Det är den konkreta mekanismen bakom "teknikerna ska gå att kombinera": utan en
+delad källa driver tre konfigurationer isär, och man felsöker skillnader mellan
+klienter i stället för att jämföra dem.
+
+**Alla klienter pratar dock inte MCP.** Open WebUI kopplar in verktyg som
+OpenAPI-servrar, så där behövs bryggan `mcpo` som översätter:
+
+```
+hello-mcp (stdio) ─┐
+                   ├─→ mcpo :8083 (OpenAPI) ─→ Open WebUI
+metadatagrafen ────┘
+
+samma servrar ─────────────────────────────→ Claude Code, OpenClaw (MCP direkt)
+```
+
+Kör igång kedjan med `verktyg/kor.sh uppsattning chatt-med-verktyg`, eller från
+[labbpanelen](../60-miljo/panelen.md).
+
 ## När det passar
 
 - Flera AI-verktyg behöver samma funktion

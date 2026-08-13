@@ -1,0 +1,153 @@
+# Katalog över det som går att installera, starta och öppna i labbet.
+#
+# Den här filen är master för allt körbart. Panelen (verktyg/panel/panel.py) och
+# verktyg/kor.sh läser den — ingen av dem vet något om enskilda tjänster utöver
+# det som står här. Vill du lägga till en tjänst: lägg till en [tjanst.<id>] här
+# och en markdownfil under docs/, inte ett nytt skript i panelen.
+#
+# Alla kommandon körs med repots rot som arbetskatalog.
+
+[panel]
+port = 8082
+startsida = "docs/START.md"
+
+# Vänsterspalten i panelen. Titel + markdownfil.
+[[navigering]]
+titel = "Start"
+fil = "docs/START.md"
+[[navigering]]
+titel = "Översikt"
+fil = "docs/00-oversikt/README.md"
+[[navigering]]
+titel = "Användningsfall"
+fil = "docs/10-anvandningsfall/README.md"
+[[navigering]]
+titel = "Tekniker"
+fil = "docs/20-tekniker/README.md"
+[[navigering]]
+titel = "Experiment"
+fil = "docs/30-experiment/README.md"
+[[navigering]]
+titel = "Matchning"
+fil = "docs/40-matchning/README.md"
+[[navigering]]
+titel = "PoC → produktion"
+fil = "docs/50-fran-poc-till-produktion/README.md"
+[[navigering]]
+titel = "Miljön"
+fil = "docs/60-miljo/README.md"
+[[navigering]]
+titel = "Minnesbanken"
+fil = "minnesbank/MINNE.md"
+[[navigering]]
+titel = "Bidra"
+fil = "BIDRA.md"
+
+
+# ── Tjänster ──────────────────────────────────────────────────────────────
+#
+#   typ         lokal  = en process i den här podden
+#               fjarr  = något som redan kör någon annanstans
+#   steg        auto     = installeras av labb-start.sh vid uppstart
+#               begaran  = installeras när någon trycker på knappen
+#   finns       kommando som lyckas när tjänsten är installerad
+#   halsa       URL som svarar när tjänsten kör (annars används port)
+#   egen_ingress  true = kräver att porten exponerades när tjänsten startade
+
+[tjanst.grund]
+namn = "Grundmiljön"
+beskrivning = "Node, GitHub CLI och git-autentisering, installerat under ~/.local så att det överlever en omstart."
+dok = "docs/60-miljo/verktygslada.md"
+typ = "verktyg"
+steg = "auto"
+finns = "command -v node && command -v gh"
+installera = "verktyg/installera/bas.sh"
+
+[tjanst.openwebui]
+namn = "Open WebUI"
+beskrivning = "Chattgränssnitt med dokumentuppladdning, RAG och verktygsanrop. Vår testbänk för chattbot-upplägg."
+dok = "docs/60-miljo/openwebui.md"
+typ = "lokal"
+steg = "begaran"
+port = 8081
+finns = "command -v open-webui"
+installera = "verktyg/installera/openwebui.sh"
+starta = "verktyg/starta-openwebui.sh --bakgrund"
+stoppa = "verktyg/starta-openwebui.sh --stoppa"
+halsa = "http://127.0.0.1:8081/health"
+egen_ingress = true
+
+[tjanst.hello-mcp]
+namn = "Hello-MCP"
+beskrivning = "Minsta möjliga MCP-server, exponerar minnesbanken. Pratar stdio — den startas av klienten, inte av oss."
+dok = "exempel/mcp/hello-mcp/README.md"
+typ = "verktyg"
+steg = "begaran"
+finns = "test -d exempel/mcp/hello-mcp/.venv"
+installera = "verktyg/installera/hello-mcp.sh"
+mcp_kommando = "uv run --directory {rot}/exempel/mcp/hello-mcp server.py"
+
+[tjanst.mcpo]
+namn = "MCP-brygga (mcpo)"
+beskrivning = "Översätter MCP till OpenAPI. Behövs för att Open WebUI ska nå våra MCP-servrar — Open WebUI pratar verktygsservrar över OpenAPI, inte MCP."
+dok = "docs/20-tekniker/mcp.md"
+typ = "lokal"
+steg = "begaran"
+port = 8083
+finns = "command -v mcpo"
+installera = "verktyg/installera/mcpo.sh"
+starta = "verktyg/starta-mcpo.sh --bakgrund"
+stoppa = "verktyg/starta-mcpo.sh --stoppa"
+halsa = "http://127.0.0.1:8083/openapi.json"
+
+[tjanst.openclaw]
+namn = "OpenClaw"
+beskrivning = "Självhostad agent-gateway. Här som experimentobjekt — kontrasten mot Open WebUI är att agenten når filer och kommandon och kan drivas utifrån."
+dok = "docs/20-tekniker/agentupplagg.md"
+typ = "lokal"
+steg = "begaran"
+port = 18789
+finns = "command -v openclaw"
+installera = "verktyg/installera/openclaw.sh"
+starta = "openclaw gateway --port 18789"
+starta_bakgrund = true   # kommandot återvänder inte av sig självt
+# Ankrat mönster: annars matchar pkill det skal som kör kommandot,
+# och stoppet dödar sig självt innan det hunnit döda gatewayen.
+stoppa = "pkill -f '^openclaw gateway'"
+egen_ingress = true
+
+[tjanst.metadatagraf]
+namn = "Metadatagrafen"
+beskrivning = "Pilotinstans för metadata som graf, med MCP-server. Kör redan — vi kopplar upp oss, vi installerar den inte."
+dok = "docs/60-miljo/metadatagrafen.md"
+typ = "fjarr"
+url_env = "METADATAGRAF_URL"
+halsa_sokvag = "/health"
+mcp_sokvag = "/mcp/sse"
+token_env = "METADATAGRAF_TOKEN"
+ingress_matchning = "metadatagraph"
+
+
+# ── Uppsättningar ─────────────────────────────────────────────────────────
+#
+# Kombinationer som är tänkta att fungera ihop. Panelen installerar det som
+# saknas, startar i ordning och skriver ~/work/.labb/mcp.json som klienterna
+# läser.
+
+[uppsattning.chatt-med-verktyg]
+namn = "Chattbot + verktyg"
+beskrivning = "Open WebUI med en egen MCP-server inkopplad via bryggan. Frågan: var går gränsen mellan att modellen svarar och att modellen gör?"
+tjanster = ["openwebui", "hello-mcp", "mcpo"]
+dok = "docs/20-tekniker/chattbot-plus-verktyg.md"
+
+[uppsattning.graf-i-chatt]
+namn = "Metadatagraf i chatten"
+beskrivning = "Open WebUI mot metadatagrafens MCP-server. Kunskap som redan finns, i ett gränssnitt vi kan variera."
+tjanster = ["openwebui", "metadatagraf", "mcpo"]
+dok = "docs/20-tekniker/grafminne.md"
+
+[uppsattning.graf-och-agent]
+namn = "Metadatagraf + agent"
+beskrivning = "Samma graf, men en agent i stället för en chatt. Skillnaden i vem som initierar är hela poängen med jämförelsen."
+tjanster = ["metadatagraf", "openclaw"]
+dok = "docs/20-tekniker/agentupplagg.md"

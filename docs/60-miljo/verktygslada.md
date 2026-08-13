@@ -1,13 +1,17 @@
 # Verktygslådan
 
 Onyxia-poddar är förgängliga. Allt du installerar med `apt` försvinner vid omstart;
-allt under `/home/onyxia` finns kvar. Det här dokumentet är receptet för att komma
-tillbaka till en fungerande arbetsmiljö.
+allt under `/home/onyxia` finns kvar.
 
-Kontrollera först vad som saknas:
+Slutsatsen vi dragit av det: **installera aldrig med `apt` det som går att lägga i
+hemkatalogen.** Alla verktyg nedan hamnar under `~/.local`, ingenting kräver `sudo`,
+och andra gången du startar en tjänst är allt redan på plats.
+
+Normalt behöver du inte köra något av det här för hand:
 
 ```bash
-./verktyg/kontrollera-miljo.sh
+./verktyg/labb-start.sh            # grunden, i ett steg
+./verktyg/kontrollera-miljo.sh     # vad finns, vad saknas
 ```
 
 ## Finns redan i imagen
@@ -15,54 +19,34 @@ Kontrollera först vad som saknas:
 `git`, `python3` (3.13), `uv`, `jq`, `curl`, `kubectl`, `helm`, `mc`.
 Kör inte om det som redan finns.
 
-## GitHub CLI
-
-Behövs för pull requests och för att slippa token i klartext.
+## Grunden: Node och GitHub CLI
 
 ```bash
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-  | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-  | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-sudo apt-get update -qq && sudo apt-get install -y gh
+./verktyg/installera/bas.sh
 ```
 
-Sedan: `./verktyg/satt-upp-git-auth.sh`
+Skriptet hämtar båda som tarball till `~/.local`, sätter `PATH` i `~/.bashrc` och
+kör `satt-upp-git-auth.sh`. Idempotent — kör om det när du vill.
 
-## Node.js
+**Node 24 eller senare**, dels för MCP-servrar som distribueras via npm (fortfarande
+majoriteten, och `npx` är standardsättet att köra dem), dels för att OpenClaw kräver
+22.22.3+/24.15+.
 
-Behövs för de MCP-servrar som distribueras via npm — det är fortfarande majoriteten
-av dem, och `npx` är standardsättet att köra dem.
-
-```bash
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs
-```
+**GitHub CLI** behövs för pull requests och för att slippa token i klartext.
 
 ## Python 3.11 för Open WebUI
 
 Imagen har 3.13. Open WebUI kräver 3.11. `uv` löser det utan att röra systemets Python:
 
 ```bash
+./verktyg/kor.sh installera openwebui
+```
+
+vilket i praktiken är:
+
+```bash
 uv python install 3.11
 uv tool install --python 3.11 open-webui
-export PATH="$HOME/.local/bin:$PATH"    # lägg till i ~/.bashrc
-```
-
-## Nätverksverktyg
-
-`ss` och `lsof` saknas i imagen, vilket är förvirrande första gången du ska ta reda på
-vad som lyssnar på en port.
-
-```bash
-sudo apt-get install -y iproute2 lsof net-tools
-```
-
-Utan dem duger bash:
-
-```bash
-timeout 1 bash -c "exec 3<>/dev/tcp/127.0.0.1/8081" && echo upptagen || echo ledig
 ```
 
 ## Python-beroenden för experiment
@@ -76,21 +60,28 @@ uv sync            # skapar .venv utifrån pyproject.toml
 uv run server.py
 ```
 
-## Vad som är värt att automatisera
+## Efter en poddomstart
 
-Efter en poddomstart:
+Ingenting. Verktygen ligger kvar under `~/.local`; det som försvann var de körande
+processerna. Starta om dem från panelen, eller:
 
 ```bash
 cd ~/work/ArkAI
-./verktyg/kontrollera-miljo.sh      # se vad som saknas
-./verktyg/satt-upp-git-auth.sh      # git + gh
-export PATH="$HOME/.local/bin:$PATH"
+./verktyg/labb-start.sh
 ```
 
-Bara `gh`, `node` och nätverksverktygen behöver installeras om — resten ligger
-persistent. Det tar ett par minuter.
+Startade du tjänsten via [labbets URL](starta-labbet.md) sker även det automatiskt —
+Onyxias startformulär har ett fält för ett init-skript, och det är där
+[`verktyg/onyxia-init.sh`](../../verktyg/onyxia-init.sh) kopplas in.
 
-Onyxias startformulär har också ett fält för ett init-skript (en URL till ett
-shellskript som körs när tjänsten startar). Vill du slippa stegen ovan helt är det
-rätt ställe att lägga dem. Lägg i så fall skriptet i det här repot och peka på
-`raw.githubusercontent.com`-URL:en — då kan alla i teamet återanvända det.
+## Nätverksverktyg
+
+`ss` och `lsof` saknas i imagen och kräver `apt`, alltså ominstallation efter varje
+omstart. Vi har därför slutat förlita oss på dem — panelen och skripten sonderar
+portar med bash i stället:
+
+```bash
+timeout 1 bash -c "exec 3<>/dev/tcp/127.0.0.1/8081" && echo upptagen || echo ledig
+```
+
+Vill du ändå ha dem: `sudo apt-get install -y iproute2 lsof net-tools`.

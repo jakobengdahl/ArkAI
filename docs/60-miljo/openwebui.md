@@ -15,6 +15,12 @@ podden (ingen Docker, inga k8s-rättigheter). Vi installerar det som ett
 Python-verktyg i VS Code-tjänsten i stället.
 
 ```bash
+verktyg/kor.sh installera openwebui
+```
+
+eller, om du hellre ser vad som händer:
+
+```bash
 uv python install 3.11                       # kräver 3.11, imagen har 3.13
 uv tool install --python 3.11 open-webui
 export PATH="$HOME/.local/bin:$PATH"         # lägg i ~/.bashrc
@@ -39,6 +45,17 @@ Stoppa med `./verktyg/starta-openwebui.sh --stoppa`.
 `8081`.
 
 ## Nå gränssnittet
+
+### Tjänsten måste lyssna på poddens adress, inte bara på loopback
+
+Startskriptet binder till `0.0.0.0`. Det är inte slarv: Onyxias portexponering
+går via en Kubernetes-Service som når podden på dess **pod-IP**. En process som
+bara lyssnar på `127.0.0.1` svarar då `502` genom ingressen, hur rätt allt annat
+än är. Verifierat 2026-08-13 — `curl http://$(hostname -i):8081/health` ska svara
+`200`, inte bara loopback-adressen.
+
+Följden är att alla i namnrymden når instansen. Sätt `WEBUI_AUTH=True` i `.env`
+innan du exponerar porten.
 
 ### Enda vägen som fungerar: egen ingress
 

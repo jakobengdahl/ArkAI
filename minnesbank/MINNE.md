@@ -20,7 +20,12 @@ en fil; ta bort raden när du tar bort filen.
 - [SSP Cloud har egen LLM-inferens](verktyg/sspcloud-llm-inferens.md) — OpenAI-kompatibelt API, personlig nyckel
 - [Open WebUI kräver Python 3.11](verktyg/openwebui-kraver-python-311.md) — imagen har 3.13, lös det med uv
 - [Webbappar fungerar inte bakom code-servers /proxy/](verktyg/spa-fungerar-inte-bakom-sokvagsproxy.md) — exponera porten med eget värdnamn vid start
+- [Query-strängen överlever proxyn](verktyg/query-strang-overlever-proxyn.md) — bygger du själv slipper du portexponering helt
 - [MCP:s Python-SDK bytte API i 2.0](verktyg/mcp-sdk-2-bytte-api.md) — FastMCP heter MCPServer, nätets exempel är föråldrade
+- [Open WebUI pratar inte MCP](verktyg/open-webui-pratar-inte-mcp.md) — verktyg kopplas in som OpenAPI, det krävs en brygga
+- [Startskriptet får inte blockera](verktyg/startskript-far-inte-blockera.md) — installationer hör hemma i en synlig VS Code-terminal, inte i init.personalInit
+- [Installera i hemkatalogen, inte med apt](verktyg/installera-i-hemkatalogen-inte-med-apt.md) — Node och gh som tarball i ~/.local överlever omstart
+- [Sondera tillstånd, läs det inte](verktyg/sondera-tillstand-las-det-inte.md) — statusfiler ljuger efter en poddomstart
 
 ## Domänkunskap
 
