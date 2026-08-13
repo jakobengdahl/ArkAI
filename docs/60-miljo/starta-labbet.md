@@ -77,8 +77,10 @@ Argumentet till startskriptet styr vad som installeras automatiskt:
 | `bas openwebui` | Dessutom Open WebUI (~4 min). **Standardvalet** |
 | `minimal` | Bara panelen — installera resten själv därifrån |
 
-Profilorden är tjänst-id ur [`verktyg/labb.toml`](../../verktyg/labb.toml), så
-`bas hello-mcp openclaw` fungerar också.
+Orden är tjänst-id ur [`verktyg/labb.toml`](../../verktyg/labb.toml), så
+`hello-mcp openclaw` fungerar också. `bas` är bara en etikett — grundmiljön
+installeras ändå, eftersom den har `steg = "auto"` i manifestet. `minimal` är
+det enda ordet med särskild betydelse: det hoppar över allt.
 
 Allt annat installeras med en knapp i panelen när du behöver det. Du behöver alltså
 inte välja rätt profil från början.

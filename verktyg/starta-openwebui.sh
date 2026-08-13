@@ -37,24 +37,35 @@ fi
 mkdir -p "$DATA"
 export DATA_DIR="$DATA"
 
-# WEBUI_AUTH=False hoppar över inloggning. Rimligt i en labbtjänst som bara du
-# når, men sätt WEBUI_AUTH=True i .env så snart någon annan ska kunna nå den.
-export WEBUI_AUTH="${WEBUI_AUTH:-False}"
+# Är porten exponerad ligger instansen på ett publikt värdnamn. Då är inloggning
+# inte en inställning man får glömma, så den slås på av sig själv. Exponerar du
+# inte porten når bara du den, och då är False bekvämt och ofarligt.
+INGRESS=$(python3 verktyg/labb.py ingress "$PORT" 2>/dev/null)
+if [ -n "$INGRESS" ]; then
+  if [ "${WEBUI_AUTH:-}" = "False" ] && [ "${TILLAT_OSKYDDAD:-}" != "ja" ]; then
+    echo "Vägrar starta utan inloggning: porten $PORT är exponerad på"
+    echo "  $INGRESS"
+    echo "Ta bort WEBUI_AUTH=False ur .env, eller kör med TILLAT_OSKYDDAD=ja om"
+    echo "du verkligen menar det."
+    exit 1
+  fi
+  export WEBUI_AUTH="${WEBUI_AUTH:-True}"
+else
+  export WEBUI_AUTH="${WEBUI_AUTH:-False}"
+fi
 export ENABLE_OLLAMA_API="${ENABLE_OLLAMA_API:-False}"
 export ENABLE_OPENAI_API="${ENABLE_OPENAI_API:-False}"
 
 echo "Startar Open WebUI"
 echo "  port      $PORT"
 echo "  data      $DATA"
-echo "  inloggning ${WEBUI_AUTH}"
+echo "  inloggning ${WEBUI_AUTH}${INGRESS:+  (porten är exponerad: $INGRESS)}"
 echo "  logg      $LOGG"
 echo
 
 # Binder till alla gränssnitt, inte bara loopback. Onyxias portexponering går
 # via en Service som når podden på dess pod-IP — en tjänst som bara lyssnar på
-# 127.0.0.1 svarar 502 genom ingressen. Podden är inte nåbar utifrån på annat
-# sätt, men andra i namnrymden når den: sätt WEBUI_AUTH=True i .env innan du
-# exponerar porten.
+# 127.0.0.1 svarar 502 genom ingressen.
 if [ "${1:-}" = "--bakgrund" ]; then
   nohup open-webui serve --host 0.0.0.0 --port "$PORT" >"$LOGG" 2>&1 &
   echo "PID $!. Väntar på att tjänsten svarar..."

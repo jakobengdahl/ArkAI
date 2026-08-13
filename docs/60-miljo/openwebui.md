@@ -54,8 +54,11 @@ bara lyssnar på `127.0.0.1` svarar då `502` genom ingressen, hur rätt allt an
 än är. Verifierat 2026-08-13 — `curl http://$(hostname -i):8081/health` ska svara
 `200`, inte bara loopback-adressen.
 
-Följden är att alla i namnrymden når instansen. Sätt `WEBUI_AUTH=True` i `.env`
-innan du exponerar porten.
+Följden är att andra kan nå instansen — via ingressen om porten är exponerad,
+annars från andra poddar i namnrymden. Därför slår startskriptet på inloggning
+av sig självt när det ser en ingress för porten, och vägrar starta med
+`WEBUI_AUTH=False` i det läget. Det är en inställning man annars glömmer, och
+konsekvensen är en öppen chatt kopplad till din API-nyckel.
 
 ### Enda vägen som fungerar: egen ingress
 
@@ -123,8 +126,8 @@ Allt sätts via miljövariabler, lämpligast i `.env`:
 | `ENABLE_OPENAI_API` / `OPENAI_API_BASE_URL` | Peka mot valfri OpenAI-kompatibel endpoint |
 | `ENABLE_OLLAMA_API` / `OLLAMA_BASE_URL` | Om du kör en lokal modell |
 
-Sätt `WEBUI_AUTH=True` så snart en kollega ska nå din instans. Ingressen är
-åtkomlig för fler än dig.
+`WEBUI_AUTH` sätts automatiskt till `True` när porten är exponerad — se ovan.
+Sätt den själv om du delar instansen på annat sätt.
 
 ## Vad vi vill testa här
 

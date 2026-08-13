@@ -458,7 +458,22 @@ def sida_logg(tjid: str) -> tuple[int, bytes]:
                 continue
             delar.append(f"<h2>{handling}</h2><pre class='logg'>{e(chr(10).join(rader))}</pre>")
     if not delar:
-        delar.append("<p>Ingen logg ännu.</p>")
+        # Kraschade kor.sh innan den hann skriva tjänstens logg står orsaken
+        # här. Utan den här grenen syns bara "ingen logg ännu".
+        panelogg = labb.LOGG / "panel-kor.log"
+        rader = []
+        if panelogg.exists():
+            try:
+                rader = panelogg.read_text(encoding="utf-8", errors="replace").splitlines()[-40:]
+            except OSError:
+                rader = []
+        if rader:
+            delar.append(
+                "<p>Ingen logg för tjänsten. Sista raderna ur panelens egen logg:</p>"
+                f"<pre class='logg'>{e(chr(10).join(rader))}</pre>"
+            )
+        else:
+            delar.append("<p>Ingen logg ännu.</p>")
     rubrik = "arbetar just nu" if arbetar else "senaste körningen"
     uppdatera = '<meta http-equiv="refresh" content="3">' if arbetar else ""
     post = labb.tjanster().get(tjid) or labb.uppsattningar().get(tjid) or {}

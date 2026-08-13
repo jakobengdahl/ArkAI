@@ -63,8 +63,12 @@ kvar filerna: panelen påstår inte att något kör bara för att det gjorde det
 
 Låsen är av två slag, vilket är lätt att göra fel. `kor.sh` tar ett **exklusivt**
 lås medan den arbetar; panelens avläsning tar ett **delat**. Två avläsningar stör
-alltså inte varandra, och en avläsning kan inte få `kor.sh` att tro att något
-redan pågår — men en verklig körning syns för båda.
+alltså inte varandra, medan en verklig körning syns för båda.
+
+Ett delat lås utesluter ändå ett exklusivt under de mikrosekunder avläsningen
+tar. Därför väntar `kor.sh` i två sekunder på låset i stället för att ge upp
+direkt — annars kunde en sidladdning i olyckligt ögonblick få en installation
+att svara "något körs redan".
 
 ## Vad panelen litar på
 
@@ -142,6 +146,8 @@ Allt panelen skriver hamnar i `~/work/.labb/`, utanför repot:
   miljo.toml        hur tjänsten startades: profil, tidpunkt, namnrymd
   mcp.json          delad MCP-konfiguration, genererad ur labb.toml
   logg/             en logg per tjänst och handling
+                    panel-kor.log = panelens egen, för fel som inträffar
+                    innan kor.sh hunnit skriva tjänstens logg
   las/              låsfiler — det är dessa som gör knapparna säkra
   status/           anteckning om senaste körningen
 ```

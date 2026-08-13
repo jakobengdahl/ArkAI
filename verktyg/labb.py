@@ -22,6 +22,7 @@ import fcntl
 import json
 import os
 import re
+import shlex
 import socket
 import subprocess
 import sys
@@ -220,11 +221,13 @@ def lasfil(tjid: str) -> Path:
 def kors_nu(tjid: str) -> bool:
     """True om kor.sh håller låset för tjänsten just nu.
 
-    Delat lås (LOCK_SH), inte exklusivt. Att bara *läsa av* ett tillstånd får
-    inte hindra andra från att göra samma sak, och framför allt inte få
-    kor.sh att tro att något redan kör. Två sonderingar samtidigt tar båda ett
-    delat lås och stör varandra inte; kor.sh:s exklusiva lås utesluter dem
-    båda, vilket är precis det vi vill upptäcka.
+    Delat lås (LOCK_SH), inte exklusivt: två sonderingar samtidigt stör inte
+    varandra, och kor.sh:s exklusiva lås utesluter dem båda — vilket är precis
+    det vi vill upptäcka.
+
+    Kvar finns ett litet fönster åt andra hållet: håller vi det delade låset i
+    de mikrosekunder anropet tar, kan kor.sh:s `flock` misslyckas. Därför
+    väntar kor.sh i två sekunder i stället för att ge upp direkt.
     """
     fil = lasfil(tjid)
     if not fil.exists():
@@ -387,21 +390,21 @@ def skriv_mcp_json() -> Path:
         if t.get("mcp_kommando"):
             # stdio-server: startas av klienten. Räcker att den är installerad.
             if s["tillstand"] in ("installerad", "kor"):
-                delar = t["mcp_kommando"].split()
-                servrar[tjid] = {
-                    "type": "stdio",
-                    "command": delar[0],
-                    "args": [d.replace("{rot}", str(ROT)) for d in delar[1:]],
-                }
+                delar = [d.replace("{rot}", str(ROT))
+                         for d in shlex.split(t["mcp_kommando"])]
+                servrar[tjid] = {"type": "stdio", "command": delar[0], "args": delar[1:]}
         elif t.get("mcp_sokvag") and s.get("url") and s["tillstand"] == "kor":
             post = {"type": "sse", "url": s["url"].rstrip("/") + t["mcp_sokvag"]}
             token = os.environ.get(t.get("token_env", "")) if t.get("token_env") else None
             if token:
                 post["headers"] = {"Authorization": f"Bearer {token}"}
             servrar[tjid] = post
+    # Rättigheterna sätts före skrivningen. Filen kan innehålla en token, och
+    # det finns inget ögonblick där den ska ha legat läsbar för andra.
     fil = LABB / "mcp.json"
-    fil.write_text(json.dumps({"mcpServers": servrar}, ensure_ascii=False, indent=2))
+    fil.touch(mode=0o600, exist_ok=True)
     fil.chmod(0o600)
+    fil.write_text(json.dumps({"mcpServers": servrar}, ensure_ascii=False, indent=2))
     return fil
 
 
@@ -430,6 +433,14 @@ def _main(argv: list[str]) -> int:
             print(json.dumps(alla_statusar(), ensure_ascii=False, indent=2))
         case "mcp-json":
             print(skriv_mcp_json())
+        case "uppsattning-finns":
+            if argv[1] in uppsattningar():
+                print(argv[1])
+        case "ingress":
+            url = egen_ingress_for(int(argv[1]))
+            if not url:
+                return 1
+            print(url)
         case "katalog":
             print(LABB)
         case _:

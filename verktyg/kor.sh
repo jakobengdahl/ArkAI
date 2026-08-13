@@ -49,8 +49,11 @@ utfor() { # utfor <handling> <tjänst>
   local las="$LABB/las/$tjid.lock"
   touch "$las"
 
+  # -w 2: panelens avläsning tar ett kortvarigt delat lås, och vi ska inte
+  # tolka det som att en körning pågår. En verklig körning håller låset längre
+  # än så.
   exec 9>"$las"
-  if ! flock -n 9; then
+  if ! flock -w 2 9; then
     fel "Något körs redan för '$tjid'. Följ det i stället:"
     fel "  tail -f $LABB/logg/$tjid-*.log"
     return 3
@@ -188,6 +191,12 @@ case "${1:-}" in
     ;;
   uppsattning)
     [ $# -eq 2 ] || { anvandning; exit 2; }
+    # Namnet valideras innan loggfilen öppnas — annars skapar ett skrivfel en
+    # fil med skräpnamn innan felmeddelandet hinner ut.
+    if [ -z "$(manifest uppsattning-finns "$2")" ]; then
+      fel "Okänd uppsättning: $2"
+      exit 2
+    fi
     # Egen logg, så att panelen kan visa hur det gick för uppsättningen som
     # helhet och inte bara för en av tjänsterna i den.
     set -o pipefail

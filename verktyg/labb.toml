@@ -111,9 +111,10 @@ finns = "command -v openclaw"
 installera = "verktyg/installera/openclaw.sh"
 starta = "openclaw gateway --port 18789"
 starta_bakgrund = true   # kommandot återvänder inte av sig självt
-# Ankrat mönster: annars matchar pkill det skal som kör kommandot,
-# och stoppet dödar sig självt innan det hunnit döda gatewayen.
-stoppa = "pkill -f '^openclaw gateway'"
+# Inte ankrat: openclaw är ett Node-CLI, så kommandoraden börjar med
+# interpretatorn ("node /.../openclaw gateway --port 18789"). Ta med porten
+# i stället för att ankra, så mönstret blir specifikt utan att bli fel.
+stoppa = "pkill -f 'openclaw gateway --port 18789'"
 egen_ingress = true
 
 [tjanst.metadatagraf]
