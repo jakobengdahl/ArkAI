@@ -83,7 +83,8 @@ Ingen ordning, ingen som äger dem än. Ta något och skriv upp dig i en PR.
 **Pröva kartan** — varje punkt prövar en cell i
 [typfall-och-byggstenar.md](../40-matchning/typfall-och-byggstenar.md)
 - Samma uppgift med och utan hämtning mot eget material. Hur mycket av kvaliteten
-  kom från underlaget och hur mycket från modellen?
+  kom från underlaget och hur mycket från modellen? Billigast att göra på de öppna
+  ramverken i [UF-004](../10-anvandningsfall/UF-004-omvarldsbevakning-metadatastandarder.md)
 - Samma flerstegsuppgift som chattbot respektive som agent. Vad vinner agenten, och
   vad blir svårare att felsöka?
 - Samma uppgift på en liten och en stor modell. Var går gränsen där den mindre inte
@@ -91,7 +92,16 @@ Ingen ordning, ingen som äger dem än. Ta något och skriv upp dig i en PR.
 - Ta fram tio utvärderingsfall för en uppgift utan facit. Hur lång tid tog det, och
   gick det alls?
 
-**Utforskande spår** — se [UF-002](../10-anvandningsfall/UF-002-stod-vid-byte-av-arbetsplattform.md)
+**Eget spår** — se [UF-003](../10-anvandningsfall/UF-003-arkitekturbeslut-och-forutsattningar.md) och [UF-004](../10-anvandningsfall/UF-004-omvarldsbevakning-metadatastandarder.md)
+- Indexera ett antal konstruerade beslut och ställ tio frågor med kända svar. Hur
+  ofta pekar svaret på rätt ställe?
+- Ställ samma fråga om samband mot text respektive graf. Var tar textminnet slut?
+- Låt en modell föreslå vilka tidigare beslut som gränsar till ett nytt. Hittar den
+  något vi själva hade missat, och hur ofta hittar den på?
+
+**Utforskande spår** — se [UF-002](../10-anvandningsfall/UF-002-stod-vid-byte-av-arbetsplattform.md) och [UF-005](../10-anvandningsfall/UF-005-metadata-som-graf.md)
+- Läs in den öppna sprintdokumentationen för metadatagrafen och skriv ner vad som
+  redan är prövat. Ett experiment som slipper göras om är också ett resultat
 - Låt en kodagent migrera en konstruerad äldre lösning till ett nytt mönster. Går
   ändringarna att granska på mindre tid än det tar att göra dem själv?
 - Samma sak, men med våra egna riktlinjer och mallar inlagda som kunskapsunderlag.
