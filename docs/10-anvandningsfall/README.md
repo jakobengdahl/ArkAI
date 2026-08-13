@@ -27,6 +27,28 @@ och lyft ut den generella beskrivningen.
 `UF-NNN-kort-namn.md`, löpnummer. Numren är bara till för att kunna hänvisa i en
 diskussion — återanvänd inte ett nummer.
 
+## Tre rader överst
+
+Varje fall inleds med typfall, spår och mognadssteg. Tre rader, men de avgör hur
+resten ska läsas.
+
+```
+**Typfall:** D · Generativt stöd i interna processer
+**Spår:** Eget
+**Steg:** PoC
+```
+
+**[Typfall](typfall.md)** säger vilket slags AI-användning det är, och därmed vad som
+krävs i utvärdering, översyn och styrning.
+
+**[Spår](../00-oversikt/vision-och-mal.md#två-spår)** säger om vi äger frågan.
+*Eget* betyder att fallet kan gå hela vägen. *Utforskande* betyder att vi bygger
+kunskap i något någon annan ansvarar för — resultatet är ett underlag, inte en
+lösning. Båda hör hemma här.
+
+**[Steg](../00-oversikt/mognadstrappa.md)** säger var det står idag. I det
+utforskande spåret stannar trappan vid PoC.
+
 ## Vad som gör ett användningsfall användbart
 
 Fyll i mallen, men lägg tiden på de här tre:
@@ -62,15 +84,26 @@ Dåliga kandidater att börja med:
 - Där ingen äger frågan om vad som ska hända sedan
 - Där själva svårigheten är att komma överens, inte att producera något
 
-## Statusen
-
-Sätt [mognadssteget](../00-oversikt/mognadstrappa.md) överst i varje fil. En rad,
-men den gör diskussionen konkret.
-
 ## Filer
 
-| Fil | Steg | Kort |
-|---|---|---|
-| [UF-001-granska-dokument-mot-regelverk.md](UF-001-granska-dokument-mot-regelverk.md) | Skiss | Exempel — visar formen |
+| Fil | Typfall | Spår | Steg | Kort |
+|---|---|---|---|---|
+| [typfall.md](typfall.md) | — | — | — | De sex typfallen och vad de avgör |
+| [UF-002-stod-vid-byte-av-arbetsplattform.md](UF-002-stod-vid-byte-av-arbetsplattform.md) | D | Utforskande | Skiss | Vad högre nivåer av AI-stöd kräver |
+| [UF-003-arkitekturbeslut-och-forutsattningar.md](UF-003-arkitekturbeslut-och-forutsattningar.md) | D | Eget | Skiss | Hålla ordning på vad vi redan beslutat |
+| [UF-004-omvarldsbevakning-metadatastandarder.md](UF-004-omvarldsbevakning-metadatastandarder.md) | D | Eget | Skiss | Öppet material — billigast att börja med |
+| [UF-005-metadata-som-graf.md](UF-005-metadata-som-graf.md) | D/C | Utforskande | Skiss | Graf kontra text på strukturerad metadata |
 
-Ersätt gärna exemplet med riktiga användningsfall när de börjar komma in.
+### De här fallen är exempel, inte en plan
+
+De finns här av tre skäl: för att visa formen på ett användningsfall, för att ge
+något konkret att diskutera kring, och för att de fyra tillsammans spänner över
+spåren och över de svårigheter vi vet finns.
+
+**Ingenting är valt.** Att ett fall står beskrivet betyder inte att det är det vi
+kommer att prova, och listan är inte tänkt att vara heltäckande. Nästa steg är att
+fylla på den tillsammans — det är lättare att komma på fall när man har fyra att
+resonera emot än när man har ett tomt blad.
+
+Numret 001 saknas med flit: där låg ett konstruerat exempel som ersattes av de här.
+Löpnummer återanvänds inte.

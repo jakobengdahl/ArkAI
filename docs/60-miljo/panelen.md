@@ -40,6 +40,7 @@ processer.
 | Se vad som är installerat och vad som kör | `verktyg/kor.sh status` |
 | Installera och starta en tjänst | `verktyg/kor.sh installera openwebui` |
 | Köra igång en hel uppsättning | `verktyg/kor.sh uppsattning chatt-med-verktyg` |
+| Köra en åtgärd | `verktyg/kor.sh atgard koppla-openwebui` |
 | Följa en installationslogg | `tail -f ~/work/.labb/logg/*.log` |
 | Se tjänster som kör i namnrymden | `kubectl get ingress` |
 
@@ -122,9 +123,31 @@ vilket är poängen — markdownfilen förblir läsbar på båda ställena.
 |---|---|
 | `<!-- panel:uppsattningar -->` | Kort med "kör igång"-knappar |
 | `<!-- panel:tjanster -->` | Kort per tjänst med status och knappar |
+| `<!-- panel:atgarder -->` | Kort med knappar för sådant som inte är en tjänst |
 | `<!-- panel:status -->` | Tabell över det som kör |
 | `<!-- panel:miljo -->` | Verktyg, namnrymd, hur tjänsten startades |
 | `<!-- panel:namnrymd -->` | Ingresser i namnrymden, som klickbara adresser |
+
+## Åtgärder
+
+Vissa saker ska gå att köra med en knapp utan att vara en tjänst — de har inget
+tillstånd, de bara utförs. Just nu en: att koppla in modellen och
+verktygsservrarna i Open WebUI, som är användbar när man installerat en ny
+MCP-server.
+
+De deklareras som `[atgard.<id>]` i [`verktyg/labb.toml`](../../verktyg/labb.toml):
+
+```toml
+[atgard.koppla-openwebui]
+namn = "Koppla in modell och verktyg i Open WebUI"
+beskrivning = "..."
+knapp = "Koppla in"
+kommando = "verktyg/konfigurera-openwebui.py --skriv"
+dok = "docs/60-miljo/openwebui.md"
+```
+
+De går genom samma `kor.sh`, tar samma lås och skriver samma sorts logg som
+tjänsterna. Id:n delar namnrymd med tjänsterna, så återanvänd inte ett id.
 
 ## Starta och stoppa panelen
 

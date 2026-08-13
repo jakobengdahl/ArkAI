@@ -93,6 +93,18 @@ def uppsattningar() -> dict[str, dict]:
     return katalog().get("uppsattning", {})
 
 
+def atgarder() -> dict[str, dict]:
+    """Sådant som går att köra från panelen men inte är en tjänst."""
+    return katalog().get("atgard", {})
+
+
+def atgard(aid: str) -> dict:
+    a = atgarder().get(aid)
+    if a is None:
+        raise KeyError(f"okänd åtgärd: {aid}")
+    return a
+
+
 def navigering() -> list[dict]:
     return katalog().get("navigering", [])
 
@@ -433,6 +445,11 @@ def _main(argv: list[str]) -> int:
             print(json.dumps(alla_statusar(), ensure_ascii=False, indent=2))
         case "mcp-json":
             print(skriv_mcp_json())
+        case "atgard-kommando":
+            a = atgarder().get(argv[1])
+            if not a or not a.get("kommando"):
+                return 1
+            print(a["kommando"])
         case "uppsattning-finns":
             if argv[1] in uppsattningar():
                 print(argv[1])

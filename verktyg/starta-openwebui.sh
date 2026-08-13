@@ -42,24 +42,53 @@ export DATA_DIR="$DATA"
 # inte porten når bara du den, och då är False bekvämt och ofarligt.
 INGRESS=$(python3 verktyg/labb.py ingress "$PORT" 2>/dev/null)
 if [ -n "$INGRESS" ]; then
-  if [ "${WEBUI_AUTH:-}" = "False" ] && [ "${TILLAT_OSKYDDAD:-}" != "ja" ]; then
-    echo "Vägrar starta utan inloggning: porten $PORT är exponerad på"
-    echo "  $INGRESS"
-    echo "Ta bort WEBUI_AUTH=False ur .env, eller kör med TILLAT_OSKYDDAD=ja om"
-    echo "du verkligen menar det."
-    exit 1
-  fi
-  export WEBUI_AUTH="${WEBUI_AUTH:-True}"
+  # Open WebUI läser variabeln som sann bara när strängen är "true". Allt annat —
+  # 1, yes, ja, felstavningar — stänger av inloggningen. Kontrollera likadant, så
+  # att spärren inte går att gå förbi med ett värde som *ser* påslaget ut.
+  case "$(printf '%s' "${WEBUI_AUTH:-True}" | tr '[:upper:]' '[:lower:]')" in
+    true)
+      export WEBUI_AUTH=True ;;
+    *)
+      if [ "${TILLAT_OSKYDDAD:-}" != "ja" ]; then
+        echo "Vägrar starta utan inloggning: porten $PORT är exponerad på"
+        echo "  $INGRESS"
+        echo "WEBUI_AUTH är satt till \"${WEBUI_AUTH:-}\". Open WebUI slår bara på"
+        echo "inloggning för värdet True — allt annat stänger av den."
+        echo "Ta bort raden ur .env, eller kör med TILLAT_OSKYDDAD=ja om du"
+        echo "verkligen menar det."
+        exit 1
+      fi ;;
+  esac
 else
   export WEBUI_AUTH="${WEBUI_AUTH:-False}"
 fi
+# Modellkopplingen och verktygsservrarna sätts åt dig. Två vägar, för Open
+# WebUI läser sin konfiguration på två sätt: miljövariabler gäller bara när
+# databasen ännu inte har värdet, medan databasen vinner för alltid efteråt.
+# Därför både exporterar vi (första starten) och skriver (alla följande).
+KONF="verktyg/konfigurera-openwebui.py"
+eval "$(python3 "$KONF" --env 2>/dev/null)" || true
+# Saknas databasen är det första starten — då räcker exporten ovan, och det
+# är inget fel.
+if [ -f "$DATA/webui.db" ]; then
+  python3 "$KONF" --skriv >/dev/null 2>&1 || true
+fi
+
 export ENABLE_OLLAMA_API="${ENABLE_OLLAMA_API:-False}"
 export ENABLE_OPENAI_API="${ENABLE_OPENAI_API:-False}"
+
+# Aldrig nyckeln, bara att den finns. Loggen läses av panelen.
+if [ -n "${OPENAI_API_KEY:-}" ] && [ "${ENABLE_OPENAI_API}" = "True" ]; then
+  MODELL="förkonfigurerad mot ${OPENAI_API_BASE_URL:-?}"
+else
+  MODELL="ingen — lägg nyckeln i miljöns hemlighet"
+fi
 
 echo "Startar Open WebUI"
 echo "  port      $PORT"
 echo "  data      $DATA"
 echo "  inloggning ${WEBUI_AUTH}${INGRESS:+  (porten är exponerad: $INGRESS)}"
+echo "  modell    $MODELL"
 echo "  logg      $LOGG"
 echo
 

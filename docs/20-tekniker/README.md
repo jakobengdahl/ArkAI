@@ -13,6 +13,7 @@ Använd [MALL-teknik.md](MALL-teknik.md) för nya sidor.
 
 | Teknik | Kort |
 |---|---|
+| [byggstenar.md](byggstenar.md) | Vad en AI-lösning består av, och nivåstegen att prata om den med |
 | [chattbot-plus-verktyg.md](chattbot-plus-verktyg.md) | Chattbot som kan göra saker, inte bara svara |
 | [mcp.md](mcp.md) | Model Context Protocol — standarden för att koppla in verktyg |
 | [agentupplagg.md](agentupplagg.md) | Hermes, OpenClaw m.fl. — vad som skiljer agentupplägg åt |
@@ -45,6 +46,15 @@ rätt men inte blir användbar.
 
 **Skills** är hur man paketerar arbetssätt så att de laddas när de behövs i stället
 för att ligga och ta plats hela tiden.
+
+[byggstenar.md](byggstenar.md) sätter in dem i en större bild — inklusive de delar
+som inte har en egen sida här för att de inte är tekniker man väljer: utvärdering,
+mänsklig översyn, drift och livscykel. Det är genomgående de som avgör om något går
+att förvalta.
+
+Samma sida har också **nivåstegen**, som är det språk vi använder när vi pratar om
+AI-stöd med verksamheten. Byggstenslistan är rätt karta för oss och fel karta för
+ett verksamhetsmöte.
 
 ## Innan du skriver en ny sida
 

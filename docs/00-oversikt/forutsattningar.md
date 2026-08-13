@@ -29,30 +29,30 @@ annan.
 |---|---|---|
 | **AI-förordningen** (EU 2024/1689) | Risknivå för systemet och vilken roll organisationen har | Vi ska kunna säga vilken risknivå ett förslag hamnar i, och varför |
 | **Dataskydd, sekretess, allmänna handlingar** | Vad som får behandlas var, och vad som blir en handling | Vi arbetar inte med riktiga data alls — det är en avgränsning, inte en bedömning |
-| **Organisationens AI-policy** | Principerna: ansvarsfull, säker, effektiv användning | Våra resultat ska gå att läsa mot dem utan omskrivning |
-| **AI-riktlinjer** | Tillämpningskategori, krav på riskanalys och mänsklig översyn | Avgör vilken sorts underlag ett förslag behöver |
+| **Organisationens AI-policy** | Principerna: ansvarsfull, säker och effektiv användning av AI | Våra resultat ska gå att läsa mot dem utan omskrivning |
+| **Riktlinjer och rutiner för AI** | Krav på riskanalys, mänsklig översyn och godkända verktyg | Avgör vilken sorts underlag ett förslag behöver |
 | **Informationssäkerhet och informationsklassning** | Vilken tjänst som får användas till vilket material | Styr valet av miljö innan tekniken diskuteras |
-| **Beslutsvägar** — linjen eller förvaltningsobjektens styrgrupper | Vem som får initiera, prioritera och finansiera | Vi initierar inte. Vi levererar underlag till dem som gör det |
+| **Beslutsvägarna** i linjen och i förvaltningen | Vem som får initiera, prioritera och finansiera | Vi initierar inte. Vi levererar underlag till dem som gör det |
 
 Ingen av raderna är vår att tolka självständigt. Att kunna referera till dem korrekt
 är däremot en del av arbetet.
 
-## Fyra tillämpningar
+## Var användningen sitter avgör mer än vilken teknik den bygger på
 
-Riktlinjerna delar in AI-användning efter **var i verksamheten den sitter**, inte
-efter vilken teknik som används. Det är en indelning värd att låna, för risknivån
-följer platsen betydligt tydligare än den följer tekniken.
+Den indelning som är mest användbar när man ska bedöma ett förslag utgår inte från
+tekniken utan från **var i verksamheten användningen sitter**. Risknivån följer
+platsen betydligt tydligare än den följer tekniken, och kraven skiljer sig därefter.
 
-| Tillämpning | Vad det är | Var vi står |
+| Var användningen sitter | Vad det innebär | Var vi står |
 |---|---|---|
-| **1 · I statistikproduktionen** | AI som integrerad del av produktionsprocessen | Vi äger den inte. Vi kan resonera om den, inte bygga i den |
-| **2a · Interna processer nära produktionen** | Stöd i arbete som gränsar till produktionen — kod, återkommande moment | Utforskande spår. Där ligger de intressantaste frågorna |
-| **2b · Administrativa och organisatoriska uppgifter** | Internt arbete utan påverkan på produktionen | Här ligger vårt eget arbete, och här kan något gå hela vägen |
-| **3 · Externa gränssnitt** | System som möter uppgiftslämnare, dataleverantörer eller användare av statistiken | Inte i labbet. Kräver ordinarie ordning från början |
+| **I statistikproduktionen** | AI som integrerad del av produktionsprocessen. Krav på kvalitet, dokumentation, spårbarhet och statistisk metod gäller fullt ut | Vi äger den inte. Vi kan resonera om den, inte bygga i den |
+| **Nära produktionen** | Stöd i arbete som gränsar till produktionen — kod, återkommande arbetsmoment | Utforskande spår. Här ligger de intressantaste frågorna |
+| **I internt och administrativt arbete** | Arbete utan påverkan på produktionen | Här ligger vårt eget arbete, och här kan något gå hela vägen |
+| **I externa gränssnitt** | System som möter uppgiftslämnare, dataleverantörer eller användare av statistiken | Inte i labbet. Kräver ordinarie ordning från början |
 
-Gränsen mellan 2a och 1 är en försiktighetsfråga: finns risk för påverkan på
-produktionen gäller de strängare kraven. Det är en bedömning man gör i förväg, inte
-i efterhand.
+Gränsdragningen mellan de två översta är en försiktighetsfråga: finns risk för
+påverkan på statistikproduktionen gäller de strängare kraven. Det är en bedömning
+man gör i förväg, inte i efterhand.
 
 Se [vision-och-mal.md](vision-och-mal.md) för vad "utforskande spår" innebär och var
 vårt mandat slutar.
@@ -76,24 +76,30 @@ vidare på.
 
 ## Vad någon kommer att fråga
 
-Ett AI-initiativ bedöms i vår typ av organisation med ungefär de här frågorna. Ett
-experiment som besvarar dem i förbifarten är oändligt mycket mer värt än ett som
-lämnar dem öppna — det är skillnaden mellan ett resultat och ett underlag.
+Ett AI-initiativ som ska bedömas möter i vår typ av organisation ungefär de här
+frågorna, i den här ordningen. Ett experiment som besvarar dem i förbifarten är
+oändligt mycket mer värt än ett som lämnar dem öppna — det är skillnaden mellan ett
+resultat och ett underlag.
 
-1. Vilket behov ska det lösa, och hur ser det önskade läget ut?
-2. Ligger användningen inom organisationens uppdrag?
-3. Vad gör lösningen? Interagerar den med människor eller genererar den nytt innehåll?
-4. Vilken information hanteras, och varför just den?
-5. Behandlas personuppgifter?
-6. Behandlas uppgifter som omfattas av sekretess?
-7. Vilken informationsklass har materialet?
-8. Vilken kompetens och vilka resurser krävs för att använda och förvalta det?
-9. Överstiger nyttan kostnaden för införande **och** förvaltning?
-10. Vilka risker föll ut av riskanalysen?
+- **Behovet.** Vilket problem löser det, och hur ser det önskade läget ut? Ligger
+  användningen inom organisationens uppdrag?
+- **Vad lösningen gör.** Interagerar den direkt med människor? Genererar den nytt
+  innehåll? Fattar eller förbereder den beslut?
+- **Materialet.** Vilken information hanteras och varför just den? Förekommer
+  personuppgifter eller uppgifter som omfattas av sekretess? Vilken
+  informationsklass rör det sig om?
+- **Förutsättningarna.** Vilken kompetens och vilka resurser krävs — både för att
+  använda och för att förvalta?
+- **Kalkylen.** Överstiger nyttan kostnaden för införande *och* förvaltning?
+- **Riskerna.** Vad föll ut av riskanalysen, och vad görs åt det?
 
-De flesta av dem går att besvara ungefärligt redan under ett experiment. Fråga 4–7
-avgör oftast om något överhuvudtaget kan provas och var — ta dem först. Se
-[beslutsguiden fråga 4](../40-matchning/beslutsguide.md).
+De flesta går att besvara ungefärligt redan under ett experiment. **Frågorna om
+materialet avgör oftast om något överhuvudtaget kan provas, och var** — ta dem först.
+Se [beslutsguiden fråga 4](../40-matchning/beslutsguide.md).
+
+Din organisation har med stor sannolikhet en mall för den här bedömningen. Leta rätt
+på den innan du skriver ett eget upplägg, och skriv experimentet så att det går att
+klippa in i den.
 
 ## Risknivå enligt AI-förordningen
 

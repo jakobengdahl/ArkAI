@@ -7,6 +7,11 @@ för informationssäkerhet, dataskydd och arkitekturstyrning.
 Poängen är att de här frågorna är billigast att ställa tidigt. Ställs de först vid
 införandet blir svaret ofta att lösningen måste byggas om.
 
+Ramarna runtomkring — policy, riktlinjer, tillämpningsområden, risknivåer,
+beslutsvägar — finns i
+[00-oversikt/forutsattningar.md](../00-oversikt/forutsattningar.md). Den här sidan
+handlar om vad man gör åt dem.
+
 ## De frågor som faktiskt avgör
 
 ### Vem ansvarar för besluten?
@@ -97,12 +102,23 @@ flyttat arbete och lagt till en risk — även när svaren är bra.
 
 Mät på arbetet, inte på modellen.
 
+### Ett underlag i fel form når inte fram
+
+Gäller det [utforskande spåret](../00-oversikt/vision-och-mal.md#två-spår): ett
+resultat som presenteras som en färdig lösning läses som en åsikt om hur någon annan
+sköter sitt arbete. Då spelar det ingen roll hur bra det är.
+
+Skriv observationer med belägg, ta kontakt innan något visas upp, och fråga vilken
+sorts underlag som faktiskt vore användbart. Se
+[minnesbanken](../../minnesbank/arbetssatt/utforskande-spar-lamnar-over.md).
+
 ## Vad vi bör ta reda på
 
 Öppna frågor som är för stora för ett experiment men som behöver besvaras:
 
-- Vilka regelverk träffar en AI-lösning i vår typ av verksamhet, och vad kräver de
-  konkret för de användningsfall vi har?
+- Vad kräver regelverken konkret för just våra användningsfall? Ramarna är kända —
+  se [forutsattningar.md](../00-oversikt/forutsattningar.md) — men översättningen till
+  ett enskilt fall är gjord av någon annan, inte av oss
 - Vad krävs för att koppla åtkomsten till användarens behörigheter i stället för till
   en teknisk användare? Det är den enskilt vanligaste blockeraren mot produktion.
 - Hur ser ett rimligt utvärderingsförfarande ut som inte tar mer tid än lösningen

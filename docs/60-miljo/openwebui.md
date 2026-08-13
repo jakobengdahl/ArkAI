@@ -56,9 +56,14 @@ bara lyssnar på `127.0.0.1` svarar då `502` genom ingressen, hur rätt allt an
 
 Följden är att andra kan nå instansen — via ingressen om porten är exponerad,
 annars från andra poddar i namnrymden. Därför slår startskriptet på inloggning
-av sig självt när det ser en ingress för porten, och vägrar starta med
-`WEBUI_AUTH=False` i det läget. Det är en inställning man annars glömmer, och
-konsekvensen är en öppen chatt kopplad till din API-nyckel.
+av sig självt när det ser en ingress för porten, och vägrar starta utan i det
+läget. Det är en inställning man annars glömmer, och konsekvensen är en öppen
+chatt kopplad till din API-nyckel.
+
+Spärren godtar bara värdet `True`, skiftlägesokänsligt. Det är inte petighet:
+Open WebUI slår på inloggning enbart för den strängen, så `WEBUI_AUTH=1` ger en
+**oskyddad** instans trots att värdet ser påslaget ut. Skriptet vägrar därför
+starta på allt utom `True` när porten är exponerad.
 
 ### Enda vägen som fungerar: egen ingress
 
@@ -113,6 +118,37 @@ Och för att bara *chatta* finns plattformens centrala instans på
 värdnamn. Din egen instans behövs när du vill variera upplägget — inte för att
 prata med en modell.
 
+## Modellen och verktygen är redan inkopplade
+
+Du ska inte behöva klistra in en API-nyckel i gränssnittet. Startskriptet gör två
+saker åt dig innan Open WebUI går upp:
+
+**Modellkopplingen** byggs av `OPENAI_API_KEY`, `OPENAI_BASE_URL` och —
+om du satt den — `OPENAI_MODEL`. De kommer ur miljöns hemlighet, se
+[starta-labbet.md](starta-labbet.md). Saknas de startar Open WebUI ändå, bara utan
+förvald modell.
+
+**Verktygsservrarna** hämtas ur `~/work/.labb/mcp.json` och registreras som
+OpenAPI-servrar mot [bryggan](../20-tekniker/mcp.md) på port 8083 — en per
+MCP-server. Det är det Open WebUI förstår; MCP pratar den inte själv.
+
+Installerar du en MCP-server senare finns knappen **Koppla in** i
+[panelen](panelen.md), under *Åtgärder*. Bryggan gör dessutom det här av sig själv
+när den startar, så kör du en uppsättning behöver du inte trycka på något.
+
+Vill du se vad som skulle sättas, utan att sätta det:
+
+```bash
+verktyg/konfigurera-openwebui.py --visa
+```
+
+### En sak som förvirrar
+
+Miljövariabler gäller **bara första gången**. Open WebUI sparar konfigurationen i
+`webui.db`, och därefter är det databasen som gäller — en ändrad nyckel slår inte
+igenom vid omstart. Därför skriver skriptet också direkt i databasen. Se
+[minnesbanken](../../minnesbank/verktyg/open-webui-databasen-vinner.md).
+
 ## Konfiguration
 
 Allt sätts via miljövariabler, lämpligast i `.env`:
@@ -121,7 +157,7 @@ Allt sätts via miljövariabler, lämpligast i `.env`:
 |---|---|
 | `OPEN_WEBUI_PORT` | 8081 som standard |
 | `DATA_DIR` | Var databas och uppladdningar hamnar. Gitignorerad. |
-| `WEBUI_AUTH` | `False` hoppar över inloggning. Bara okej medan du är ensam användare. |
+| `WEBUI_AUTH` | Allt utom `True` hoppar över inloggning. Bara okej medan du är ensam användare. |
 | `WEBUI_SECRET_KEY` | Sätt en gång (`openssl rand -hex 32`) och behåll — annars loggas alla ut vid omstart. |
 | `ENABLE_OPENAI_API` / `OPENAI_API_BASE_URL` | Peka mot valfri OpenAI-kompatibel endpoint |
 | `ENABLE_OLLAMA_API` / `OLLAMA_BASE_URL` | Om du kör en lokal modell |

@@ -42,6 +42,30 @@ gör användningsfallen bedömbara. Det som inte hör hemma här är enskilda sy
 personer, avtal, riktiga data och allt som rör kärnverksamhetens skarpa drift.
 Ingenting vi gör i labbet rör den.
 
+**Interna styrdokument refereras generellt, aldrig ordagrant.** Policyer, riktlinjer,
+mallar och beslutsunderlag som inte är publicerade utanför organisationen ska
+beskrivas som mönster — "en bedömning brukar fråga efter informationsklass" — inte
+citeras, återges strukturmässigt eller läggas in som filer. Se
+[docs/00-oversikt/forutsattningar.md](docs/00-oversikt/forutsattningar.md) för
+tonläget. Dokumentfiler (`.pdf`, `.docx`, `.pptx`) är gitignorerade med flit.
+
+## Två spår — kontrollera vilket du skriver i
+
+Vi arbetar dels med sådant vi själva ansvarar för, dels med utblickar mot verksamhet
+andra ansvarar för. Skillnaden styr vad ett dokument får landa i:
+
+- **Eget spår** — får resonera hela vägen till pilot och produktion.
+- **Utforskande spår** — resultatet är kunskap och ett underlag, aldrig ett förslag
+  om vad någon annan bör göra. Föreslå inte införande, utrullning eller nästa steg i
+  någon annans verksamhet. Formulera observationer.
+
+Står det **Spår: Utforskande** överst i en fil, skriv därefter. Se
+[docs/00-oversikt/vision-och-mal.md](docs/00-oversikt/vision-och-mal.md#två-spår).
+
+Varje användningsfall inleds dessutom med ett
+[typfall](docs/10-anvandningsfall/typfall.md) (A–F). Det avgör vad som krävs i
+utvärdering, mänsklig översyn och styrning — sätt det innan du resonerar om teknik.
+
 **Klistra inte in miljövariabler eller konfigurationsfiler.** `env`,
 `~/.continue/config.yaml`, `~/.config/opencode/opencode.jsonc` och `.git/config`
 innehåller alla fungerande tokens i den här miljön. Se

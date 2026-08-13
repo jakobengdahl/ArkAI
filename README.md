@@ -26,6 +26,15 @@ användningsfall är relevant.
 
 Fråga 3 och 4 är de svåra. Fråga 1 och 2 är förarbetet.
 
+Arbetet ska ge tre saker: kompetens som sitter i händerna, en karta över vilken
+teknik olika slags fall kräver, och ett språk som håller i ett verksamhetsmöte. Se
+[vision-och-mal.md](docs/00-oversikt/vision-och-mal.md).
+
+Vi arbetar i **två spår**: vad vi själva ansvarar för, som kan gå hela vägen, och
+utblickar mot verksamhet andra ansvarar för, där resultatet är ett underlag att ta
+vidare tillsammans med dem — inte en lösning. Styrningen som gäller runtomkring finns
+sammanfattad i [forutsattningar.md](docs/00-oversikt/forutsattningar.md).
+
 ## Karta över repot
 
 | Katalog | Innehåll |
