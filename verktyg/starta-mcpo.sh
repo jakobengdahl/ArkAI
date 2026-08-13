@@ -46,7 +46,15 @@ if [ "${1:-}" = "--bakgrund" ]; then
   echo "PID $!. Logg: $LOGG"
   for _ in $(seq 1 30); do
     sleep 1
-    curl -sf "http://127.0.0.1:$PORT/openapi.json" >/dev/null 2>&1 && { echo "Uppe."; exit 0; }
+    if curl -sf "http://127.0.0.1:$PORT/openapi.json" >/dev/null 2>&1; then
+      echo "Uppe."
+      # Nu när bryggan svarar vet vi vilka verktygsservrar som finns. Tala om
+      # det för Open WebUI, så slipper man klicka in dem för hand. Tyst om
+      # Open WebUI inte har startat än — då sätts samma sak vid dess start.
+      python3 verktyg/konfigurera-openwebui.py --skriv >/dev/null 2>&1 \
+        && echo "Verktygsservrarna inskrivna i Open WebUI."
+      exit 0
+    fi
   done
   echo "Svarade inte inom 30 s. Kolla loggen: tail -30 $LOGG"
   exit 1

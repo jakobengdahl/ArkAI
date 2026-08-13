@@ -62,13 +62,33 @@ if [ -n "$INGRESS" ]; then
 else
   export WEBUI_AUTH="${WEBUI_AUTH:-False}"
 fi
+# Modellkopplingen och verktygsservrarna sätts åt dig. Två vägar, för Open
+# WebUI läser sin konfiguration på två sätt: miljövariabler gäller bara när
+# databasen ännu inte har värdet, medan databasen vinner för alltid efteråt.
+# Därför både exporterar vi (första starten) och skriver (alla följande).
+KONF="verktyg/konfigurera-openwebui.py"
+eval "$(python3 "$KONF" --env 2>/dev/null)" || true
+# Saknas databasen är det första starten — då räcker exporten ovan, och det
+# är inget fel.
+if [ -f "$DATA/webui.db" ]; then
+  python3 "$KONF" --skriv >/dev/null 2>&1 || true
+fi
+
 export ENABLE_OLLAMA_API="${ENABLE_OLLAMA_API:-False}"
 export ENABLE_OPENAI_API="${ENABLE_OPENAI_API:-False}"
+
+# Aldrig nyckeln, bara att den finns. Loggen läses av panelen.
+if [ -n "${OPENAI_API_KEY:-}" ] && [ "${ENABLE_OPENAI_API}" = "True" ]; then
+  MODELL="förkonfigurerad mot ${OPENAI_API_BASE_URL:-?}"
+else
+  MODELL="ingen — lägg nyckeln i miljöns hemlighet"
+fi
 
 echo "Startar Open WebUI"
 echo "  port      $PORT"
 echo "  data      $DATA"
 echo "  inloggning ${WEBUI_AUTH}${INGRESS:+  (porten är exponerad: $INGRESS)}"
+echo "  modell    $MODELL"
 echo "  logg      $LOGG"
 echo
 

@@ -389,7 +389,37 @@ def block_namnrymd(_: str) -> str:
     )
 
 
+def block_atgarder(_: str) -> str:
+    """Knappar för sådant som inte är en tjänst men ska gå att köra härifrån."""
+    atgarder = labb.atgarder()
+    if not atgarder:
+        return ""
+    kort = []
+    for aid, a in atgarder.items():
+        arbetar = labb.kors_nu(aid)
+        knappar = []
+        if arbetar:
+            knappar.append(f'<a class="knapp" href="?logg={e(aid)}">Visa vad som händer</a>')
+        else:
+            knappar.append(
+                f'<form method="post" action=""><input type="hidden" name="nonce" value="{NONCE}">'
+                f'<input type="hidden" name="id" value="{e(aid)}">'
+                f'<input type="hidden" name="handling" value="atgard">'
+                f'<button type="submit" class="primar">{e(a.get("knapp", "Kör"))}</button></form>'
+            )
+        if a.get("dok"):
+            knappar.append(f'<a class="knapp" href="?sida={urllib.parse.quote(a["dok"])}">Läs mer</a>')
+        if labb.loggfil(aid, "atgard").exists():
+            knappar.append(f'<a class="knapp" href="?logg={e(aid)}">Logg</a>')
+        kort.append(
+            f'<div class="kort"><h3>{e(a.get("namn", aid))}</h3>'
+            f'<p>{e(a.get("beskrivning", ""))}</p>{"".join(knappar)}</div>'
+        )
+    return '<div class="rutnat">' + "".join(kort) + "</div>"
+
+
 _BLOCKBYGGARE = {
+    "atgarder": block_atgarder,
     "tjanster": block_tjanster,
     "uppsattningar": block_uppsattningar,
     "status": block_status,
@@ -436,10 +466,11 @@ def sida_markdown(rel: str) -> tuple[int, bytes]:
 
 
 def sida_logg(tjid: str) -> tuple[int, bytes]:
-    handlingar = ("installera", "starta", "stoppa", "uppsattning")
+    handlingar = ("installera", "starta", "stoppa", "uppsattning", "atgard")
     känd = (
         tjid in labb.tjanster()
         or tjid in labb.uppsattningar()
+        or tjid in labb.atgarder()
         or any(labb.loggfil(tjid, h).exists() for h in handlingar)
     )
     if not känd or "/" in tjid:
@@ -492,6 +523,11 @@ def starta_handling(handling: str, tjid: str) -> str:
         if tjid not in labb.uppsattningar():
             return "?sida=docs/START.md"
         kmd = ["verktyg/kor.sh", "uppsattning", tjid]
+        mal = f"?logg={urllib.parse.quote(tjid)}"
+    elif handling == "atgard":
+        if tjid not in labb.atgarder():
+            return "?sida=docs/START.md"
+        kmd = ["verktyg/kor.sh", "atgard", tjid]
         mal = f"?logg={urllib.parse.quote(tjid)}"
     else:
         if tjid not in labb.tjanster() or handling not in ("installera", "starta", "stoppa"):

@@ -22,6 +22,13 @@ MCP-konfigurationen. Du kan trycka igen — det som redan kör lämnas i fred.
 
 <!-- panel:tjanster -->
 
+## Åtgärder
+
+Sådant som inte är en tjänst men som är bra att kunna köra om. Kör du en
+uppsättning ovan görs det här automatiskt.
+
+<!-- panel:atgarder -->
+
 ## Vad vi försöker ta reda på
 
 1. **Vilka användningsfall** i vårt arbete tjänar på AI — och vilka gör det inte?

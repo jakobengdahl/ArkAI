@@ -112,6 +112,28 @@ Kontextkostnad: varje inkopplad server lägger sina verktygsbeskrivningar i
 kontexten vid varje anrop. Tio servrar med tjugo verktyg vardera är inte gratis —
 och gör dessutom modellen sämre på att välja rätt.
 
+## Från MCP-server till verktyg i chatten
+
+Kedjan har tre led, och det är värt att hålla isär dem:
+
+1. **MCP-servern** installeras — den pratar MCP, det protokoll agenter förstår
+2. **Bryggan (mcpo)** läser `~/work/.labb/mcp.json` och exponerar varje server
+   som en OpenAPI-server på sin egen sökväg
+3. **Open WebUI** pekas mot de sökvägarna som *verktygsservrar*
+
+Steg 3 är det som brukar glömmas, och det är rent klickande. Därför gör labbet det
+åt dig: bryggan skriver in servrarna i Open WebUI när den startar, och panelen har
+knappen *Koppla in* under **Åtgärder** för att göra om det.
+
+```bash
+verktyg/konfigurera-openwebui.py --visa    # vilka servrar skulle kopplas in
+verktyg/kor.sh atgard koppla-openwebui     # samma sak som knappen
+```
+
+Att kedjan är tre led och inte ett är i sig ett resultat värt att notera: en
+agent når MCP direkt, en chattbot behöver en översättning. Det säger något om var
+respektive upplägg passar.
+
 ## Vad vi har provat
 
 | Experiment | Vad vi lärde oss |

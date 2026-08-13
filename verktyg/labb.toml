@@ -129,6 +129,20 @@ token_env = "METADATAGRAF_TOKEN"
 ingress_matchning = "metadatagraph"
 
 
+# ── Åtgärder ──────────────────────────────────────────────────────────────
+#
+# Sådant som ska gå att köra med en knapp men inte är en tjänst. Samma lås och
+# samma loggar som tjänsterna, så panelen behöver inte veta något särskilt om
+# dem. Id:n delar namnrymd med tjänsterna — återanvänd inte ett id.
+
+[atgard.koppla-openwebui]
+namn = "Koppla in modell och verktyg i Open WebUI"
+beskrivning = "Skriver in modellkopplingen från miljöns hemlighet och de MCP-servrar som bryggan exponerar. Kör den när du installerat en ny MCP-server, eller när du bytt nyckel."
+knapp = "Koppla in"
+kommando = "verktyg/konfigurera-openwebui.py --skriv"
+dok = "docs/60-miljo/openwebui.md"
+
+
 # ── Uppsättningar ─────────────────────────────────────────────────────────
 #
 # Kombinationer som är tänkta att fungera ihop. Panelen installerar det som

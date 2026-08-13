@@ -28,6 +28,7 @@ anvandning() {
   cat <<'SLUT'
 Användning:
   verktyg/kor.sh <installera|starta|stoppa> <tjänst>
+  verktyg/kor.sh atgard <namn>
   verktyg/kor.sh uppsattning <namn>
   verktyg/kor.sh status [tjänst]
   verktyg/kor.sh lista
@@ -36,12 +37,20 @@ SLUT
 
 # ── Enskild handling ──────────────────────────────────────────────────────
 
-utfor() { # utfor <handling> <tjänst>
-  local handling=$1 tjid=$2
-  local kmd; kmd=$(manifest kommando "$tjid" "$handling")
+utfor() { # utfor <handling> <tjänst|åtgärd>
+  local handling=$1 tjid=$2 kmd
+  if [ "$handling" = "atgard" ]; then
+    kmd=$(manifest atgard-kommando "$tjid")
+  else
+    kmd=$(manifest kommando "$tjid" "$handling")
+  fi
 
   if [ -z "$kmd" ]; then
-    fel "Tjänsten '$tjid' har ingen handling '$handling' i verktyg/labb.toml."
+    if [ "$handling" = "atgard" ]; then
+      fel "Okänd åtgärd '$tjid' i verktyg/labb.toml."
+    else
+      fel "Tjänsten '$tjid' har ingen handling '$handling' i verktyg/labb.toml."
+    fi
     return 2
   fi
 
@@ -59,8 +68,8 @@ utfor() { # utfor <handling> <tjänst>
     return 3
   fi
 
-  local bakgrund
-  bakgrund=$(python3 - "$tjid" "$handling" <<'SLUTPY' 2>/dev/null
+  local bakgrund=nej
+  [ "$handling" = "atgard" ] || bakgrund=$(python3 - "$tjid" "$handling" <<'SLUTPY' 2>/dev/null
 import sys
 sys.path.insert(0, "verktyg")
 import labb
@@ -185,7 +194,7 @@ SLUTPY
 # ── Ingång ────────────────────────────────────────────────────────────────
 
 case "${1:-}" in
-  installera|starta|stoppa)
+  installera|starta|stoppa|atgard)
     [ $# -eq 2 ] || { anvandning; exit 2; }
     utfor "$1" "$2"
     ;;
@@ -221,6 +230,10 @@ for tjid, t in labb.tjanster().items():
 print("\nUppsättningar")
 for uid, u in labb.uppsattningar().items():
     print(f"  {uid:<20} {u.get('namn','')}  ({', '.join(u['tjanster'])})")
+if labb.atgarder():
+    print("\nÅtgärder")
+    for aid, a in labb.atgarder().items():
+        print(f"  {aid:<20} {a.get('namn','')}")
 PY
     ;;
   *)
