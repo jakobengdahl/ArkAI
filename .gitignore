@@ -26,6 +26,15 @@ data/
 *.db
 *.sqlite3
 
+# Interna underlag läses ofta in medan man skriver — de ska inte följa med.
+# Behöver du undantagsvis versionshantera ett dokument: git add -f, efter en
+# medveten bedömning enligt RIKTLINJER-INNEHALL.md.
+*.pdf
+*.doc
+*.docx
+*.ppt
+*.pptx
+
 # --- Körtidsartefakter ----------------------------------------------------
 open-webui-data/
 .webui_secret_key

@@ -80,6 +80,25 @@ Ingen ordning, ingen som äger dem än. Ta något och skriv upp dig i en PR.
   användningen av att agenten når en där kollegorna finns?
 - Samma uppgift genom opencode, Continue och en kodagent till — vad skiljer?
 
+**Pröva kartan** — varje punkt prövar en cell i
+[typfall-och-byggstenar.md](../40-matchning/typfall-och-byggstenar.md)
+- Samma uppgift med och utan hämtning mot eget material. Hur mycket av kvaliteten
+  kom från underlaget och hur mycket från modellen?
+- Samma flerstegsuppgift som chattbot respektive som agent. Vad vinner agenten, och
+  vad blir svårare att felsöka?
+- Samma uppgift på en liten och en stor modell. Var går gränsen där den mindre inte
+  räcker? Svarar på en kostnads- och miljöfråga samtidigt
+- Ta fram tio utvärderingsfall för en uppgift utan facit. Hur lång tid tog det, och
+  gick det alls?
+
+**Utforskande spår** — se [UF-002](../10-anvandningsfall/UF-002-stod-vid-byte-av-arbetsplattform.md)
+- Låt en kodagent migrera en konstruerad äldre lösning till ett nytt mönster. Går
+  ändringarna att granska på mindre tid än det tar att göra dem själv?
+- Samma sak, men med våra egna riktlinjer och mallar inlagda som kunskapsunderlag.
+  Vad ändras?
+- Låt ett agentupplägg upptäcka avvikelser mellan vad koden gör och vad
+  dokumentationen påstår. Var går gränsen mot att också få rätta dem?
+
 **Mot produktion**
 - Sätt upp Langfuse från katalogen och spåra en session. Vad går att svara på
   efteråt som annars inte gick?

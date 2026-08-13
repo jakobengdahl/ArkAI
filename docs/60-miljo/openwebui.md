@@ -56,9 +56,14 @@ bara lyssnar på `127.0.0.1` svarar då `502` genom ingressen, hur rätt allt an
 
 Följden är att andra kan nå instansen — via ingressen om porten är exponerad,
 annars från andra poddar i namnrymden. Därför slår startskriptet på inloggning
-av sig självt när det ser en ingress för porten, och vägrar starta med
-`WEBUI_AUTH=False` i det läget. Det är en inställning man annars glömmer, och
-konsekvensen är en öppen chatt kopplad till din API-nyckel.
+av sig självt när det ser en ingress för porten, och vägrar starta utan i det
+läget. Det är en inställning man annars glömmer, och konsekvensen är en öppen
+chatt kopplad till din API-nyckel.
+
+Spärren godtar bara värdet `True`, skiftlägesokänsligt. Det är inte petighet:
+Open WebUI slår på inloggning enbart för den strängen, så `WEBUI_AUTH=1` ger en
+**oskyddad** instans trots att värdet ser påslaget ut. Skriptet vägrar därför
+starta på allt utom `True` när porten är exponerad.
 
 ### Enda vägen som fungerar: egen ingress
 
@@ -121,7 +126,7 @@ Allt sätts via miljövariabler, lämpligast i `.env`:
 |---|---|
 | `OPEN_WEBUI_PORT` | 8081 som standard |
 | `DATA_DIR` | Var databas och uppladdningar hamnar. Gitignorerad. |
-| `WEBUI_AUTH` | `False` hoppar över inloggning. Bara okej medan du är ensam användare. |
+| `WEBUI_AUTH` | Allt utom `True` hoppar över inloggning. Bara okej medan du är ensam användare. |
 | `WEBUI_SECRET_KEY` | Sätt en gång (`openssl rand -hex 32`) och behåll — annars loggas alla ut vid omstart. |
 | `ENABLE_OPENAI_API` / `OPENAI_API_BASE_URL` | Peka mot valfri OpenAI-kompatibel endpoint |
 | `ENABLE_OLLAMA_API` / `OLLAMA_BASE_URL` | Om du kör en lokal modell |

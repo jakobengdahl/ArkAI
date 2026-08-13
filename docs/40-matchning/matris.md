@@ -9,8 +9,9 @@ gissningar.
 **Bara rader som bygger på ett genomfört experiment.**
 
 Att tro att RAG passar ett användningsfall är inte kunskap, det är en hypotes. Håll
-hypoteserna i användningsfallets egen fil under "Möjliga tekniker". Flytta dem hit
-när någon faktiskt provat.
+hypoteserna i användningsfallets egen fil under "Möjliga tekniker", eller i
+[typfall-och-byggstenar.md](typfall-och-byggstenar.md) när de gäller en hel klass av
+användning. Flytta dem hit när någon faktiskt provat.
 
 Utan den regeln blir matrisen en sammanställning av våra förutfattade meningar, med
 ett trovärdigt utseende. Det är sämre än en tom tabell.
@@ -33,6 +34,8 @@ Härifrån plockar man sitt nästa experiment.
 | [UF-001](../10-anvandningsfall/UF-001-granska-dokument-mot-regelverk.md) | [RAG](../20-tekniker/rag-och-vektor.md) | Hittar rätt ställe per krav och kan ge källhänvisning | — |
 | [UF-001](../10-anvandningsfall/UF-001-granska-dokument-mot-regelverk.md) | [Skills](../20-tekniker/skills.md) | Jämnare bedömningar mellan granskare | — |
 | [UF-001](../10-anvandningsfall/UF-001-granska-dokument-mot-regelverk.md) | [Minnesbank](../20-tekniker/minnesbank.md) | Fångar resonemang från gränsfall som annars inte skrivs ner | — |
+| [UF-002](../10-anvandningsfall/UF-002-stod-vid-byte-av-arbetsplattform.md) | [Kodagenter](../20-tekniker/kodagenter.md) | Klarar flerstegsarbete i en kodbas med granskningsbart resultat | — |
+| [UF-002](../10-anvandningsfall/UF-002-stod-vid-byte-av-arbetsplattform.md) | [RAG](../20-tekniker/rag-och-vektor.md) + [skills](../20-tekniker/skills.md) | Eget kunskapsunderlag betyder mer för kvaliteten än modellvalet | — |
 
 ## Mönster vi börjar se
 

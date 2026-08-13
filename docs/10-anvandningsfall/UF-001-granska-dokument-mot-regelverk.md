@@ -1,5 +1,7 @@
 # UF-001 · Granska ett underlag mot ett regelverk
 
+**Typfall:** [D · Generativt stöd i interna processer](typfall.md)
+**Spår:** Eget
 **Steg:** Skiss
 **Ägare:** —
 **Uppdaterad:** 2026-08-12

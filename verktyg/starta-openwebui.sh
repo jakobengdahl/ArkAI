@@ -42,14 +42,23 @@ export DATA_DIR="$DATA"
 # inte porten når bara du den, och då är False bekvämt och ofarligt.
 INGRESS=$(python3 verktyg/labb.py ingress "$PORT" 2>/dev/null)
 if [ -n "$INGRESS" ]; then
-  if [ "${WEBUI_AUTH:-}" = "False" ] && [ "${TILLAT_OSKYDDAD:-}" != "ja" ]; then
-    echo "Vägrar starta utan inloggning: porten $PORT är exponerad på"
-    echo "  $INGRESS"
-    echo "Ta bort WEBUI_AUTH=False ur .env, eller kör med TILLAT_OSKYDDAD=ja om"
-    echo "du verkligen menar det."
-    exit 1
-  fi
-  export WEBUI_AUTH="${WEBUI_AUTH:-True}"
+  # Open WebUI läser variabeln som sann bara när strängen är "true". Allt annat —
+  # 1, yes, ja, felstavningar — stänger av inloggningen. Kontrollera likadant, så
+  # att spärren inte går att gå förbi med ett värde som *ser* påslaget ut.
+  case "$(printf '%s' "${WEBUI_AUTH:-True}" | tr '[:upper:]' '[:lower:]')" in
+    true)
+      export WEBUI_AUTH=True ;;
+    *)
+      if [ "${TILLAT_OSKYDDAD:-}" != "ja" ]; then
+        echo "Vägrar starta utan inloggning: porten $PORT är exponerad på"
+        echo "  $INGRESS"
+        echo "WEBUI_AUTH är satt till \"${WEBUI_AUTH:-}\". Open WebUI slår bara på"
+        echo "inloggning för värdet True — allt annat stänger av den."
+        echo "Ta bort raden ur .env, eller kör med TILLAT_OSKYDDAD=ja om du"
+        echo "verkligen menar det."
+        exit 1
+      fi ;;
+  esac
 else
   export WEBUI_AUTH="${WEBUI_AUTH:-False}"
 fi

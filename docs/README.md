@@ -8,7 +8,7 @@ i tur och ordning.
 
 | | Katalog | Vad det är | Börja här om du... |
 |---|---|---|---|
-| 00 | [oversikt/](00-oversikt/) | Vision, ordlista, mognadstrappa | ...är ny |
+| 00 | [oversikt/](00-oversikt/) | Vision, förutsättningar, ordlista, mognadstrappa | ...är ny |
 | 10 | [anvandningsfall/](10-anvandningsfall/) | Vad vi gör och var AI kan hjälpa | ...har ett problem att lösa |
 | 20 | [tekniker/](20-tekniker/) | En sida per AI-teknik | ...vill veta vad något är |
 | 30 | [experiment/](30-experiment/) | Labbloggar med svar | ...vill veta om något provats |
@@ -37,11 +37,12 @@ en minnespost är en instruktion till framtiden. Bara den ena överlever.
 
 ## Läsordning för en ny kollega
 
-1. [00-oversikt/vision-och-mal.md](00-oversikt/vision-och-mal.md) — vad vi försöker
-2. [RIKTLINJER-INNEHALL.md](../RIKTLINJER-INNEHALL.md) — repot är publikt
-3. [60-miljo/starta-labbet.md](60-miljo/starta-labbet.md) — starta miljön och kom igång
-4. [60-miljo/sspcloud-onyxia.md](60-miljo/sspcloud-onyxia.md) — plattformen bakom
-5. [minnesbank/README.md](../minnesbank/README.md) — hur vi delar det vi lär oss
-6. [30-experiment/](30-experiment/) — vad som redan gjorts
+1. [00-oversikt/vision-och-mal.md](00-oversikt/vision-och-mal.md) — vad vi försöker, och de två spåren
+2. [00-oversikt/forutsattningar.md](00-oversikt/forutsattningar.md) — vad som styr, och var vi står i den bilden
+3. [RIKTLINJER-INNEHALL.md](../RIKTLINJER-INNEHALL.md) — repot är publikt
+4. [60-miljo/starta-labbet.md](60-miljo/starta-labbet.md) — starta miljön och kom igång
+5. [60-miljo/sspcloud-onyxia.md](60-miljo/sspcloud-onyxia.md) — plattformen bakom
+6. [minnesbank/README.md](../minnesbank/README.md) — hur vi delar det vi lär oss
+7. [30-experiment/](30-experiment/) — vad som redan gjorts
 
 Sedan: ta något från "På tur" i experimentlistan.

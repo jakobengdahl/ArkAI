@@ -31,6 +31,11 @@ MCP-konfigurationen. Du kan trycka igen — det som redan kör lämnas i fred.
 
 Fråga 3 och 4 är de svåra. Fråga 1 och 2 är förarbetet.
 
+Vi jobbar i [två spår](00-oversikt/vision-och-mal.md#två-spår): sådant vi själva
+ansvarar för, som kan gå hela vägen, och utblickar mot verksamhet andra ansvarar för,
+där resultatet är ett underlag att ta vidare tillsammans med dem. Vad styrningen
+kräver i respektive: [förutsättningar](00-oversikt/forutsattningar.md).
+
 Ny här? [Läsordningen](README.md) tar dig igenom repot. Har du en halvtimme och vill
 göra något: kör uppsättningen *Chattbot + verktyg* ovan och läs
 [chattbot + verktyg](20-tekniker/chattbot-plus-verktyg.md) medan den installeras.

@@ -1,8 +1,13 @@
 # UF-NNN · <Kort namn>
 
+**Typfall:** A–F, se [typfall.md](typfall.md)
+**Spår:** Eget | Utforskande
 **Steg:** Skiss | PoC | Pilot | Produktion
 **Ägare:** roll, inte namn
 **Uppdaterad:** ÅÅÅÅ-MM-DD
+
+Är spåret *utforskande* — skriv en rad om varför fallet finns med och vad resultatet
+ska bli, så att ingen läser det som ett förslag till den som äger frågan.
 
 ## Vad det handlar om
 
