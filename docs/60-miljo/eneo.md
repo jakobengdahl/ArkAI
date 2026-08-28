@@ -136,13 +136,14 @@ Ingen av dem går att ändra i efterhand.
 | `resources.requests.memory` | `4Gi` | Så att podden faktiskt schemaläggs med marginal |
 | `init.personalInit` | startskriptet i repot | Panelen och grundmiljön |
 | `init.personalInitArgs` | `bas` | Open WebUI installeras från panelen när den behövs |
-| `git.repository` | ArkAI | Klonas till `~/work/ArkAI` |
+| `git.repository` | `https://github.com/jakobengdahl/ArkAI.git` | Klonas till `~/work/ArkAI` |
+| `git.branch` | `main` | Utan detta klonas standardgrenen. Planen och skripten ligger i `main` |
 | `vault.secret` | `arkai-hemligheter` | Modellnyckeln, se [starta-labbet.md](starta-labbet.md) |
 
 ### Start-URL
 
 ```
-https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=arkai-eneo&init.personalInit=https%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh&init.personalInitArgs=bas&git.repository=https%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git&vault.secret=arkai-hemligheter&kubernetes.role=edit&persistence.size=50Gi&resources.limits.memory=16Gi&resources.requests.memory=4Gi&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084
+https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=arkai-eneo&init.personalInit=https%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh&init.personalInitArgs=bas&git.repository=https%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git&git.branch=main&vault.secret=arkai-hemligheter&kubernetes.role=edit&persistence.size=50Gi&resources.limits.memory=16Gi&resources.requests.memory=4Gi&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084
 ```
 
 ### Databasen, som egen tjänst
