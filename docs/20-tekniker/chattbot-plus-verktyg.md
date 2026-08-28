@@ -22,6 +22,14 @@ Med verktyg flyttas svaret från "vad modellen minns" till "vad systemet vet". D
 Modellen får en lista över tillgängliga funktioner med beskrivningar. Under samtalet
 kan den välja att anropa en; resultatet läggs i kontexten och den fortsätter svara.
 
+![Frågan går till modellen, som väljer om ett verktyg behövs. Verktygslagret anropar
+en källa eller ett system. Resultatet läggs i kontexten och modellen fortsätter,
+innan svaret går till användaren.](../bilder/verktygsanrop.svg)
+
+Det är modellen som väljer, inte vi. Det är därför verktygslagret är en påbyggnad som
+måste konstrueras och inte bara kopplas in — se
+[byggstenar.md](byggstenar.md#när-modellen-inte-räcker).
+
 Tre saker avgör om det blir bra, och ingen av dem handlar om modellen:
 
 **Beskrivningen av verktyget.** Det är allt modellen har att gå på. Vagt beskrivna

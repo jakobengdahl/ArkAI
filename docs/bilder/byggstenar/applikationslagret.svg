@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 302 66" width="302" height="66"
+     font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="14" fill="#1a1a1a"
+     role="img" aria-labelledby="titel">
+<title id="titel">Applikationslagret — chatt, editor, flöde</title>
+<rect x="1.5" y="1.5" width="299" height="63" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text x="17" y="27" font-size="14" font-weight="600" fill="#1a1a1a">Applikationslagret</text>
+<text x="17" y="44" font-size="11.5" fill="#5f5f6a">chatt, editor, flöde</text>
+</svg>

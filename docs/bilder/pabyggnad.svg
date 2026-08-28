@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 480" width="880" height="480"
+     font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="14" fill="#1a1a1a"
+     role="img" aria-labelledby="titel beskrivning">
+<title id="titel">Påbyggnad: vad man lägger till när modellen inte räcker</title>
+<desc id="beskrivning">Sex lager staplade på varandra. Nederst språkmodellen, därefter kontext och hämtning, verktyg, arbetssätt som paket, orkestrering och överst kontroller och spärrar. Till höger står vad varje påbyggnad svarar mot.</desc>
+<style>
+/* Ljust läge ligger i presentationsattribut på varje element, så figuren blir rätt
+   även i renderare som inte kör CSS. Här finns bara mörkerlägets avvikelser. */
+@media (prefers-color-scheme:dark){
+  .kort{fill:#202024;stroke:#3d3d46}
+  .ruta{fill:#2a2a31;stroke:#3d3d46}
+  .accruta{fill:#22303f;stroke:#6cb6ff}
+  .bas{fill:#6f6fd8;stroke:#6f6fd8}
+  .ram{stroke:#a3a3ae}
+  .lin{stroke:#3d3d46}
+  .pil{stroke:#a3a3ae}
+  .spets{fill:#a3a3ae}
+  text{fill:#e9e9ee}
+  .s,.h{fill:#a3a3ae}
+  .v,.vs{fill:#ffffff}
+}
+</style>
+
+<rect class="kort" x="0.5" y="0.5" width="879" height="479" rx="10" fill="#ffffff" stroke="#d8d8de"/>
+
+<text class="h" x="40" y="40" font-size="12" font-weight="600" fill="#5f5f6a">Byggs på nedifrån och upp</text>
+<text class="h" x="376" y="40" font-size="12" font-weight="600" fill="#5f5f6a">Vad påbyggnaden svarar mot</text>
+<line class="lin" x1="356" y1="56" x2="356" y2="452" stroke="#d8d8de"/>
+
+<!-- 6 · kontroller -->
+<rect class="accruta" x="40" y="86" width="296" height="52" rx="7" fill="#e8f0fa" stroke="#0b5fa5"/>
+<text class="t" x="56" y="108" font-size="14" font-weight="600" fill="#1a1a1a">Kontroller och spärrar</text>
+<text class="s" x="56" y="125" font-size="11.5" fill="#5f5f6a">behörighet, loggning, utvärdering</text>
+<text class="p" x="376" y="106" font-size="11.5" fill="#1a1a1a">Någon ska kunna lita på resultatet, förklara det i efterhand</text>
+<text class="p" x="376" y="122" font-size="11.5" fill="#1a1a1a">och begränsa vad lösningen får se och göra.</text>
+
+<!-- 5 · orkestrering -->
+<rect class="ruta" x="40" y="148" width="296" height="52" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="56" y="170" font-size="14" font-weight="600" fill="#1a1a1a">Orkestrering</text>
+<text class="s" x="56" y="187" font-size="11.5" fill="#5f5f6a">agentupplägg, flera steg</text>
+<text class="p" x="376" y="168" font-size="11.5" fill="#1a1a1a">Uppgiften består av flera moment som måste hänga ihop</text>
+<text class="p" x="376" y="184" font-size="11.5" fill="#1a1a1a">och kunna avbrytas när ett av dem går fel.</text>
+
+<!-- 4 · arbetssätt -->
+<rect class="ruta" x="40" y="210" width="296" height="52" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="56" y="232" font-size="14" font-weight="600" fill="#1a1a1a">Arbetssätt som paket</text>
+<text class="s" x="56" y="249" font-size="11.5" fill="#5f5f6a">skills, mallar, kontrollsteg</text>
+<text class="p" x="376" y="230" font-size="11.5" fill="#1a1a1a">Samma uppgift ska göras likadant varje gång, av vem som</text>
+<text class="p" x="376" y="246" font-size="11.5" fill="#1a1a1a">helst, med stegen i rätt ordning.</text>
+
+<!-- 3 · verktyg -->
+<rect class="ruta" x="40" y="272" width="296" height="52" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="56" y="294" font-size="14" font-weight="600" fill="#1a1a1a">Verktyg</text>
+<text class="s" x="56" y="311" font-size="11.5" fill="#5f5f6a">tool-calling, MCP</text>
+<text class="p" x="376" y="292" font-size="11.5" fill="#1a1a1a">Slå upp, räkna och hämta färskt i stället för att gissa.</text>
+<text class="p" x="376" y="308" font-size="11.5" fill="#1a1a1a">Det som är sant just nu står i systemen, inte i modellen.</text>
+
+<!-- 2 · kontext -->
+<rect class="ruta" x="40" y="334" width="296" height="52" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="56" y="356" font-size="14" font-weight="600" fill="#1a1a1a">Kontext och hämtning</text>
+<text class="s" x="56" y="373" font-size="11.5" fill="#5f5f6a">RAG, metadata, egna underlag</text>
+<text class="p" x="376" y="354" font-size="11.5" fill="#1a1a1a">Svaret ska bygga på vad som gäller hos oss — våra begrepp,</text>
+<text class="p" x="376" y="370" font-size="11.5" fill="#1a1a1a">vår metadata — inte på vad modellen råkar minnas.</text>
+
+<!-- 1 · modellen -->
+<rect class="bas" x="40" y="396" width="296" height="52" rx="7" fill="#1b1b6e" stroke="#1b1b6e"/>
+<text class="t v" x="56" y="418" font-size="14" font-weight="600" fill="#ffffff">Språkmodellen</text>
+<text class="vs" x="56" y="435" font-size="11.5" fill="#ffffff" opacity=".85">egen, öppen eller inköpt</text>
+<text class="p" x="376" y="416" font-size="11.5" fill="#1a1a1a">Kan formulera, resonera och sammanfatta.</text>
+<text class="p" x="376" y="432" font-size="11.5" fill="#1a1a1a">Vet inget om vår verksamhet och kan inte göra något.</text>
+
+<text class="s" x="40" y="468" font-size="11.5" fill="#5f5f6a">Varje nivå läggs till, ingen ersätter den under. Det är påbyggnaden som avgör vad lösningen klarar — sällan modellvalet.</text>
+</svg>

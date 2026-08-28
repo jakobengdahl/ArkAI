@@ -16,6 +16,8 @@ i tur och ordning.
 | 50 | [fran-poc-till-produktion/](50-fran-poc-till-produktion/) | Vad steget kräver | ...har något som fungerar |
 | 60 | [miljo/](60-miljo/) | Labbmiljön, verktygen, autentisering | ...ska sätta upp något |
 
+Onumrerat: [bilder/](bilder/) — figurerna som används i texterna, en fil per figur.
+
 Utanför `docs/`:
 
 - [minnesbank/](../minnesbank/) — det delade minnet, både verktyg och experiment

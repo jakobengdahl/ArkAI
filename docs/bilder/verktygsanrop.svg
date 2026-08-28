@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" width="880" height="300"
+     font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="14" fill="#1a1a1a"
+     role="img" aria-labelledby="titel beskrivning">
+<title id="titel">Ett verktygsanrop, steg för steg</title>
+<desc id="beskrivning">Frågan går till modellen, som väljer om ett verktyg behövs. Verktygslagret anropar en källa eller ett system. Resultatet läggs i kontexten och modellen fortsätter, innan svaret går till användaren.</desc>
+<style>
+/* Ljust läge ligger i presentationsattribut på varje element, så figuren blir rätt
+   även i renderare som inte kör CSS. Här finns bara mörkerlägets avvikelser. */
+@media (prefers-color-scheme:dark){
+  .kort{fill:#202024;stroke:#3d3d46}
+  .ruta{fill:#2a2a31;stroke:#3d3d46}
+  .accruta{fill:#22303f;stroke:#6cb6ff}
+  .bas{fill:#6f6fd8;stroke:#6f6fd8}
+  .ram{stroke:#a3a3ae}
+  .lin{stroke:#3d3d46}
+  .pil{stroke:#a3a3ae}
+  .spets{fill:#a3a3ae}
+  text{fill:#e9e9ee}
+  .s,.h{fill:#a3a3ae}
+  .v,.vs{fill:#ffffff}
+}
+</style>
+<defs>
+  <marker id="pil2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path class="spets" d="M0 0 L10 5 L0 10 z" fill="#5f5f6a"/>
+  </marker>
+</defs>
+
+<rect class="kort" x="0.5" y="0.5" width="879" height="299" rx="10" fill="#ffffff" stroke="#d8d8de"/>
+
+<rect class="ruta" x="176" y="40" width="160" height="52" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="192" y="66" font-size="14" font-weight="600" fill="#1a1a1a">Svar</text>
+<text class="s" x="192" y="83" font-size="11.5" fill="#5f5f6a">grundat i resultatet</text>
+
+<rect class="ruta" x="24" y="136" width="112" height="64" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="40" y="166" font-size="14" font-weight="600" fill="#1a1a1a">Fråga</text>
+<text class="s" x="40" y="183" font-size="11.5" fill="#5f5f6a">från användaren</text>
+
+<rect class="bas" x="176" y="136" width="160" height="64" rx="7" fill="#1b1b6e" stroke="#1b1b6e"/>
+<text class="t v" x="192" y="166" font-size="14" font-weight="600" fill="#ffffff">Modellen</text>
+<text class="vs" x="192" y="183" font-size="11.5" fill="#ffffff" opacity=".85">väljer verktyg</text>
+
+<rect class="ruta" x="376" y="136" width="170" height="64" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="392" y="166" font-size="14" font-weight="600" fill="#1a1a1a">Verktygslagret</text>
+<text class="s" x="392" y="183" font-size="11.5" fill="#5f5f6a">MCP-funktion, kommando</text>
+
+<rect class="ruta" x="586" y="136" width="190" height="64" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="602" y="166" font-size="14" font-weight="600" fill="#1a1a1a">Källa eller system</text>
+<text class="s" x="602" y="183" font-size="11.5" fill="#5f5f6a">register, fil, API</text>
+
+<path class="pil" d="M136 168 H176" stroke="#5f5f6a" fill="none" marker-end="url(#pil2)"/>
+<path class="pil" d="M336 168 H376" stroke="#5f5f6a" fill="none" marker-end="url(#pil2)"/>
+<path class="pil" d="M546 168 H586" stroke="#5f5f6a" fill="none" marker-end="url(#pil2)"/>
+<path class="pil" d="M256 136 V92" stroke="#5f5f6a" fill="none" marker-end="url(#pil2)"/>
+<path class="pil" d="M681 200 V246 H256 V200" stroke="#5f5f6a" fill="none" marker-end="url(#pil2)"/>
+
+<text class="s" x="300" y="268" font-size="11.5" fill="#5f5f6a">verktygssvaret läggs i kontexten — modellen fortsätter med det, och kan gå ett varv till</text>
+</svg>

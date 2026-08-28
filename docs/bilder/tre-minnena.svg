@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 240" width="880" height="240"
+     font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="14" fill="#1a1a1a"
+     role="img" aria-labelledby="titel beskrivning">
+<title id="titel">Tre sätt att få rätt saker in i kontexten</title>
+<desc id="beskrivning">Hämtning med RAG svarar på vad som står om X i våra dokument och ger stycken ur dokument. Minnesbanken svarar på vad vi brukar göra i sådana här lägen och ger kurerade lärdomar. Grafminnet svarar på vad som hänger ihop med det här och ger noder och relationer.</desc>
+<style>
+/* Ljust läge ligger i presentationsattribut på varje element, så figuren blir rätt
+   även i renderare som inte kör CSS. Här finns bara mörkerlägets avvikelser. */
+@media (prefers-color-scheme:dark){
+  .kort{fill:#202024;stroke:#3d3d46}
+  .ruta{fill:#2a2a31;stroke:#3d3d46}
+  .accruta{fill:#22303f;stroke:#6cb6ff}
+  .bas{fill:#6f6fd8;stroke:#6f6fd8}
+  .ram{stroke:#a3a3ae}
+  .lin{stroke:#3d3d46}
+  .pil{stroke:#a3a3ae}
+  .spets{fill:#a3a3ae}
+  text{fill:#e9e9ee}
+  .s,.h{fill:#a3a3ae}
+  .v,.vs{fill:#ffffff}
+}
+</style>
+
+<rect class="kort" x="0.5" y="0.5" width="879" height="239" rx="10" fill="#ffffff" stroke="#d8d8de"/>
+<text class="s" x="24" y="40" font-size="11.5" fill="#5f5f6a">Tre sätt att få rätt saker in i kontexten. De löser olika problem och används ofta tillsammans.</text>
+
+<rect class="ruta" x="24" y="58" width="252" height="150" rx="8" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="42" y="88" font-size="14" font-weight="600" fill="#1a1a1a">Hämtning (RAG)</text>
+<text class="f" x="42" y="118" font-size="12.5" font-style="italic" fill="#1a1a1a">»Vad står det om X i</text>
+<text class="f" x="42" y="136" font-size="12.5" font-style="italic" fill="#1a1a1a">våra dokument?«</text>
+<line class="lin" x1="42" y1="156" x2="258" y2="156" stroke="#d8d8de"/>
+<text class="s" x="42" y="180" font-size="11.5" fill="#5f5f6a">svarar med stycken ur</text>
+<text class="s" x="42" y="196" font-size="11.5" fill="#5f5f6a">dokument</text>
+
+<rect class="ruta" x="314" y="58" width="252" height="150" rx="8" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="332" y="88" font-size="14" font-weight="600" fill="#1a1a1a">Minnesbanken</text>
+<text class="f" x="332" y="118" font-size="12.5" font-style="italic" fill="#1a1a1a">»Vad brukar vi göra i</text>
+<text class="f" x="332" y="136" font-size="12.5" font-style="italic" fill="#1a1a1a">sådana här lägen?«</text>
+<line class="lin" x1="332" y1="156" x2="548" y2="156" stroke="#d8d8de"/>
+<text class="s" x="332" y="180" font-size="11.5" fill="#5f5f6a">svarar med kurerade</text>
+<text class="s" x="332" y="196" font-size="11.5" fill="#5f5f6a">lärdomar</text>
+
+<rect class="ruta" x="604" y="58" width="252" height="150" rx="8" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="622" y="88" font-size="14" font-weight="600" fill="#1a1a1a">Grafminnet</text>
+<text class="f" x="622" y="118" font-size="12.5" font-style="italic" fill="#1a1a1a">»Vad hänger ihop med</text>
+<text class="f" x="622" y="136" font-size="12.5" font-style="italic" fill="#1a1a1a">det här?«</text>
+<line class="lin" x1="622" y1="156" x2="838" y2="156" stroke="#d8d8de"/>
+<text class="s" x="622" y="180" font-size="11.5" fill="#5f5f6a">svarar med noder och</text>
+<text class="s" x="622" y="196" font-size="11.5" fill="#5f5f6a">relationer</text>
+</svg>

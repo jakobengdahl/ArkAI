@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 470" width="880" height="470"
+     font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="14" fill="#1a1a1a"
+     role="img" aria-labelledby="titel beskrivning">
+<title id="titel">Nivåstegen: fyra steg av AI-stöd, och vad som tillkommer på varje</title>
+<desc id="beskrivning">Fyra allt högre trappsteg. Steg 1 allmänt stöd, en grundläggande ai-assistent. Steg 2 stöd som kan vårt, en use-case-anpassad ai-assistent. Steg 3 stöd som gör, en use-case-anpassad ai-agent. Steg 4 stöd som gör i systemen, en use-case-integrerad ai-agent. Över varje steg står vilka byggstenar som tillkommer.</desc>
+<style>
+/* Ljust läge ligger i presentationsattribut på varje element, så figuren blir rätt
+   även i renderare som inte kör CSS. Här finns bara mörkerlägets avvikelser. */
+@media (prefers-color-scheme:dark){
+  .kort{fill:#202024;stroke:#3d3d46}
+  .ruta{fill:#2a2a31;stroke:#3d3d46}
+  .accruta{fill:#22303f;stroke:#6cb6ff}
+  .bas{fill:#6f6fd8;stroke:#6f6fd8}
+  .ram{stroke:#a3a3ae}
+  .lin{stroke:#3d3d46}
+  .pil{stroke:#a3a3ae}
+  .spets{fill:#a3a3ae}
+  text{fill:#e9e9ee}
+  .s,.h{fill:#a3a3ae}
+  .v,.vs{fill:#ffffff}
+}
+</style>
+
+<rect class="kort" x="0.5" y="0.5" width="879" height="469" rx="10" fill="#ffffff" stroke="#d8d8de"/>
+<text class="h" x="24" y="40" font-size="12" font-weight="600" fill="#5f5f6a">Vad som tillkommer i byggstenar</text>
+
+<!-- steg 1 -->
+<text class="s" x="24" y="250" font-size="11.5" fill="#5f5f6a">modell och gränssnitt</text>
+<text class="s" x="24" y="266" font-size="11.5" fill="#5f5f6a">inget eget material</text>
+<text class="s" x="24" y="282" font-size="11.5" fill="#5f5f6a">ingen egen utvärdering</text>
+<rect class="bas" x="24" y="300" width="200" height="120" rx="8" fill="#1b1b6e"/>
+<text class="t v" x="40" y="328" font-size="14" font-weight="600" fill="#ffffff">1 · Allmänt stöd</text>
+<text class="vs" x="40" y="370" font-size="11.5" fill="#ffffff" opacity=".85">Grundläggande</text>
+<text class="vs" x="40" y="386" font-size="11.5" fill="#ffffff" opacity=".85">ai-assistent</text>
+
+<!-- steg 2 -->
+<text class="s" x="236" y="190" font-size="11.5" fill="#5f5f6a">+ egna underlag i kontexten</text>
+<text class="s" x="236" y="206" font-size="11.5" fill="#5f5f6a">+ hämtning och verktyg</text>
+<text class="s" x="236" y="222" font-size="11.5" fill="#5f5f6a">+ något att mäta mot</text>
+<rect class="bas" x="236" y="240" width="200" height="180" rx="8" fill="#1b1b6e"/>
+<text class="t v" x="252" y="268" font-size="14" font-weight="600" fill="#ffffff">2 · Stöd som kan vårt</text>
+<text class="vs" x="252" y="310" font-size="11.5" fill="#ffffff" opacity=".85">Use-case-anpassad</text>
+<text class="vs" x="252" y="326" font-size="11.5" fill="#ffffff" opacity=".85">ai-assistent</text>
+
+<!-- steg 3 -->
+<text class="s" x="448" y="130" font-size="11.5" fill="#5f5f6a">+ orkestrering av flera steg</text>
+<text class="s" x="448" y="146" font-size="11.5" fill="#5f5f6a">+ arbetssätt som paket</text>
+<text class="s" x="448" y="162" font-size="11.5" fill="#5f5f6a">+ granskning och spårbarhet</text>
+<rect class="bas" x="448" y="180" width="200" height="240" rx="8" fill="#1b1b6e"/>
+<text class="t v" x="464" y="208" font-size="14" font-weight="600" fill="#ffffff">3 · Stöd som gör</text>
+<text class="vs" x="464" y="250" font-size="11.5" fill="#ffffff" opacity=".85">Use-case-anpassad</text>
+<text class="vs" x="464" y="266" font-size="11.5" fill="#ffffff" opacity=".85">ai-agent</text>
+
+<!-- steg 4 -->
+<text class="s" x="660" y="70" font-size="11.5" fill="#5f5f6a">+ behörighet per användare</text>
+<text class="s" x="660" y="86" font-size="11.5" fill="#5f5f6a">+ loggning och eskalering</text>
+<text class="s" x="660" y="102" font-size="11.5" fill="#5f5f6a">+ avgränsat mandat</text>
+<rect class="bas" x="660" y="120" width="200" height="300" rx="8" fill="#1b1b6e"/>
+<text class="t v" x="676" y="148" font-size="14" font-weight="600" fill="#ffffff">4 · Stöd som gör</text>
+<text class="t v" x="676" y="166" font-size="14" font-weight="600" fill="#ffffff">i systemen</text>
+<text class="vs" x="676" y="208" font-size="11.5" fill="#ffffff" opacity=".85">Use-case-integrerad</text>
+<text class="vs" x="676" y="224" font-size="11.5" fill="#ffffff" opacity=".85">ai-agent</text>
+
+<line class="lin" x1="24" y1="420.5" x2="860" y2="420.5" stroke="#d8d8de"/>
+<text class="s" x="24" y="444" font-size="11.5" fill="#5f5f6a">Nivåerna bygger på varandra: arbetet med nivå 2 är inte bortkastat om man vill vidare — det är förutsättningen för att nivå 3 ska bli bra.</text>
+</svg>
