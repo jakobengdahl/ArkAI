@@ -38,11 +38,12 @@ processer.
 |---|---|
 | Läsa dokumentationen med navigering | `less docs/…` |
 | Se vad som är installerat och vad som kör | `verktyg/kor.sh status` |
-| Installera och starta en tjänst | `verktyg/kor.sh installera openwebui` |
-| Köra igång en hel uppsättning | `verktyg/kor.sh uppsattning chatt-med-verktyg` |
-| Köra en åtgärd | `verktyg/kor.sh atgard koppla-openwebui` |
+| Installera och starta en tjänst | `verktyg/kor.sh installera eneo` |
+| Köra igång en hel uppsättning | `verktyg/kor.sh uppsattning eneo-plattform` |
+| Köra en åtgärd | `verktyg/kor.sh atgard koppla-eneo` |
+| **Ta bort en tjänst ur namnrymden** | `verktyg/kor.sh avinstallera eneo` |
 | Följa en installationslogg | `tail -f ~/work/.labb/logg/*.log` |
-| Se tjänster som kör i namnrymden | `kubectl get ingress` |
+| Se vad som kör i namnrymden och vad det kostar | `python3 verktyg/labb.py namnrymd` |
 
 Panelen anropar `verktyg/kor.sh`. Det är samma väg som terminalen använder, vilket
 är avsiktligt: en installation du startade i terminalen låser knappen i panelen,
@@ -96,12 +97,13 @@ dok = "docs/20-tekniker/min-teknik.md"
 typ = "lokal"            # lokal = process här, fjarr = kör någon annanstans,
                          # verktyg = stdio, startas av klienten
 steg = "begaran"         # auto = installeras vid uppstart
-port = 8084
+port = 8085
 finns = "command -v mittverktyg"
 installera = "verktyg/installera/mittverktyg.sh"
 starta = "verktyg/starta-mittverktyg.sh --bakgrund"
 stoppa = "verktyg/starta-mittverktyg.sh --stoppa"
-halsa = "http://127.0.0.1:8084/health"
+avinstallera = "verktyg/ta-bort-mittverktyg.sh"   # frivilligt, se nedan
+halsa = "http://127.0.0.1:8085/health"
 ```
 
 En **uppsättning** är flera tjänster som ska fungera ihop:
@@ -111,6 +113,7 @@ En **uppsättning** är flera tjänster som ska fungera ihop:
 namn = "Mitt experiment"
 beskrivning = "Vad kombinationen är till för."
 tjanster = ["openwebui", "mittverktyg", "mcpo"]
+atgarder = ["koppla-openwebui"]   # körs sist, när tjänsterna svarar
 dok = "docs/30-experiment/EXP-00N-mitt-experiment.md"
 ```
 
@@ -127,27 +130,56 @@ vilket är poängen — markdownfilen förblir läsbar på båda ställena.
 | `<!-- panel:status -->` | Tabell över det som kör |
 | `<!-- panel:miljo -->` | Verktyg, namnrymd, hur tjänsten startades |
 | `<!-- panel:namnrymd -->` | Ingresser i namnrymden, som klickbara adresser |
+| `<!-- panel:kvot -->` | Arbetslaster och volymer i namnrymden, med kvotförbrukning |
+
+## Att ta bort något
+
+Att stoppa och att ta bort är två olika saker, och skillnaden syns i panelen.
+*Stoppa* släpper processer och skalar arbetslaster till noll; data ligger kvar.
+*Ta bort* raderar.
+
+En tjänst får en **Ta bort**-knapp bara om den har `avinstallera` i manifestet.
+Knappen kör aldrig något direkt — den leder till en bekräftelsesida som visar
+`avinstallera_varning` och utdata från `avinstallera_visa`, alltså vad som
+faktiskt försvinner. Först där finns knappen som gör det.
+
+```toml
+avinstallera = "verktyg/ta-bort-mittverktyg.sh"
+avinstallera_varning = "Databasen raderas — det går inte att ångra."
+avinstallera_visa = "kubectl get all,pvc -l app.kubernetes.io/part-of=mittverktyg"
+```
+
+Det här finns för att tjänster som deployas i namnrymden — Eneo är den första —
+**fortsätter köra när VS Code-tjänsten stoppas**. Utan en väg att ta bort dem fylls
+namnrymden av installationer vars miljö inte längre finns. Blocket
+`<!-- panel:kvot -->` på startsidan visar vad man har igång och hur mycket av
+kvoten det tar. Se
+[minnesbanken](../../minnesbank/verktyg/namnrymden-overlever-podden.md).
 
 ## Åtgärder
 
 Vissa saker ska gå att köra med en knapp utan att vara en tjänst — de har inget
-tillstånd, de bara utförs. Just nu en: att koppla in modellen och
-verktygsservrarna i Open WebUI, som är användbar när man installerat en ny
-MCP-server.
+tillstånd, de bara utförs. Just nu två: att koppla in plattformens modeller i Eneo,
+och att koppla in modell och verktygsservrar i Open WebUI. Båda är användbara när
+man bytt nyckel eller installerat en ny MCP-server.
 
 De deklareras som `[atgard.<id>]` i [`verktyg/labb.toml`](../../verktyg/labb.toml):
 
 ```toml
-[atgard.koppla-openwebui]
-namn = "Koppla in modell och verktyg i Open WebUI"
+[atgard.koppla-eneo]
+namn = "Koppla in modellerna i Eneo"
 beskrivning = "..."
 knapp = "Koppla in"
-kommando = "verktyg/konfigurera-openwebui.py --skriv"
-dok = "docs/60-miljo/openwebui.md"
+kommando = "verktyg/konfigurera-eneo.py --skriv"
+dok = "docs/60-miljo/eneo.md"
 ```
 
 De går genom samma `kor.sh`, tar samma lås och skriver samma sorts logg som
 tjänsterna. Id:n delar namnrymd med tjänsterna, så återanvänd inte ett id.
+
+En uppsättning kan räkna upp åtgärder som ska köras när tjänsterna är uppe:
+`atgarder = ["koppla-eneo"]`. Det är det som gör *Eneo som plattform* till en enda
+knapp — installera, starta, koppla in modellerna.
 
 ## Starta och stoppa panelen
 

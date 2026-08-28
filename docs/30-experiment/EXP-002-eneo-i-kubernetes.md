@@ -61,6 +61,9 @@ Verifierat efteråt, i den ordningen:
 | Fråga till standardassistenten, `stream: true` | `event: text`-ström genom proxyn |
 | Modellerna genom Eneos `validate-model` | chatt och embedding svarar |
 | `kor.sh stoppa eneo` och `starta eneo` igen | uppe efter ~2 min, konto och modeller kvar |
+| `kor.sh uppsattning eneo-plattform` från tomt läge | installerar, startar och kopplar in modellerna i ett svep |
+| `kor.sh avinstallera eneo` | namnrymden tom, `kubectl get all -l …=eneo` svarar tomt |
+| `ta-bort-eneo.sh --behall-data` + ny installation | samma konto, samma lösenord, samma modellkoppling |
 
 ## Vad vi lärde oss
 
@@ -75,6 +78,10 @@ Verifierat efteråt, i den ordningen:
   manifestfiler och ett skript som väntar mellan dem — både `init_db.py` och
   backendens start kör `alembic upgrade head`, och två samtidiga migreringar mot
   samma databas är inte värt att chansa på.
+- **Att stoppa VS Code-tjänsten stoppar inte Eneo.** Det är samma egenskap som gör
+  att den överlever en poddomstart, men den betyder att uppstädning är ett eget
+  steg. Därför finns `avinstallera` i manifestet, en *Ta bort*-knapp i panelen och
+  en [minnespost](../../minnesbank/verktyg/namnrymden-overlever-podden.md).
 - **Plattformens inferens duger som modelleverantör i Eneo**, som typ `openai` med
   egen `api_base`. Bakom Eneos modellhantering ligger LiteLLM, som då pratar vanlig
   OpenAI-dialekt med `Authorization: Bearer`. Provider-typen `vllm` hade *inte*

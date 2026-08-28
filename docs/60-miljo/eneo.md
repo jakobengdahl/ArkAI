@@ -25,11 +25,18 @@ Installationen tar knappt tre minuter och är ett kommando.
 
 ## Köra det
 
+I panelen räcker det med knappen *Kör igång* på uppsättningen **Eneo som plattform**:
+den installerar, startar och kopplar in modellerna i ett svep. I terminalen är det
+samma sak:
+
 ```bash
+verktyg/kor.sh uppsattning eneo-plattform   # allt nedan, i ordning
+
 verktyg/kor.sh installera eneo      # deployar i namnrymden, ~3 min
 verktyg/kor.sh starta eneo          # skalar upp och startar proxyn här i podden
 verktyg/kor.sh atgard koppla-eneo   # kopplar in plattformens modeller
 verktyg/kor.sh stoppa eneo          # proxyn ner, tjänsterna till noll — data kvar
+verktyg/kor.sh avinstallera eneo    # tar bort allt, inklusive databasen
 ```
 
 Adressen är värdnamnet för port 8084, och panelen visar den. Den första
@@ -131,22 +138,10 @@ det säger inget om behovet: 6,6 GB av disken är använd, och det mesta av det 
 
 ### Start-URL
 
-Samma form som [labbets ordinarie URL](starta-labbet.md#urlen) — värden inom «…»
-URL-kodas, och en riktig URL står på en rad.
-
-```
-https://datalab.sspcloud.fr/launcher/ide/vscode-python
-  ?name=«arkai-eneo»
-  &init.personalInit=«https://raw.githubusercontent.com/jakobengdahl/ArkAI/main/verktyg/onyxia-init.sh»
-  &init.personalInitArgs=«bas openwebui»
-  &git.repository=«https://github.com/jakobengdahl/ArkAI.git»
-  &git.branch=«main»
-  &vault.secret=«arkai-hemligheter»
-  &networking.user.enabled=true
-  &networking.user.ports[0]=8081
-  &networking.user.ports[1]=8084
-  &kubernetes.role=«edit»
-```
+URL:en som startar en miljö med de här inställningarna står i
+[starta-labbet.md](starta-labbet.md#urlen) — en enda gång, så att den inte hinner
+glida isär från den som faktiskt används. Profilen `bas eneo` gör att Eneo
+installeras direkt när miljön startar.
 
 ## Modellerna
 
@@ -180,6 +175,35 @@ på plattformens modeller.
 `max_input_tokens` och `max_output_tokens` är satta av oss (32768/4096) och
 medvetet försiktiga. Plattformens modellista säger ingenting om kontextfönster, och
 Eneo trunkerar själv utifrån värdet.
+
+## Ta bort Eneo igen
+
+Eneo kör i namnrymden, inte i podden. **Stoppar du VS Code-tjänsten fortsätter Eneo
+att köra** och att ta av kvoten — sex poddar och 22 Gi lagring — tills någon tar bort
+det. Det är samma egenskap som gör att det överlever en poddomstart; den har bara två
+sidor. Se [minnesbanken](../../minnesbank/verktyg/namnrymden-overlever-podden.md).
+
+Två olika saker, och skillnaden är inte kosmetisk:
+
+| | Vad som händer | Data |
+|---|---|---|
+| **Stoppa** | Proxyn ner, alla arbetslaster skalas till noll | Kvar på volymerna |
+| **Ta bort** | Allt märkt `app.kubernetes.io/part-of=eneo` raderas | Borta |
+
+I panelen sitter *Ta bort* på Eneos kort. Den kör ingenting direkt: den leder till en
+sida som visar exakt vilka arbetslaster, tjänster och volymer som försvinner, och
+först där finns knappen. I terminalen:
+
+```bash
+verktyg/kor.sh avinstallera eneo               # allt, databasen med
+verktyg/ta-bort-eneo.sh --behall-data          # arbetslasterna bort, volymerna kvar
+```
+
+`--behall-data` är vägen om du vill frigöra poddar men komma tillbaka till samma
+databas senare: en ny `installera` monterar volymerna igen.
+
+Panelens startsida visar också vad som ligger i namnrymden och hur mycket av kvoten
+det tar, så att det går att se att något står kvar utan att leta i `kubectl`.
 
 ## Vad som inte är gjort
 

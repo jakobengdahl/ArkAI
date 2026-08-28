@@ -33,6 +33,7 @@ en fil; ta bort raden när du tar bort filen.
 - [En ingressregel per exponerad port](verktyg/en-ingress-regel-per-port.md) — flera portar delar ingress, ett värdnamn per regel
 - [Två portar är två origins](verktyg/tva-portar-ar-tva-origins.md) — frontend och API hör ihop, proxya på sökväg i podden
 - [Förbjudet är inte samma sak som saknas](verktyg/forbjudet-ar-inte-saknat.md) — klusterbreda kubectl-frågor svarar Forbidden, fråga med api-resources
+- [Namnrymden överlever podden](verktyg/namnrymden-overlever-podden.md) — det du deployat kör vidare och äter kvot när tjänsten stoppas
 
 ## Domänkunskap
 

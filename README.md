@@ -45,7 +45,7 @@ sammanfattad i [forutsattningar.md](docs/00-oversikt/forutsattningar.md).
 | [docs/30-experiment/](docs/30-experiment/) | Labbloggar. Ett experiment = en fil = ett svar |
 | [docs/40-matchning/](docs/40-matchning/) | Matrisen: vilken teknik löser vilket användningsfall |
 | [docs/50-fran-poc-till-produktion/](docs/50-fran-poc-till-produktion/) | Checklistor, styrning, drift, kostnad |
-| [docs/60-miljo/](docs/60-miljo/) | Labbmiljön: SSP Cloud/Onyxia, Open WebUI, verktyg, git-auth |
+| [docs/60-miljo/](docs/60-miljo/) | Labbmiljön: SSP Cloud/Onyxia, Eneo, Open WebUI, verktyg, git-auth |
 | [minnesbank/](minnesbank/) | Det **delade** minnet — vårt viktigaste experiment |
 | [exempel/](exempel/) | Körbar kod: MCP-server, skills |
 | [verktyg/](verktyg/) | Panelen, startskripten och katalogen över det som går att köra |

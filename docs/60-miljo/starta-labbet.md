@@ -43,15 +43,22 @@ Byter du nyckel räcker det att uppdatera hemligheten och starta om tjänsten.
 ```
 https://datalab.sspcloud.fr/launcher/ide/vscode-python
   ?autoLaunch=true
-  &name=«arkai»
+  &name=«arkai-eneo»
+  &version=2.6.2
+  &s3=default
   &init.personalInit=«https://raw.githubusercontent.com/jakobengdahl/ArkAI/main/verktyg/onyxia-init.sh»
-  &init.personalInitArgs=«bas openwebui»
+  &init.personalInitArgs=«bas eneo»
   &git.repository=«https://github.com/jakobengdahl/ArkAI.git»
+  &git.branch=«main»
+  &git.asCodeServerRoot=true
   &vault.secret=«arkai-hemligheter»
+  &kubernetes.role=«edit»
   &networking.user.enabled=true
   &networking.user.ports[0]=8081
-  &kubernetes.role=«edit»
-  &resources.limits.memory=«16Gi»
+  &networking.user.ports[1]=8084
+  &resources.requests.memory=«6Gi»
+  &resources.limits.cpu=«15600m»
+  &persistence.size=«50Gi»
 ```
 
 (En riktig URL står på en rad, och värden inom `«…»` URL-kodas. Onyxias
@@ -61,11 +68,16 @@ launcher-länkar följer samma mönster som andra projekt i SSP Cloud använder.
 |---|---|
 | `init.personalInit` | Startskriptet, hämtat direkt från `main`. Se nedan. |
 | `init.personalInitArgs` | Profil: vilka tjänster som ska förinstalleras |
-| `git.repository` | Repot klonas automatiskt till `~/work/ArkAI` |
+| `git.repository` + `git.branch` | Repot klonas till `~/work/ArkAI`. Utan `branch` klonas standardgrenen |
+| `git.asCodeServerRoot` | VS Code öppnar repot i stället för `~/work` — tasks och panel fungerar i båda fallen |
 | `vault.secret` | Hemligheten monteras som miljövariabler |
+| `kubernetes.role` | **`edit`.** Krävs för att kunna deploya Eneo i namnrymden. Standard är `view` |
 | `networking.user.ports[0]` | **8081 för Open WebUI.** Går inte att ändra i efterhand |
-| `kubernetes.role` | `edit` om du vill kunna deploya i din namnrymd, annars `view` |
-| `resources.limits.memory` | 16 GB räcker gott för det vi gör |
+| `networking.user.ports[1]` | **8084 för Eneo.** Detsamma |
+| `version` | Chart-versionen. Pinnad så att alla får samma tjänst |
+| `s3` | Kopplar in plattformens objektlagring |
+| `resources.*` | 6 GiB begärt minne och gott om CPU. Eneo kör i namnrymden och tar inte av podden |
+| `persistence.size` | 50 GiB. Mest för uv-cache och modellhämtningar — Eneos data ligger på egna volymer |
 
 ### Profiler
 
@@ -74,7 +86,9 @@ Argumentet till startskriptet styr vad som installeras automatiskt:
 | Profil | Vad du får |
 |---|---|
 | `bas` | Panelen, Node, gh, git-auth. Under en minut |
-| `bas openwebui` | Dessutom Open WebUI (~4 min). **Standardvalet** |
+| `bas eneo` | Dessutom Eneo, deployat i namnrymden (~3 min). **Standardvalet** |
+| `bas openwebui` | Dessutom Open WebUI i podden (~4 min) |
+| `bas eneo openwebui` | Båda, om det är dem du ska jämföra |
 | `minimal` | Bara panelen — installera resten själv därifrån |
 
 Orden är tjänst-id ur [`verktyg/labb.toml`](../../verktyg/labb.toml), så
@@ -93,6 +107,7 @@ En port måste exponeras **vid start** för att bli nåbar utifrån. Lägg till 
 | Port | Tjänst | Behövs utifrån? |
 |---|---|---|
 | 8081 | Open WebUI | **Ja** — appen fungerar inte bakom en sökvägsproxy |
+| 8084 | Eneo | **Ja** — och det är där hela Eneo ligger, både gränssnitt och API |
 | 18789 | OpenClaw gateway | Ja, om du vill nå dess gränssnitt |
 | 8082 | Labbpanelen | Nej — nås via code-servers proxy, och ska inte ligga öppet |
 | 8083 | MCP-bryggan | Nej — bara Open WebUI i samma podd anropar den |
@@ -103,7 +118,7 @@ En port måste exponeras **vid start** för att bli nåbar utifrån. Lägg till 
 |---|---|---|
 | Tjänsten startar | `onyxia-init.sh` skriver inställningar och startar panelen | ~2 sekunder |
 | VS Code öppnas | En terminal öppnas automatiskt och installerar grunden | ~10 sekunder |
-| Strax därefter | Samma terminal installerar Open WebUI | ~4 minuter |
+| Strax därefter | Samma terminal installerar det profilen ber om — med `bas eneo` deployas Eneo i namnrymden | ~3 minuter |
 | Hela tiden | Panelen är igång och visar vad som pågår | — |
 
 Startskriptet gör med flit **ingenting tungt**. Tjänsten blir inte tillgänglig
@@ -134,8 +149,19 @@ cd ~/work/ArkAI
 verktyg/labb-start.sh        # installerar grunden och startar panelen
 ```
 
-Då får du allt utom det som måste bestämmas vid start: exponerade portar och
-Vault-hemligheten. Open WebUI går att köra, men bara nås från terminalen.
+Då får du allt utom det som måste bestämmas vid start: Kubernetes-rollen, exponerade
+portar och Vault-hemligheten. Utan `kubernetes.role=edit` går Eneo inte att
+installera alls, och utan exponerad port når du varken Eneo eller Open WebUI utifrån.
+
+## Det du startat i namnrymden lever vidare
+
+Eneo kör inte i podden utan som egna arbetslaster i namnrymden. Det är avsiktligt —
+det är så en plattform ska köras, och det är därför den överlever en poddomstart —
+men det betyder också att **den fortsätter köra och ta av kvoten när du stoppar
+VS Code-tjänsten**. Panelens startsida visar vad du har igång och vad det kostar, och
+tjänstekortet har en *Ta bort*-knapp. Se
+[eneo.md](eneo.md#ta-bort-eneo-igen) och
+[minnesbanken](../../minnesbank/verktyg/namnrymden-overlever-podden.md).
 
 ## Att starta om är billigt
 

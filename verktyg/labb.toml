@@ -53,6 +53,11 @@ fil = "BIDRA.md"
 #   finns       kommando som lyckas när tjänsten är installerad
 #   halsa       URL som svarar när tjänsten kör (annars används port)
 #   egen_ingress  true = kräver att porten exponerades när tjänsten startade
+#   avinstallera  kommando som tar bort tjänsten. Panelen visar knappen "Ta
+#                 bort", frågar först och kör aldrig det direkt från kortet
+#   avinstallera_varning  vad som går förlorat — visas på bekräftelsesidan
+#   avinstallera_visa     läskommando vars utdata visas på samma sida, så att
+#                 man ser vad som faktiskt försvinner innan man trycker
 
 [tjanst.grund]
 namn = "Grundmiljön"
@@ -62,20 +67,6 @@ typ = "verktyg"
 steg = "auto"
 finns = "command -v node && command -v gh"
 installera = "verktyg/installera/bas.sh"
-
-[tjanst.openwebui]
-namn = "Open WebUI"
-beskrivning = "Chattgränssnitt med dokumentuppladdning, RAG och verktygsanrop. Vår testbänk för chattbot-upplägg."
-dok = "docs/60-miljo/openwebui.md"
-typ = "lokal"
-steg = "begaran"
-port = 8081
-finns = "command -v open-webui"
-installera = "verktyg/installera/openwebui.sh"
-starta = "verktyg/starta-openwebui.sh --bakgrund"
-stoppa = "verktyg/starta-openwebui.sh --stoppa"
-halsa = "http://127.0.0.1:8081/health"
-egen_ingress = true
 
 [tjanst.eneo]
 namn = "Eneo"
@@ -92,6 +83,26 @@ installera = "verktyg/installera/eneo.sh"
 starta = "verktyg/starta-eneo.sh --bakgrund"
 stoppa = "verktyg/starta-eneo.sh --stoppa"
 halsa = "http://127.0.0.1:8084/version"
+egen_ingress = true
+# Stoppa skalar till noll och behåller allt. Ta bort raderar — och det är inte
+# en detalj: Eneo kör i namnrymden och fortsätter göra det när den här podden
+# är borta. Panelen frågar först och visar vad som försvinner.
+avinstallera = "verktyg/ta-bort-eneo.sh"
+avinstallera_varning = "Eneos databas raderas — konton, chattar och kunskapskällor försvinner. Vill du bara stänga av tills vidare, använd Stoppa: då skalas tjänsterna till noll och all data ligger kvar."
+avinstallera_visa = "kubectl get deployments,statefulsets,jobs,services,pvc -l app.kubernetes.io/part-of=eneo"
+
+[tjanst.openwebui]
+namn = "Open WebUI"
+beskrivning = "Chattgränssnitt med dokumentuppladdning, RAG och verktygsanrop. Vår testbänk för chattbot-upplägg."
+dok = "docs/60-miljo/openwebui.md"
+typ = "lokal"
+steg = "begaran"
+port = 8081
+finns = "command -v open-webui"
+installera = "verktyg/installera/openwebui.sh"
+starta = "verktyg/starta-openwebui.sh --bakgrund"
+stoppa = "verktyg/starta-openwebui.sh --stoppa"
+halsa = "http://127.0.0.1:8081/health"
 egen_ingress = true
 
 [tjanst.hello-mcp]
@@ -171,7 +182,14 @@ dok = "docs/60-miljo/openwebui.md"
 #
 # Kombinationer som är tänkta att fungera ihop. Panelen installerar det som
 # saknas, startar i ordning och skriver ~/work/.labb/mcp.json som klienterna
-# läser.
+# läser. Listan `atgarder` körs sist, när tjänsterna svarar.
+
+[uppsattning.eneo-plattform]
+namn = "Eneo som plattform"
+beskrivning = "Installerar Eneo i namnrymden, startar det och kopplar in plattformens modeller. Frågan: vad kostar det i styrning och drift att köra en plattform som är byggd för att förvaltas?"
+tjanster = ["eneo"]
+atgarder = ["koppla-eneo"]
+dok = "docs/60-miljo/eneo.md"
 
 [uppsattning.chatt-med-verktyg]
 namn = "Chattbot + verktyg"

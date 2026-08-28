@@ -44,8 +44,9 @@ där resultatet är ett underlag att ta vidare tillsammans med dem. Vad styrning
 kräver i respektive: [förutsättningar](00-oversikt/forutsattningar.md).
 
 Ny här? [Läsordningen](README.md) tar dig igenom repot. Har du en halvtimme och vill
-göra något: kör uppsättningen *Chattbot + verktyg* ovan och läs
-[chattbot + verktyg](20-tekniker/chattbot-plus-verktyg.md) medan den installeras.
+göra något: kör uppsättningen *Eneo som plattform* ovan och läs
+[eneo.md](60-miljo/eneo.md) medan den installeras — den tar en plattform hela vägen
+till något som liknar drift, och det är där de svåra frågorna sitter.
 
 ## Miljön
 
@@ -56,6 +57,15 @@ göra något: kör uppsättningen *Chattbot + verktyg* ovan och läs
 Det här kör redan, oberoende av den här podden. Somligt ligger bakom inloggning.
 
 <!-- panel:namnrymd -->
+
+### Vad du har igång, och vad det kostar
+
+Allt nedan lever kvar när den här podden stoppas — det är poängen med att köra
+saker i namnrymden, och samtidigt det som gör att kvoten tar slut om ingen städar.
+Tjänster som labbet självt deployat står med i kolumnen *Del av* och tas bort med
+**Ta bort** på tjänstens kort ovan.
+
+<!-- panel:kvot -->
 
 ## När du hittat något
 
