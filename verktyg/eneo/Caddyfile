@@ -1,0 +1,40 @@
+# Proxyn som gör Eneo till *en* origin.
+#
+# Eneo vill ha frontend och backend på samma värdnamn: sessionskakan sätts av
+# frontenden och skickas till backendens API. Onyxia ger varje exponerad port
+# ett eget värdnamn, så två portar hade blivit två origins och trasig
+# inloggning. Därför lyssnar Caddy på den exponerade porten i den här podden
+# och delar trafiken på sökväg — samma delning som Eneos Traefik-exempel gör
+# med PathPrefix.
+#
+# Startas av verktyg/starta-eneo.sh, som sätter variablerna nedan.
+# {$NAMN:standard} är Caddys egen syntax för miljövariabler.
+
+{
+	admin off
+	auto_https off
+}
+
+:{$ENEO_PORT:8084} {
+	# Backendens sökvägar, ordagrant från Eneos compose-fil.
+	@backend path /api/* /scim/* /docs /docs/* /openapi.json /version
+	handle @backend {
+		reverse_proxy {$ENEO_BACKEND:eneo-backend:8000} {
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	# Allt annat är frontenden: SvelteKit med SSR.
+	handle {
+		reverse_proxy {$ENEO_FRONTEND:eneo-frontend:3000} {
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	# Strömmande svar går genom den här proxyn — Caddy buffrar inte
+	# text/event-stream, och uppgraderar WebSocket av sig själv.
+	log {
+		output stderr
+		format console
+	}
+}

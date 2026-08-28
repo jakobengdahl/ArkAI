@@ -50,6 +50,7 @@ Punkt 3 är hela poängen. Experimentet är berättelsen om vad som hände; minn
 | Nr | Experiment | Slutsats |
 |---|---|---|
 | [001](EXP-001-openwebui-i-onyxia.md) | Kan Open WebUI köras i en Onyxia-tjänst? | Ja, med `uv` och Python 3.11 på port 8081 |
+| [002](EXP-002-eneo-i-kubernetes.md) | Går Eneo att köra utan containerruntime? | Ja, som arbetslaster i namnrymden med en proxy i podden |
 
 ## På tur
 
@@ -60,6 +61,8 @@ Ingen ordning, ingen som äger dem än. Ta något och skriv upp dig i en PR.
   jämför mot en extern modell på samma uppgift
 - Nå Open WebUI via egen ingress i stället för code-servers proxy — bekräfta att
   portinställningen vid start fungerar som dokumenterat
+- Samma uppgift i [Eneo](../60-miljo/eneo.md) och i Open WebUI. Vad skiljer när
+  frågan är behörigheter, spårbarhet och förvaltning snarare än chattkvalitet?
 
 **MCP och verktyg**
 - Bygg [hello-mcp](../../exempel/mcp/hello-mcp/) och koppla in den i Continue,

@@ -53,6 +53,11 @@ fil = "BIDRA.md"
 #   finns       kommando som lyckas när tjänsten är installerad
 #   halsa       URL som svarar när tjänsten kör (annars används port)
 #   egen_ingress  true = kräver att porten exponerades när tjänsten startade
+#   avinstallera  kommando som tar bort tjänsten. Panelen visar knappen "Ta
+#                 bort", frågar först och kör aldrig det direkt från kortet
+#   avinstallera_varning  vad som går förlorat — visas på bekräftelsesidan
+#   avinstallera_visa     läskommando vars utdata visas på samma sida, så att
+#                 man ser vad som faktiskt försvinner innan man trycker
 
 [tjanst.grund]
 namn = "Grundmiljön"
@@ -62,6 +67,29 @@ typ = "verktyg"
 steg = "auto"
 finns = "command -v node && command -v gh"
 installera = "verktyg/installera/bas.sh"
+
+[tjanst.eneo]
+namn = "Eneo"
+beskrivning = "Öppen AI-plattform för svensk offentlig sektor, med behörighetsmodell, revisionslogg och OIDC. Vår jämförelse mot Open WebUI när frågan är drift, inte demo."
+dok = "docs/60-miljo/eneo.md"
+# Delvis lokal: själva Eneo kör som arbetslaster i namnrymden och överlever en
+# poddomstart. Det som kör här i podden är proxyn som lägger frontend och
+# backend på samma origin — och den behöver den exponerade porten.
+typ = "lokal"
+steg = "begaran"
+port = 8084
+finns = "command -v caddy && kubectl get deployment eneo-backend"
+installera = "verktyg/installera/eneo.sh"
+starta = "verktyg/starta-eneo.sh --bakgrund"
+stoppa = "verktyg/starta-eneo.sh --stoppa"
+halsa = "http://127.0.0.1:8084/version"
+egen_ingress = true
+# Stoppa skalar till noll och behåller allt. Ta bort raderar — och det är inte
+# en detalj: Eneo kör i namnrymden och fortsätter göra det när den här podden
+# är borta. Panelen frågar först och visar vad som försvinner.
+avinstallera = "verktyg/ta-bort-eneo.sh"
+avinstallera_varning = "Eneos databas raderas — konton, chattar och kunskapskällor försvinner. Vill du bara stänga av tills vidare, använd Stoppa: då skalas tjänsterna till noll och all data ligger kvar."
+avinstallera_visa = "kubectl get deployments,statefulsets,jobs,services,pvc -l app.kubernetes.io/part-of=eneo"
 
 [tjanst.openwebui]
 namn = "Open WebUI"
@@ -135,6 +163,13 @@ ingress_matchning = "metadatagraph"
 # samma loggar som tjänsterna, så panelen behöver inte veta något särskilt om
 # dem. Id:n delar namnrymd med tjänsterna — återanvänd inte ett id.
 
+[atgard.koppla-eneo]
+namn = "Koppla in modellerna i Eneo"
+beskrivning = "Lägger upp plattformens inferens som modelleverantör i Eneo, med chattmodell och embeddingmodell, och kontrollerar att båda svarar. Kör den när du bytt nyckel — Eneo läser inte nyckeln ur miljön."
+knapp = "Koppla in"
+kommando = "verktyg/konfigurera-eneo.py --skriv"
+dok = "docs/60-miljo/eneo.md"
+
 [atgard.koppla-openwebui]
 namn = "Koppla in modell och verktyg i Open WebUI"
 beskrivning = "Skriver in modellkopplingen från miljöns hemlighet och de MCP-servrar som bryggan exponerar. Kör den när du installerat en ny MCP-server, eller när du bytt nyckel."
@@ -147,7 +182,14 @@ dok = "docs/60-miljo/openwebui.md"
 #
 # Kombinationer som är tänkta att fungera ihop. Panelen installerar det som
 # saknas, startar i ordning och skriver ~/work/.labb/mcp.json som klienterna
-# läser.
+# läser. Listan `atgarder` körs sist, när tjänsterna svarar.
+
+[uppsattning.eneo-plattform]
+namn = "Eneo som plattform"
+beskrivning = "Installerar Eneo i namnrymden, startar det och kopplar in plattformens modeller. Frågan: vad kostar det i styrning och drift att köra en plattform som är byggd för att förvaltas?"
+tjanster = ["eneo"]
+atgarder = ["koppla-eneo"]
+dok = "docs/60-miljo/eneo.md"
 
 [uppsattning.chatt-med-verktyg]
 namn = "Chattbot + verktyg"

@@ -1,4 +1,4 @@
-# Eneo som alternativ till Open WebUI
+# Eneo i labbet
 
 [Eneo](https://www.eneo.ai) är en öppen AI-plattform byggd av Sundsvalls och Ånge
 kommun för svensk offentlig sektor. Den gör i grunden samma sak som Open WebUI —
@@ -7,220 +7,221 @@ behörighetsmodell per organisation, revisionslogg, OIDC-federation, SCIM. Det g
 intressant för oss, för det är precis den sortens frågor som skiljer en PoC från
 något som får köras i drift. Se [50-fran-poc-till-produktion](../50-fran-poc-till-produktion/).
 
-Det här dokumentet är **en plan, inte en installationsanvisning**. Installationen är
-inte gjord. Miljön som beskrivs i [starta-labbet.md](starta-labbet.md) klarar den inte
-— den måste startas med andra inställningar, och de går inte att ändra i efterhand.
-
-Underlaget är mätt i labbmiljön 2026-08-28 mot Eneo v2.1.1.
+**Eneo v2.1.1 kör i labbet sedan 2026-08-28.** Det här dokumentet beskriver hur, och
+var installationen avviker från det Eneo själva dokumenterar. Underlaget för vägvalen
+finns i [EXP-002](../30-experiment/EXP-002-eneo-i-kubernetes.md).
 
 ## Kort svar
 
-Det går, men inte på den väg Eneo själva dokumenterar. Deras enda beskrivna
-installation är `docker compose`, och **det finns ingen containerruntime i
-labbtjänsten**. Tre saker måste ändras, alla vid tjänstestart:
-Kubernetes-rollen, diskstorleken och en extra exponerad port.
+Eneo dokumenterar bara `docker compose`, och det finns ingen containerruntime i
+labbtjänsten. I stället kör Eneo som **sex arbetslaster i namnrymden** — samma
+tjänster som compose-filen, översatta till Kubernetes-manifest — plus en **Caddy i
+VS Code-podden** som lägger frontend och backend på samma värdnamn.
 
-Räkna med en dags arbete, inte en eftermiddag.
+Två saker måste vara satta redan när Onyxia-tjänsten startar: `kubernetes.role=edit`
+och en exponerad port för Eneo. Ingetdera går att ändra i efterhand.
 
-## Vad Eneo kräver
+Installationen tar knappt tre minuter och är ett kommando.
 
-Fem tjänster, enligt [deployment-guiden](https://docs.eneo.ai/guides/deployment):
+## Köra det
 
-| Tjänst | Teknik | Port | Roll |
-|---|---|---|---|
-| Frontend | SvelteKit | 3000 | Webbgränssnitt, SSR |
-| Backend | FastAPI | 8000 | API, autentisering |
-| Worker | ARQ | — | Dokumentindexering, bakgrundsjobb |
-| Databas | PostgreSQL 16 + **pgvector** | 5432 | Data och vektorsökning |
-| Cache/kö | Redis 7 | 6379 | Cache, jobbkö |
+I panelen räcker det med knappen *Kör igång* på uppsättningen **Eneo som plattform**:
+den installerar, startar och kopplar in modellerna i ett svep. I terminalen är det
+samma sak:
 
-Rekommenderat: 4+ kärnor, 8 GB+ RAM, **50 GB disk** (minimum 20 GB).
+```bash
+verktyg/kor.sh uppsattning eneo-plattform   # allt nedan, i ordning
 
-En reverse proxy ska terminera TLS och dela trafiken på **samma origin**:
-`/*` till frontend, och `/api/*`, `/docs`, `/openapi.json`, `/version` till backend.
-WebSocket måste gå igenom — Eneo använder både WebSocket och SSE för
-strömmande svar. `PUBLIC_ORIGIN` sätts till den externa URL:en, och `JWT_SECRET`
-måste vara **identisk** i frontend och backend.
+verktyg/kor.sh installera eneo      # deployar i namnrymden, ~3 min
+verktyg/kor.sh starta eneo          # skalar upp och startar proxyn här i podden
+verktyg/kor.sh atgard koppla-eneo   # kopplar in plattformens modeller
+verktyg/kor.sh stoppa eneo          # proxyn ner, tjänsterna till noll — data kvar
+verktyg/kor.sh avinstallera eneo    # tar bort allt, inklusive databasen
+```
 
-Projektet är i gott skick: AGPL-3.0, v2.1.1 släppt 2026-08-26, aktiv utveckling.
-Imagerna på `ghcr.io/eneo-ai/` är publika — taggarna går att lista utan inloggning.
-**Det finns inget Helm-chart och inga Kubernetes-manifest i repot.**
+Adressen är värdnamnet för port 8084, och panelen visar den. Den första
+inloggningen skrivs till `~/work/.labb/eneo-inloggning.txt` (utanför repot, läge
+0600) och ligger också i Kubernetes-hemligheten `eneo-hemligheter`. **Byt lösenord
+vid första inloggningen** — porten är publik, se
+[minnesbanken](../../minnesbank/verktyg/exponerad-port-kraver-inloggning.md).
 
-### Dokumentationen ligger efter koden
+Eneo överlever att den här podden startas om: det enda som kör lokalt är proxyn.
+Databasen ligger på en egen volym i namnrymden.
 
-Getting-started säger `pnpm 8.9.0` och `Python ≥ 3.10`. Koden på `develop` säger
-något annat: `frontend/package.json` har `"packageManager": "bun@1.3.14"`, och
-`backend/pyproject.toml` har `requires-python = ">=3.11,<3.12"`. Ska något byggas
-från källkod är det **bun och Python 3.11** som gäller. Läs `Taskfile.yml` i repot
-före guiden.
+## Hur det är byggt
 
-## Vad labbmiljön ger
-
-Uppmätt i en `vscode-python`-tjänst startad på standardsättet:
-
-| | Läge |
-|---|---|
-| **Docker / podman / nerdctl** | **saknas helt** — `docker: command not found` |
-| Kubernetes | `kubectl` och `helm` finns, men rollen är `view`: `kubectl auth can-i create deployments` → `no` |
-| CPU / RAM | 15 kärnor, 50 GiB enligt cgroup — gott om marginal |
-| **Disk** | `/home/onyxia/work` är **9,8 GB, varav 2,8 GB ledigt** |
-| sudo | fungerar utan lösenord |
-| Paket | pgdg-repot är förinlagt: `postgresql-16` och `postgresql-16-pgvector` 0.8.6 finns, liksom `redis-server` 7.0.15 |
-| Toolchain | uv 0.12.5, Node 24, npm 11. **Ingen bun, ingen pnpm** |
-| Utgående nät | pypi, npm, ghcr.io, github, ubuntu — allt öppet |
-| Namnrymdskvot | 14/100 poddar, 93 Gi av 2 Ti lagring |
-
-### Tre hinder
-
-**Ingen containerruntime.** Hela den dokumenterade installationen är otillgänglig.
-Antingen bygger man från källkod i podden, eller så deployar man imagerna i
-Kubernetes.
-
-**Disken.** 2,8 GB ledigt mot Eneos 20 GB minimum. Backendens venv, frontendens
-`node_modules` och en pgdata får inte plats. 7,0 GB av de 9,8 går just nu till
-`~/work/.cache` (uv) — `uv cache prune` friar en del, men storleken måste ändå upp.
-Standardvärdet `persistence.size` är `10Gi`.
-
-**En origin, två portar.** Onyxia ger varje exponerad port ett *eget* värdnamn.
-Eneo vill ha frontend och backend på samma origin — sessionscookies och delad
-`JWT_SECRET`. Två värdnamn ger cross-origin-cookies och trasig inloggning. Det
-behövs alltså en liten Caddy eller nginx i podden som lyssnar på den exponerade
-porten och delar trafiken på sökväg. Det är inte svårt, men det är en bit som inte
-finns i Eneos anvisningar och som gäller **oavsett** vilken väg man väljer.
-
-## Vägval
-
-**A. Kubernetes-deploy med de färdiga imagerna.** Starta tjänsten med
-`kubernetes.role=edit` — se [sspcloud-onyxia.md](sspcloud-onyxia.md#kubernetes-roll).
-Deploya backend, frontend och worker från `ghcr.io/eneo-ai/` som egna manifest, och
-ta databasen från katalogen: `postgresql-cnpg` har en `extension.pgvector`-flagga.
-Mest produktionslikt, och det enda som ger riktig persistens. Priset: manifesten
-måste skrivas för hand från compose-filen, och **Redis finns inte i
-Onyxia-katalogen** — den får bli ett eget manifest med `redis:7-alpine`.
-
-**B. Från källkod i podden**, som vi gör med Open WebUI. uv klarar Python 3.11 och
-backend; bun installeras under `~/.local` och överlever omstart; postgres+pgvector
-och redis från apt med datakatalogen i `~/work`. Passar labbets befintliga mönster
-och kräver ingen ändrad Kubernetes-roll — men det blir **fem processer i en podd som
-är förgänglig**, och `apt`-delen måste installeras om vid varje omstart.
-Uppgraderingar blir manuella.
-
-**C. Vänta på ett Helm-chart.** Eneo vänder sig till svensk offentlig sektor, som kör
-mycket Kubernetes, så frågan lär inte vara främmande för dem. Men det är ingen väg
-framåt den här månaden.
-
-### Rekommendation: A
-
-Motivet att välja A framför B är inte teknisk elegans. Eneo är inte ett verktyg man
-provar en kvart — det är en plattform man jämför med Open WebUI över tid. Fem
-processer som dör vid varje podomstart gör den jämförelsen ojämn på fel sätt: Open
-WebUI är en enda process och kommer alltid att verka enklare än den är. Kör man Eneo
-som riktiga tjänster i namnrymden jämför man plattformarna, inte installationsbesväret.
-
-Även i väg A går trafiken in genom den exponerade porten på VS Code-podden, med
-Caddy där som pekar på Eneos ClusterIP-tjänster. Det slipper gissningar om
-ingress-värdnamn och certifikat, och återanvänder mekanismen labbet redan kan.
-
-## Inställningar för den nya miljön
-
-Ingen av dem går att ändra i efterhand.
-
-| Parameter | Värde | Varför |
+| Arbetslast | Image | Roll |
 |---|---|---|
-| `kubernetes.role` | `edit` | Annars går det inte att deploya. Standard är `view` |
-| `persistence.size` | `50Gi` | Standard är `10Gi`. Eneo vill ha 20 GB minimum, 50 GB rekommenderat |
+| `eneo-db` | `pgvector/pgvector:pg16` | PostgreSQL 16 med pgvector, 20 Gi volym |
+| `eneo-redis` | `redis:7-alpine` | Cache och jobbkö (ARQ), 2 Gi volym |
+| `eneo-db-init` | `eneo-backend` (Job) | Migreringar och första tenant/användare |
+| `eneo-backend` | `ghcr.io/eneo-ai/eneo-backend` | FastAPI på 8000 |
+| `eneo-worker` | samma image, `RUN_AS_WORKER=true` | Bakgrundsjobb |
+| `eneo-frontend` | `ghcr.io/eneo-ai/eneo-frontend` | SvelteKit med SSR på 3000 |
+
+Manifesten ligger i [`verktyg/eneo/`](../../verktyg/eneo/) och är mallar — de
+renderas av installationsskriptet, som fyller i värdnamn, imager och storlekar.
+Numreringen är körordningen: databasen först, sedan migreringen, sedan applikationen.
+
+Backend- och frontendimagerna är pinnade till **de digester Eneo attesterar för
+v2.1.1** (`IMAGE-DIGESTS.txt` i releasen), inte till en tagg. `/version` svarar
+`2.1.1-dev` — versionssträngen i den släppta imagen är byggd så, det är inte en
+utvecklingsbygge.
+
+### Proxyn, och varför den behövs
+
+Eneo vill ha frontend och backend på **samma origin**: frontenden sätter
+sessionskakan, och webbläsaren skickar den vidare till API:et. Onyxia ger varje
+exponerad port ett eget värdnamn, så två portar hade blivit två origins och trasig
+inloggning.
+
+Caddy lyssnar därför på 8084 i den här podden och delar trafiken på sökväg —
+`/api/*`, `/scim/*`, `/docs`, `/openapi.json` och `/version` till backend, allt annat
+till frontend. Det är samma delning som Eneos eget Traefik-exempel gör med
+`PathPrefix`, vilket är hela skälet till att den fungerar: vi hittar inte på en ny
+topologi, vi flyttar deras.
+
+Strömmande svar går igenom: en fråga till assistenten kommer tillbaka som
+`event: text`-strömmar via proxyn. Kakan sätts och inloggningen går igenom hela
+vägen utifrån.
+
+### Var vi avviker från Eneos compose-fil
+
+**Databasen är en egen StatefulSet, inte katalogens `postgresql-cnpg`.**
+CNPG-operatorn *finns* i klustret och vi får skapa `Cluster`-resurser — den vägen är
+alltså öppen och är den mer driftlika. Vi valde ändå Eneos egen image, för att hålla
+hela installationen i ett skript och en variabel färre mot compose-filen. Vill man ha
+riktig operatorhanterad databas med backup är det bytet nästa steg, inte en
+ommöblering.
+
+**`/app/data` och `/tmp` delas inte mellan backend och worker.** I compose är de
+gemensamma volymer. Lagringsklassen här (`rook-ceph-block`) är ReadWriteOnce, och två
+poddar kan inte montera samma volym — så båda har var sin `emptyDir`. Följden:
+**exporterade revisionsloggar går inte att ladda ner**, eftersom worker skriver filen
+i sin podd och backend läser i sin. Behövs den funktionen är lösningen antingen en
+delad ReadWriteMany-volym eller att objektlagring kopplas in.
+
+**Webbkryparen är avstängd** (`USING_CRAWL=false`). Den drar långa jobb och mycket
+minne, och det är inte den vi jämför plattformar på.
+
+**Ingen OIDC.** Inloggning sker med e-post och lösenord mot Eneos egen
+användardatabas. Federationen är en av de intressanta sakerna med Eneo, men den
+kräver en identitetsleverantör att federera mot.
+
+**Ingen TLS i proxyn.** Onyxias ingress terminerar TLS; Caddy kör `auto_https off`
+och får `X-Forwarded-Proto: https` satt åt sig.
+
+## Inställningar för miljön
+
+Ingen av dem går att ändra i efterhand. Det här är vad tjänsten faktiskt startades
+med, och vad som visade sig behövas.
+
+| Parameter | Värde | Kommentar |
+|---|---|---|
+| `kubernetes.role` | `edit` | **Krävs.** Standard är `view`, och då går ingenting av det här |
 | `networking.user.enabled` | `true` | Krävs för att exponera portar alls |
-| `networking.user.ports[0]` | `8081` | Open WebUI — behålls, det är den vi jämför mot |
-| `networking.user.ports[1]` | `8084` | Eneo, via Caddy i podden |
-| `resources.limits.memory` | `16Gi` | Räcker gott. Klustrets tak är 50 GiB |
-| `resources.requests.memory` | `4Gi` | Så att podden faktiskt schemaläggs med marginal |
-| `init.personalInit` | startskriptet i repot | Panelen och grundmiljön |
-| `init.personalInitArgs` | `bas openwebui` | Samma som labbets ordinarie URL. Open WebUI är den vi jämför mot |
-| `git.repository` | `https://github.com/jakobengdahl/ArkAI.git` | Klonas till `~/work/ArkAI` |
-| `git.branch` | `main` | Utan detta klonas standardgrenen. Planen och skripten ligger i `main` |
-| `vault.secret` | `arkai-hemligheter` | Modellnyckeln, se [starta-labbet.md](starta-labbet.md) |
+| `networking.user.ports[0]` | `8081` | Open WebUI — den vi jämför mot |
+| `networking.user.ports[1]` | `8084` | Eneo, via proxyn |
+| `git.branch` | grenen du vill ha | Utan den klonas standardgrenen |
+| `vault.secret` | miljöns hemlighet | Modellnyckeln, se [starta-labbet.md](starta-labbet.md) |
+
+**`persistence.size` och minnet behöver inte höjas för Eneos skull.** Planen räknade
+med 50 Gi disk och 16 Gi minne på podden, av Eneos systemkrav. Men i den här vägen kör
+Eneo *inte* i podden: data ligger på egna volymer i namnrymden (20 Gi + 2 Gi, mot
+kvotens 2 Ti) och minnet tas av Eneos egna poddar, som har sina gränser satta i
+manifesten (backend 4 Gi, databasen 2 Gi). Podden själv behöver bara plats för
+Caddy-binären.
+
+Tjänsten det här skrevs i startades förvisso med 50 Gi disk och 50 Gi minnestak, men
+det säger inget om behovet: 6,6 GB av disken är använd, och det mesta av det är
+`uv`-cache sedan tidigare.
 
 ### Start-URL
 
-Samma form som [labbets ordinarie URL](starta-labbet.md#urlen) — värden inom «…»
-URL-kodas, och en riktig URL står på en rad. `autoLaunch` är borttagen: den här
-tjänsten har inställningar man vill se i formuläret innan den startar.
+URL:en som startar en miljö med de här inställningarna står i
+[starta-labbet.md](starta-labbet.md#urlen) — en enda gång, så att den inte hinner
+glida isär från den som faktiskt används. Profilen `bas eneo` gör att Eneo
+installeras direkt när miljön startar.
 
+## Modellerna
+
+Eneo läser inte modellnycklar ur miljön på det sätt Open WebUI gör. Modeller läggs
+upp per organisation: först en **leverantör** med bas-URL och nyckel, sedan de
+modeller man vill kunna välja. Nyckeln krypteras med `ENCRYPTION_KEY` och hamnar i
+Eneos databas.
+
+Det går att göra i admingränssnittet. [`verktyg/konfigurera-eneo.py`](../../verktyg/konfigurera-eneo.py)
+gör samma sak mot API:et, av samma skäl som motsvarigheten för Open WebUI finns: en
+installation som kräver sexton klick i ett formulär är inte reproducerbar.
+
+Leverantören läggs upp som typ `openai` med `config.endpoint` mot
+[plattformens inferens](sspcloud-llm.md). Bakom Eneos modellhantering ligger LiteLLM,
+som med en egen `api_base` pratar vanlig OpenAI-dialekt med `Authorization: Bearer` —
+alltså precis vad plattformen vill ha. (Provider-typen `vllm` finns också, men den
+skickar nyckeln i `X-API-Key` och passar därför inte här.)
+
+Två modeller är inkopplade och verifierade med Eneos egen `validate-model`, som gör
+ett riktigt anrop:
+
+| | Modell | Anmärkning |
+|---|---|---|
+| Chatt | plattformens standardmodell (`OPENAI_MODEL`) | Samma modell som Open WebUI kör, så jämförelsen blir på plattformen och inte på modellen |
+| Embedding | plattformens embeddingmodell | 4096 dimensioner |
+
+**Att plattformens inferens har `/embeddings` var en öppen fråga i planen.** Den har
+det, och Eneo når den. Det betyder att kunskapskällor och RAG i Eneo kan köras helt
+på plattformens modeller.
+
+`max_input_tokens` och `max_output_tokens` är satta av oss (32768/4096) och
+medvetet försiktiga. Plattformens modellista säger ingenting om kontextfönster, och
+Eneo trunkerar själv utifrån värdet.
+
+## Ta bort Eneo igen
+
+Eneo kör i namnrymden, inte i podden. **Stoppar du VS Code-tjänsten fortsätter Eneo
+att köra** och att ta av kvoten — sex poddar och 22 Gi lagring — tills någon tar bort
+det. Det är samma egenskap som gör att det överlever en poddomstart; den har bara två
+sidor. Se [minnesbanken](../../minnesbank/verktyg/namnrymden-overlever-podden.md).
+
+Två olika saker, och skillnaden är inte kosmetisk:
+
+| | Vad som händer | Data |
+|---|---|---|
+| **Stoppa** | Proxyn ner, alla arbetslaster skalas till noll | Kvar på volymerna |
+| **Ta bort** | Allt märkt `app.kubernetes.io/part-of=eneo` raderas | Borta |
+
+I panelen sitter *Ta bort* på Eneos kort. Den kör ingenting direkt: den leder till en
+sida som visar exakt vilka arbetslaster, tjänster och volymer som försvinner, och
+först där finns knappen. I terminalen:
+
+```bash
+verktyg/kor.sh avinstallera eneo               # allt, databasen med
+verktyg/ta-bort-eneo.sh --behall-data          # arbetslasterna bort, volymerna kvar
 ```
-https://datalab.sspcloud.fr/launcher/ide/vscode-python
-  ?name=«arkai-eneo»
-  &init.personalInit=«https://raw.githubusercontent.com/jakobengdahl/ArkAI/main/verktyg/onyxia-init.sh»
-  &init.personalInitArgs=«bas openwebui»
-  &git.repository=«https://github.com/jakobengdahl/ArkAI.git»
-  &git.branch=«main»
-  &vault.secret=«arkai-hemligheter»
-  &networking.user.enabled=true
-  &networking.user.ports[0]=8081
-  &networking.user.ports[1]=8084
-  &kubernetes.role=«edit»
-  &persistence.size=«50Gi»
-  &resources.limits.memory=«16Gi»
-  &resources.requests.memory=«4Gi»
-```
 
-Mot den ordinarie URL:en är fyra rader nya — `git.branch`, den andra porten,
-`persistence.size` och `resources.requests.memory` — och en är borttagen,
-`autoLaunch`. `kubernetes.role` fanns redan, men här *måste* den vara `edit`,
-inte bara får vara det.
+`--behall-data` är vägen om du vill frigöra poddar men komma tillbaka till samma
+databas senare: en ny `installera` monterar volymerna igen.
 
-### Databasen, som egen tjänst
+Panelens startsida visar också vad som ligger i namnrymden och hur mycket av kvoten
+det tar, så att det går att se att något står kvar utan att leta i `kubectl`.
 
-```
-https://datalab.sspcloud.fr/launcher/databases/postgresql-cnpg
-  ?name=«eneo-db»
-  &imageCatalog.major=«16»
-  &extension.pgvector=true
-  &storage.size=«20Gi»
-```
+## Vad som inte är gjort
 
-Ingen `autoLaunch` här heller, och med flit: användarnamn och lösenord ska fyllas i
-i formuläret och hamna i Vault, inte i en URL i ett publikt repo. Chartet kör
-PostgreSQL 18 som standard; `16` är valt för att matcha det Eneo dokumenterar.
-
-## Arbetsordning i den nya miljön
-
-1. `kubectl auth can-i create deployments` → ska svara `yes`. Gör den inte det är
-   tjänsten startad med fel roll, och inget nedanför fungerar.
-2. Starta `eneo-db` från katalogen. Lägg uppgifterna i Vault.
-3. Deploya Redis — eget manifest, `redis:7-alpine`.
-4. Skriv manifest för backend, frontend och worker från Eneos `docker-compose`.
-   `JWT_SECRET`, `URL_SIGNING_KEY` och `PUBLIC_ORIGIN` i en Secret.
-5. `PUBLIC_ORIGIN` är värdnamnet för port 8084. Det syns med
-   `python3 verktyg/labb.py ingress 8084` när tjänsten kör.
-6. Caddy i podden på 8084: `/api/*`, `/docs`, `/openapi.json`, `/version` till
-   backend-tjänsten, allt annat till frontend-tjänsten.
-7. Modellen kopplas in i Eneos admingränssnitt, inte via miljövariabler:
-   provider `openai` med base-URL mot [plattformens inferens](sspcloud-llm.md).
-
-Blir det gjort hör det hemma som ett skript i `verktyg/installera/`, på samma sätt
-som resten — se [verktygslada.md](verktygslada.md).
-
-## Vad som inte är verifierat
-
-Tre saker kan välta planen, och ingen av dem går att avgöra utan att prova:
-
-**Fungerar frontenden bakom en sökvägsdelande proxy?** Dokumentationen är tyst, och
-`Host()`-routing i Traefik är det enda exemplet. Det här är den största osäkerheten.
-Faller den, är alternativet två exponerade portar och cross-origin-cookies — vilket
-kan kräva ändringar i Eneos cookie-inställningar.
-
-**Kräver Eneo `/v1/embeddings`?** Dokumentationen säger att en OpenAI-kompatibel
-server ska exponera både `/v1/chat/completions` och `/v1/embeddings`. Om
-plattformens inferens gör det är inte kontrollerat. Gör den inte det behövs en egen
-embeddingmodell för att RAG-delen ska fungera.
-
-**Hämtningsgräns på Docker Hub.** `redis:7-alpine` ligger där, och anonyma
-hämtningar i ett delat kluster kan slå i taket. Märks det, får imagen speglas.
+- **Backup.** Databasen ligger på en volym utan säkerhetskopiering. Med CNPG hade det
+  följt med.
+- **Uppgradering.** Byte till en ny Eneo-version är att ändra digesterna i
+  installationsskriptet och köra om det. Migreringarna kör i jobbet. Inte provat.
+- **OIDC och SCIM** — se ovan.
+- **WebSocket genom proxyn.** Strömmande svar via SSE är verifierat. Eneo använder
+  enligt dokumentationen även WebSocket; det har inte prövats separat.
+- **Objektlagring.** Eneo kan lägga filer i en S3-kompatibel tjänst i stället för i
+  databasen. Plattformen har S3 — det är ett rimligt nästa steg, och det skulle
+  samtidigt lösa den delade volymen.
 
 ## Källor
 
 - <https://docs.eneo.ai/docs/getting-started>
 - <https://docs.eneo.ai/guides/deployment>
 - <https://docs.eneo.ai/docs/architecture>
-- <https://docs.eneo.ai/guides/ai-providers>
-- <https://github.com/eneo-ai/eneo>
+- <https://github.com/eneo-ai/eneo> — `docs/deployment/` på taggen `v2.1.1` är det
+  som faktiskt gäller. Dokumentationssajten ligger efter koden.

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Kör en handling ur verktyg/labb.toml — installera, starta eller stoppa.
+# Kör en handling ur verktyg/labb.toml — installera, starta, stoppa, ta bort.
 #
-#   verktyg/kor.sh installera openwebui
-#   verktyg/kor.sh starta openwebui
-#   verktyg/kor.sh stoppa openwebui
+#   verktyg/kor.sh installera eneo
+#   verktyg/kor.sh starta eneo
+#   verktyg/kor.sh stoppa eneo
+#   verktyg/kor.sh avinstallera eneo
 #   verktyg/kor.sh uppsattning chatt-med-verktyg
 #   verktyg/kor.sh lista
 #
@@ -27,7 +28,7 @@ manifest() { python3 verktyg/labb.py "$@" 2>/dev/null; }
 anvandning() {
   cat <<'SLUT'
 Användning:
-  verktyg/kor.sh <installera|starta|stoppa> <tjänst>
+  verktyg/kor.sh <installera|starta|stoppa|avinstallera> <tjänst>
   verktyg/kor.sh atgard <namn>
   verktyg/kor.sh uppsattning <namn>
   verktyg/kor.sh status [tjänst]
@@ -187,6 +188,22 @@ SLUTPY
     esac
   done
 
+  # Åtgärder körs sist: de förutsätter att tjänsterna svarar. Modellkopplingen
+  # i Eneo är en sådan — den skriver mot ett API som måste vara uppe.
+  local atgarder
+  atgarder=$(python3 - "$namn" <<'SLUTPY' 2>/dev/null
+import sys
+sys.path.insert(0, "verktyg")
+import labb
+u = labb.uppsattningar().get(sys.argv[1]) or {}
+print(" ".join(u.get("atgarder", [])))
+SLUTPY
+)
+  local aid
+  for aid in $atgarder; do
+    utfor atgard "$aid"
+  done
+
   python3 verktyg/labb.py mcp-json >/dev/null 2>&1
   klar "Klart. Panelen visar vad som kör."
 }
@@ -194,7 +211,7 @@ SLUTPY
 # ── Ingång ────────────────────────────────────────────────────────────────
 
 case "${1:-}" in
-  installera|starta|stoppa|atgard)
+  installera|starta|stoppa|avinstallera|atgard)
     [ $# -eq 2 ] || { anvandning; exit 2; }
     utfor "$1" "$2"
     ;;

@@ -1,0 +1,184 @@
+# Backend, worker och frontend — steg 3 av 3.
+#
+# Mall, renderas av verktyg/installera/eneo.sh. Läggs på först när jobbet i
+# 02-init.yaml är klart.
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eneo-backend
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  selector:
+    app.kubernetes.io/name: eneo-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eneo-backend
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eneo-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eneo-backend
+        app.kubernetes.io/part-of: eneo
+    spec:
+      containers:
+        - name: backend
+          image: ${BACKEND_IMAGE}
+          envFrom:
+            - configMapRef:
+                name: eneo-backend-konfig
+            - secretRef:
+                name: eneo-hemligheter
+          ports:
+            - containerPort: 8000
+          startupProbe:
+            httpGet:
+              path: /api/healthz
+              port: 8000
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 8000
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              cpu: "4"
+              memory: 4Gi
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: temp
+              mountPath: /tmp
+      volumes:
+        # Compose delar de här två volymerna mellan backend och worker. Det
+        # gör vi inte — lagringsklassen här är ReadWriteOnce, och två poddar
+        # kan inte montera samma volym. Följden står i dokumentationen.
+        - name: data
+          emptyDir: {}
+        - name: temp
+          emptyDir: {}
+
+# ── Worker ────────────────────────────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eneo-worker
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eneo-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eneo-worker
+        app.kubernetes.io/part-of: eneo
+    spec:
+      containers:
+        - name: worker
+          image: ${BACKEND_IMAGE}
+          env:
+            - name: RUN_AS_WORKER
+              value: "true"
+          envFrom:
+            - configMapRef:
+                name: eneo-backend-konfig
+            - secretRef:
+                name: eneo-hemligheter
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "4"
+              memory: 4Gi
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: temp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: temp
+          emptyDir: {}
+
+# ── Frontend ──────────────────────────────────────────────────────────────
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eneo-frontend
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  selector:
+    app.kubernetes.io/name: eneo-frontend
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eneo-frontend
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eneo-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eneo-frontend
+        app.kubernetes.io/part-of: eneo
+    spec:
+      containers:
+        - name: frontend
+          image: ${FRONTEND_IMAGE}
+          envFrom:
+            - configMapRef:
+                name: eneo-frontend-konfig
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: eneo-hemligheter
+                  key: JWT_SECRET
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi

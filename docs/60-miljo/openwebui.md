@@ -199,5 +199,7 @@ frågorna den försöker lösa — förvaltning, behörigheter, spårbarhet, upp
 — är precis de frågor som avgör om något går från PoC till produktion hos oss.
 
 Open WebUI är snabbare att komma igång med och bättre för att förstå *tekniken*.
-Lägg upp jämförelsen som ett eget experiment när grunderna sitter, och håll isär
-"vad kan verktyget" från "vad krävs för att förvalta det".
+Håll isär "vad kan verktyget" från "vad krävs för att förvalta det".
+
+Eneo kör sedan 2026-08-28 i labbet, på port 8084 — se [eneo.md](eneo.md). Själva
+jämförelsen är inte gjord; den hör hemma som ett eget experiment.

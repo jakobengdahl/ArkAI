@@ -149,7 +149,11 @@ _ingress_cache: tuple[float, list[dict]] | None = None
 
 
 def ingresser() -> list[dict]:
-    """Ingresser i namnrymden: [{namn, host, portar}].
+    """Ingressernas regler i namnrymden: [{namn, host, portar}].
+
+    En post per *regel*, inte per ingress. Exponerar du två portar lägger
+    Onyxia båda i samma ingress, med ett värdnamn per port — slår man ihop
+    reglerna hamnar den andra porten på den första portens värdnamn.
 
     Kräver bara läsrättigheter, alltså standardrollen `view`. Det är så vi kan
     visa riktiga URL:er till tjänster som kör utanför den här podden.
@@ -166,19 +170,18 @@ def ingresser() -> list[dict]:
         )
         if rå.returncode == 0:
             for post in json.loads(rå.stdout).get("items", []):
-                portar = set()
-                hostar = []
+                namn = post.get("metadata", {}).get("name", "")
                 for regel in post.get("spec", {}).get("rules", []):
-                    if regel.get("host"):
-                        hostar.append(regel["host"])
+                    if not regel.get("host"):
+                        continue
+                    portar = set()
                     for stig in regel.get("http", {}).get("paths", []):
                         p = stig.get("backend", {}).get("service", {}).get("port", {}).get("number")
                         if p:
                             portar.add(int(p))
-                if hostar:
                     resultat.append({
-                        "namn": post.get("metadata", {}).get("name", ""),
-                        "host": hostar[0],
+                        "namn": namn,
+                        "host": regel["host"],
                         "portar": sorted(portar),
                     })
     except (OSError, subprocess.SubprocessError, json.JSONDecodeError, ValueError):
@@ -210,6 +213,67 @@ def egen_ingress_for(port: int) -> str | None:
             continue
         return f"https://{ing['host']}/"
     return None
+
+
+_namnrymd_cache: tuple[float, dict] | None = None
+
+
+def namnrymden() -> dict:
+    """Arbetslaster, volymer och kvot i namnrymden.
+
+    Det här är den enda vy som visar sådant som *överlever den här podden*.
+    Deployar man något i namnrymden — Eneo, en databas — kör det kvar när
+    VS Code-tjänsten stoppas, och fortsätter ta av kvoten. Panelen visar det
+    för att man ska kunna städa, inte bara starta.
+
+    Kräver bara läsrättigheter. Går något inte att läsa utelämnas den delen.
+    """
+    global _namnrymd_cache
+    nu = time.monotonic()
+    if _namnrymd_cache and nu - _namnrymd_cache[0] < 30:
+        return _namnrymd_cache[1]
+
+    def kubectl(*arg: str) -> dict:
+        try:
+            rå = subprocess.run(["kubectl", *arg, "-o", "json"],
+                                capture_output=True, text=True, timeout=10)
+            return json.loads(rå.stdout) if rå.returncode == 0 else {}
+        except (OSError, subprocess.SubprocessError, json.JSONDecodeError, ValueError):
+            return {}
+
+    arbetslaster = []
+    for post in kubectl("get", "deployments,statefulsets,jobs").get("items", []):
+        sort = post.get("kind", "")
+        status = post.get("status", {})
+        if sort == "Job":
+            lage = "klar" if status.get("succeeded") else ("kör" if status.get("active") else "—")
+        else:
+            lage = f"{status.get('readyReplicas', 0)}/{post.get('spec', {}).get('replicas', 0)}"
+        arbetslaster.append({
+            "sort": sort,
+            "namn": post.get("metadata", {}).get("name", ""),
+            "lage": lage,
+            "etiketter": post.get("metadata", {}).get("labels", {}) or {},
+        })
+
+    volymer = [
+        {
+            "namn": p.get("metadata", {}).get("name", ""),
+            "storlek": p.get("spec", {}).get("resources", {}).get("requests", {}).get("storage", ""),
+            "etiketter": p.get("metadata", {}).get("labels", {}) or {},
+        }
+        for p in kubectl("get", "pvc").get("items", [])
+    ]
+
+    kvot = {}
+    for k in kubectl("get", "resourcequota").get("items", []):
+        status = k.get("status", {})
+        for namn, hard in (status.get("hard") or {}).items():
+            kvot[namn] = {"anvant": (status.get("used") or {}).get(namn, "?"), "tak": hard}
+
+    svar = {"arbetslaster": arbetslaster, "volymer": volymer, "kvot": kvot}
+    _namnrymd_cache = (nu, svar)
+    return svar
 
 
 def ingress_match(monster: str) -> str | None:
@@ -458,6 +522,8 @@ def _main(argv: list[str]) -> int:
             if not url:
                 return 1
             print(url)
+        case "namnrymd":
+            print(json.dumps(namnrymden(), ensure_ascii=False, indent=2))
         case "katalog":
             print(LABB)
         case _:

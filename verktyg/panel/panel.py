@@ -256,6 +256,10 @@ def _knappar(tjid: str, s: dict) -> str:
                 delar.append(f'<a class="knapp" href="{e(s["url"])}" target="_blank">Öppna</a>')
             if t.get("stoppa"):
                 delar.append(form("stoppa", "Stoppa"))
+        # Avinstallation är destruktiv och går via en bekräftelsesida, aldrig
+        # direkt från ett kort. Sidan visar vad som faktiskt försvinner.
+        if t.get("avinstallera") and s["tillstand"] in ("installerad", "kor"):
+            delar.append(f'<a class="knapp" href="?bekrafta={e(tjid)}">Ta bort</a>')
         if t.get("dok"):
             dok = urllib.parse.quote(t["dok"])
             delar.append(f'<a class="knapp" href="?sida={dok}">Läs mer</a>')
@@ -373,11 +377,24 @@ def block_miljo(_: str) -> str:
     return f'<p>{prickar}</p><table class="tabellsvag">{tabell}</table>{knapp}'
 
 
+def _storlek(varde: str) -> str:
+    """Kubernetes storleksangivelse till något läsbart: 173343481Ki → 165 GiB."""
+    enheter = {"Ki": 1024, "Mi": 1024**2, "Gi": 1024**3, "Ti": 1024**4}
+    for suffix, faktor in enheter.items():
+        if varde.endswith(suffix):
+            try:
+                byte = float(varde[: -len(suffix)]) * faktor
+            except ValueError:
+                return varde
+            return f"{byte / 1024**4:.1f} TiB" if byte >= 1024**4 else f"{byte / 1024**3:.0f} GiB"
+    return varde
+
+
 def block_namnrymd(_: str) -> str:
     ing = labb.ingresser()
     if not ing:
         return (
-            "<p><em>Kunde inte läsa ingresser. Det kräver läsrättigheter i namnrymden "
+            "<p><em>Kunde inte läsa namnrymden. Det kräver läsrättigheter "
             "(<code>kubectl get ingress</code>).</em></p>"
         )
     rader = "".join(
@@ -386,11 +403,67 @@ def block_namnrymd(_: str) -> str:
         for i in sorted(ing, key=lambda x: x["namn"])
     )
     return (
-        "<table><tr><th>Tjänst i namnrymden</th><th>Adress</th></tr>" + rader + "</table>"
+        "<table><tr><th>Adresser i namnrymden</th><th>Värdnamn</th></tr>" + rader + "</table>"
         "<p style='font-size:13.5px;color:var(--svag)'>Hämtat med "
         "<code>kubectl get ingress</code>. "
         "Det som ligger bakom ett inloggningsskydd svarar ändå på sin hälsokontroll.</p>"
     )
+
+
+def block_kvot(_: str) -> str:
+    """Vad som kör i namnrymden och vad det tar av kvoten.
+
+    Finns för att det som deployats i namnrymden inte försvinner när den här
+    podden gör det. Utan den här vyn är det ingen som ser att en installation
+    står kvar och äter kvot efter att tjänsten den startades från är borta.
+    """
+    n = labb.namnrymden()
+    if not n["arbetslaster"] and not n["volymer"]:
+        return ("<p><em>Kunde inte läsa arbetslasterna. Det kräver läsrättigheter "
+                "(<code>kubectl get deployments</code>).</em></p>")
+
+    kvot = n["kvot"]
+    poddar = kvot.get("count/pods", {})
+    lagring = kvot.get("requests.storage", {})
+    sammanfattning = []
+    if poddar:
+        sammanfattning.append(f'poddar {e(poddar.get("anvant"))} av {e(poddar.get("tak"))}')
+    if lagring:
+        sammanfattning.append(
+            f'lagring {e(_storlek(lagring.get("anvant", "")))} av '
+            f'{e(_storlek(lagring.get("tak", "")))}'
+        )
+
+    # Etiketten app.kubernetes.io/part-of sätts av manifesten i verktyg/, och
+    # värdet är tjänstens id. Andra saker i namnrymden kan ha samma etikett med
+    # ett annat värde — den räknas alltså inte som labbets bara för att den finns.
+    def hor_till_labbet(post: dict) -> bool:
+        return post.get("etiketter", {}).get("app.kubernetes.io/part-of") in labb.tjanster()
+
+    rader = []
+    for a in sorted(n["arbetslaster"], key=lambda x: (x["sort"], x["namn"])):
+        del_av = a["etiketter"].get("app.kubernetes.io/part-of", "")
+        rader.append(
+            f'<tr><td>{e(a["namn"])}</td><td>{e(a["sort"])}</td><td>{e(a["lage"])}</td>'
+            f'<td>{e(del_av)}</td></tr>'
+        )
+    for v in sorted(n["volymer"], key=lambda x: x["namn"]):
+        del_av = v["etiketter"].get("app.kubernetes.io/part-of", "")
+        rader.append(
+            f'<tr><td>{e(v["namn"])}</td><td>Volym</td><td>{e(v["storlek"])}</td>'
+            f'<td>{e(del_av)}</td></tr>'
+        )
+    tabell = (
+        "<table><tr><th>Namn</th><th>Sort</th><th>Läge</th><th>Del av</th></tr>"
+        + "".join(rader) + "</table>"
+    )
+    egna = sum(1 for a in n["arbetslaster"] if hor_till_labbet(a))
+    notis = (
+        f"<p style='font-size:13.5px;color:var(--svag)'>{' · '.join(sammanfattning)}. "
+        f"{egna} av arbetslasterna är deployade härifrån och tas bort med "
+        "<em>Ta bort</em> på tjänstens kort ovan.</p>"
+    ) if sammanfattning else ""
+    return tabell + notis
 
 
 def block_atgarder(_: str) -> str:
@@ -429,6 +502,7 @@ _BLOCKBYGGARE = {
     "status": block_status,
     "miljo": block_miljo,
     "namnrymd": block_namnrymd,
+    "kvot": block_kvot,
 }
 
 
@@ -470,7 +544,7 @@ def sida_markdown(rel: str) -> tuple[int, bytes]:
 
 
 def sida_logg(tjid: str) -> tuple[int, bytes]:
-    handlingar = ("installera", "starta", "stoppa", "uppsattning", "atgard")
+    handlingar = ("installera", "starta", "stoppa", "avinstallera", "uppsattning", "atgard")
     känd = (
         tjid in labb.tjanster()
         or tjid in labb.uppsattningar()
@@ -521,6 +595,41 @@ def sida_logg(tjid: str) -> tuple[int, bytes]:
     )
 
 
+def sida_bekrafta(tjid: str) -> tuple[int, bytes]:
+    """Sista steget före något destruktivt.
+
+    Ingen knapp på ett tjänstekort tar bort något direkt. Den här sidan visar
+    vad som faktiskt försvinner — hämtat med tjänstens egen `avinstallera_visa`
+    ur manifestet — och har den enda knapp som kör det.
+    """
+    if tjid not in labb.tjanster() or not labb.tjanst(tjid).get("avinstallera"):
+        return 404, skal("<h1>Går inte att ta bort</h1>"
+                         "<p>Tjänsten har ingen avinstallation i manifestet.</p>")
+    t = labb.tjanst(tjid)
+    namn = t.get("namn", tjid)
+    varning = t.get("avinstallera_varning", "Det här går inte att ångra.")
+    visa = ""
+    if t.get("avinstallera_visa"):
+        try:
+            ut = subprocess.run(["bash", "-lc", t["avinstallera_visa"]], cwd=ROT,
+                                capture_output=True, text=True, timeout=20)
+            text = (ut.stdout or ut.stderr).strip() or "(ingenting hittades)"
+        except (OSError, subprocess.SubprocessError):
+            text = "(kunde inte läsa)"
+        visa = f"<h2>Det här försvinner</h2><pre class='logg'>{e(text)}</pre>"
+    knapp = (
+        f'<form method="post" action=""><input type="hidden" name="nonce" value="{NONCE}">'
+        f'<input type="hidden" name="id" value="{e(tjid)}">'
+        f'<input type="hidden" name="handling" value="avinstallera">'
+        f'<button type="submit" class="primar">Ta bort {e(namn)}</button></form>'
+        f'<a class="knapp" href="?sida=docs/START.md">Avbryt</a>'
+    )
+    return 200, skal(
+        f"<h1>Ta bort {e(namn)}?</h1>"
+        f'<div class="varning">{e(varning)}</div>{visa}{knapp}'
+    )
+
+
 def starta_handling(handling: str, tjid: str) -> str:
     """Startar kor.sh frånkopplat och returnerar vart vi ska skicka läsaren."""
     if handling == "uppsattning":
@@ -534,7 +643,9 @@ def starta_handling(handling: str, tjid: str) -> str:
         kmd = ["verktyg/kor.sh", "atgard", tjid]
         mal = f"?logg={urllib.parse.quote(tjid)}"
     else:
-        if tjid not in labb.tjanster() or handling not in ("installera", "starta", "stoppa"):
+        if tjid not in labb.tjanster() or handling not in (
+            "installera", "starta", "stoppa", "avinstallera"
+        ):
             return "?sida=docs/START.md"
         kmd = ["verktyg/kor.sh", handling, tjid]
         mal = f"?logg={urllib.parse.quote(tjid)}"
@@ -586,6 +697,10 @@ class Panel(http.server.BaseHTTPRequestHandler):
 
         if hämta("logg"):
             kod, kropp = sida_logg(hämta("logg"))
+            return self._svara(kod, kropp)
+
+        if hämta("bekrafta"):
+            kod, kropp = sida_bekrafta(hämta("bekrafta"))
             return self._svara(kod, kropp)
 
         rel = hämta("sida") or labb.katalog().get("panel", {}).get("startsida", "docs/START.md")

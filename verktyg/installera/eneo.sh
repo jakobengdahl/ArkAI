@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+# Installerar Eneo som riktiga tjänster i namnrymden.
+#
+# Eneo dokumenterar bara docker compose, och det finns ingen containerruntime i
+# labbtjänsten. Det här skriptet gör i stället samma sak med kubectl: databas,
+# kö, migrering, backend, worker och frontend som egna arbetslaster, plus en
+# Caddy i den här podden som lägger frontend och backend på *samma* origin.
+#
+# Tar 10–15 minuter första gången — imagerna är stora och migreringen tar tid.
+# Kör om den när du vill: allt är idempotent, och hemligheterna skapas bara en
+# gång.
+#
+# Kräver att tjänsten startades med kubernetes.role=edit och port 8084
+# exponerad. Ingetdera går att ändra i efterhand — se docs/60-miljo/eneo.md.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+export PATH="$HOME/.local/bin:$PATH"
+
+# Imagerna är pinnade till Eneos egna attesterade digester för v2.1.1
+# (IMAGE-DIGESTS.txt i releasen). Taggen 2.1.1 pekar på samma sak i dag, men
+# en digest kan inte flyttas.
+ENEO_VERSION="2.1.1"
+BACKEND_IMAGE="ghcr.io/eneo-ai/eneo-backend@sha256:b1c9f3790f803e2c5e951ffe64dec73d1fc13958d9f0a99bd8d1b513dce27b84"
+FRONTEND_IMAGE="ghcr.io/eneo-ai/eneo-frontend@sha256:e9e466828f6aae871a652a3f06c2b69793f0afa10f0682437e9b4a9738b5958d"
+DB_IMAGE="pgvector/pgvector:pg16"
+REDIS_IMAGE="redis:7-alpine"
+DB_STORLEK="${ENEO_DB_STORLEK:-20Gi}"
+CADDY_VERSION="2.11.4"
+ENEO_PORT="${ENEO_PORT:-8084}"
+ADMIN_EPOST="${ENEO_ADMIN_EPOST:-labbadmin@exempel.se}"
+
+LABB="${WORKSPACE_DIR:-$HOME/work}/.labb"
+INLOGGNING="$LABB/eneo-inloggning.txt"
+
+export ENEO_VERSION BACKEND_IMAGE FRONTEND_IMAGE DB_IMAGE REDIS_IMAGE \
+       DB_STORLEK ADMIN_EPOST
+
+rendera() {  # rendera <mallfil> — skriver färdig yaml till stdout
+  python3 - "$1" <<'PY'
+import os, pathlib, string, sys
+mall = pathlib.Path(sys.argv[1]).read_text()
+sys.stdout.write(string.Template(mall).substitute(os.environ))
+PY
+}
+
+# ── 1. Förutsättningar ────────────────────────────────────────────────────
+
+echo "1/6  Kontrollerar förutsättningarna"
+
+command -v kubectl >/dev/null || { echo "kubectl saknas — det ska finnas i imagen."; exit 1; }
+
+if [ "$(kubectl auth can-i create deployments 2>/dev/null)" != "yes" ]; then
+  cat <<'MEDD'
+Tjänsten är startad med Kubernetes-rollen view, och då går det inte att
+deploya något. Rollen sätts när tjänsten startar och går inte att ändra i
+efterhand — starta en ny tjänst med kubernetes.role=edit.
+Start-URL:en står i docs/60-miljo/eneo.md.
+MEDD
+  exit 1
+fi
+
+PUBLIC_ORIGIN="$(python3 verktyg/labb.py ingress "$ENEO_PORT" 2>/dev/null)"
+PUBLIC_ORIGIN="${PUBLIC_ORIGIN%/}"
+if [ -z "$PUBLIC_ORIGIN" ]; then
+  cat <<MEDD
+Port $ENEO_PORT är inte exponerad i den här tjänsten. Eneo behöver ett publikt
+värdnamn: både inloggningen och frontendens SSR bygger URL:er av det.
+Portar exponeras när tjänsten startar — se docs/60-miljo/eneo.md.
+MEDD
+  exit 1
+fi
+export PUBLIC_ORIGIN
+echo "     roll edit, port $ENEO_PORT exponerad"
+echo "     Eneo kommer att ligga på $PUBLIC_ORIGIN"
+
+# ── 2. Caddy ──────────────────────────────────────────────────────────────
+
+echo "2/6  Proxyn (Caddy $CADDY_VERSION)"
+if command -v caddy >/dev/null 2>&1; then
+  echo "     finns redan: $(caddy version | head -1)"
+else
+  mkdir -p "$HOME/.local/bin"
+  URL="https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz"
+  curl -fsSL "$URL" | tar -xz -C "$HOME/.local/bin" caddy || {
+    echo "Kunde inte hämta Caddy från $URL"; exit 1; }
+  chmod +x "$HOME/.local/bin/caddy"
+  echo "     installerad i ~/.local/bin — överlever en omstart av podden"
+fi
+
+# ── 3. Hemligheter ────────────────────────────────────────────────────────
+#
+# Skapas en gång. Ligger de redan i namnrymden rör vi dem inte: databasen är
+# krypterad med ENCRYPTION_KEY, och ett nytt värde gör gamla modellnycklar
+# oläsbara.
+
+echo "3/6  Hemligheter"
+if kubectl get secret eneo-hemligheter >/dev/null 2>&1; then
+  echo "     eneo-hemligheter finns redan — lämnas orörd"
+else
+  LOSEN="Labb-$(openssl rand -hex 8)!"
+  kubectl create secret generic eneo-hemligheter \
+    --from-literal=POSTGRES_PASSWORD="$(openssl rand -hex 16)" \
+    --from-literal=JWT_SECRET="$(openssl rand -hex 32)" \
+    --from-literal=URL_SIGNING_KEY="$(openssl rand -hex 32)" \
+    --from-literal=ENCRYPTION_KEY="$(python3 -c 'import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).decode())')" \
+    --from-literal=ENEO_SUPER_API_KEY="$(openssl rand -hex 32)" \
+    --from-literal=ENEO_SUPER_DUPER_API_KEY="$(openssl rand -hex 32)" \
+    --from-literal=DEFAULT_USER_PASSWORD="$LOSEN" >/dev/null || exit 1
+  kubectl label secret eneo-hemligheter app.kubernetes.io/part-of=eneo >/dev/null
+
+  mkdir -p "$LABB"
+  umask 077
+  cat >"$INLOGGNING" <<INL
+Eneo i labbet — första inloggningen
+$(date +%F)
+
+  adress    $PUBLIC_ORIGIN
+  e-post    $ADMIN_EPOST
+  lösenord  $LOSEN
+
+Byt lösenordet vid första inloggningen. Filen ligger utanför repot med flit —
+den ska inte kunna commitas. Lösenordet finns också i Secret:en
+eneo-hemligheter (nyckeln DEFAULT_USER_PASSWORD).
+INL
+  echo "     skapade eneo-hemligheter. Inloggningen står i $INLOGGNING"
+fi
+
+# ── 4. Databas och kö ─────────────────────────────────────────────────────
+
+echo "4/6  Databas och kö"
+rendera verktyg/eneo/01-data.yaml | kubectl apply -f - || exit 1
+echo "     väntar på att postgres och redis svarar (första gången: bildhämtning)"
+kubectl rollout status statefulset/eneo-db --timeout=900s || exit 1
+kubectl rollout status statefulset/eneo-redis --timeout=600s || exit 1
+
+# ── 5. Migrering och första användaren ────────────────────────────────────
+#
+# Jobbet är immutabelt i Kubernetes, så ett gammalt måste bort innan ett nytt
+# kan läggas på. init_db.py är säker att köra om — finns tenant och användare
+# redan hoppar den över dem.
+
+echo "5/6  Migrering och första användaren"
+kubectl delete job eneo-db-init --ignore-not-found >/dev/null
+rendera verktyg/eneo/02-init.yaml | kubectl apply -f - || exit 1
+if ! kubectl wait --for=condition=complete job/eneo-db-init --timeout=900s; then
+  echo
+  echo "Migreringen blev inte klar. Loggen:"
+  kubectl logs job/eneo-db-init --tail=40
+  exit 1
+fi
+
+# ── 6. Backend, worker och frontend ───────────────────────────────────────
+
+echo "6/6  Backend, worker och frontend"
+rendera verktyg/eneo/03-app.yaml | kubectl apply -f - || exit 1
+kubectl rollout status deployment/eneo-backend --timeout=900s || exit 1
+kubectl rollout status deployment/eneo-worker --timeout=600s || exit 1
+kubectl rollout status deployment/eneo-frontend --timeout=600s || exit 1
+
+echo
+echo "Klart. Tjänsterna kör i namnrymden:"
+kubectl get pods -l app.kubernetes.io/part-of=eneo \
+  -o custom-columns=NAMN:.metadata.name,STATUS:.status.phase,STARTAD:.status.startTime
+echo
+echo "Starta proxyn och öppna gränssnittet med:"
+echo "  verktyg/kor.sh starta eneo"
