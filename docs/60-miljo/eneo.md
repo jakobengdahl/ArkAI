@@ -135,27 +135,52 @@ Ingen av dem går att ändra i efterhand.
 | `resources.limits.memory` | `16Gi` | Räcker gott. Klustrets tak är 50 GiB |
 | `resources.requests.memory` | `4Gi` | Så att podden faktiskt schemaläggs med marginal |
 | `init.personalInit` | startskriptet i repot | Panelen och grundmiljön |
-| `init.personalInitArgs` | `bas` | Open WebUI installeras från panelen när den behövs |
+| `init.personalInitArgs` | `bas openwebui` | Samma som labbets ordinarie URL. Open WebUI är den vi jämför mot |
 | `git.repository` | `https://github.com/jakobengdahl/ArkAI.git` | Klonas till `~/work/ArkAI` |
 | `git.branch` | `main` | Utan detta klonas standardgrenen. Planen och skripten ligger i `main` |
 | `vault.secret` | `arkai-hemligheter` | Modellnyckeln, se [starta-labbet.md](starta-labbet.md) |
 
 ### Start-URL
 
+Samma form som [labbets ordinarie URL](starta-labbet.md#urlen) — värden inom «…»
+URL-kodas, och en riktig URL står på en rad. `autoLaunch` är borttagen: den här
+tjänsten har inställningar man vill se i formuläret innan den startar.
+
 ```
-https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=arkai-eneo&init.personalInit=https%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh&init.personalInitArgs=bas&git.repository=https%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git&git.branch=main&vault.secret=arkai-hemligheter&kubernetes.role=edit&persistence.size=50Gi&resources.limits.memory=16Gi&resources.requests.memory=4Gi&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084
+https://datalab.sspcloud.fr/launcher/ide/vscode-python
+  ?name=«arkai-eneo»
+  &init.personalInit=«https://raw.githubusercontent.com/jakobengdahl/ArkAI/main/verktyg/onyxia-init.sh»
+  &init.personalInitArgs=«bas openwebui»
+  &git.repository=«https://github.com/jakobengdahl/ArkAI.git»
+  &git.branch=«main»
+  &vault.secret=«arkai-hemligheter»
+  &networking.user.enabled=true
+  &networking.user.ports[0]=8081
+  &networking.user.ports[1]=8084
+  &kubernetes.role=«edit»
+  &persistence.size=«50Gi»
+  &resources.limits.memory=«16Gi»
+  &resources.requests.memory=«4Gi»
 ```
+
+Mot den ordinarie URL:en är fyra rader nya — `git.branch`, den andra porten,
+`persistence.size` och `resources.requests.memory` — och en är borttagen,
+`autoLaunch`. `kubernetes.role` fanns redan, men här *måste* den vara `edit`,
+inte bara får vara det.
 
 ### Databasen, som egen tjänst
 
 ```
-https://datalab.sspcloud.fr/launcher/databases/postgresql-cnpg?name=eneo-db&imageCatalog.major=16&extension.pgvector=true&storage.size=20Gi
+https://datalab.sspcloud.fr/launcher/databases/postgresql-cnpg
+  ?name=«eneo-db»
+  &imageCatalog.major=«16»
+  &extension.pgvector=true
+  &storage.size=«20Gi»
 ```
 
-`autoLaunch` är med flit **inte** satt här: användarnamn och lösenord ska fyllas i
-i formuläret. De hör hemma i Vault, inte i en URL i ett publikt repo.
-Chartet kör PostgreSQL 18 som standard; `16` är valt för att matcha det Eneo
-dokumenterar.
+Ingen `autoLaunch` här heller, och med flit: användarnamn och lösenord ska fyllas i
+i formuläret och hamna i Vault, inte i en URL i ett publikt repo. Chartet kör
+PostgreSQL 18 som standard; `16` är valt för att matcha det Eneo dokumenterar.
 
 ## Arbetsordning i den nya miljön
 
