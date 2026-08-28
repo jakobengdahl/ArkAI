@@ -49,6 +49,13 @@ uv python install 3.11
 uv tool install --python 3.11 open-webui
 ```
 
+## Caddy för Eneo
+
+Eneo behöver en proxy i podden som lägger frontend och backend på samma värdnamn.
+Binären hämtas från Caddys releaser till `~/.local/bin` av
+`./verktyg/kor.sh installera eneo` och överlever en omstart som allt annat där. Själva
+Eneo kör i namnrymden och behöver inte installeras om — se [eneo.md](eneo.md).
+
 ## Python-beroenden för experiment
 
 Använd `uv` med en projektlokal virtuell miljö — inte `pip install` mot systemets

@@ -149,7 +149,11 @@ _ingress_cache: tuple[float, list[dict]] | None = None
 
 
 def ingresser() -> list[dict]:
-    """Ingresser i namnrymden: [{namn, host, portar}].
+    """Ingressernas regler i namnrymden: [{namn, host, portar}].
+
+    En post per *regel*, inte per ingress. Exponerar du två portar lägger
+    Onyxia båda i samma ingress, med ett värdnamn per port — slår man ihop
+    reglerna hamnar den andra porten på den första portens värdnamn.
 
     Kräver bara läsrättigheter, alltså standardrollen `view`. Det är så vi kan
     visa riktiga URL:er till tjänster som kör utanför den här podden.
@@ -166,19 +170,18 @@ def ingresser() -> list[dict]:
         )
         if rå.returncode == 0:
             for post in json.loads(rå.stdout).get("items", []):
-                portar = set()
-                hostar = []
+                namn = post.get("metadata", {}).get("name", "")
                 for regel in post.get("spec", {}).get("rules", []):
-                    if regel.get("host"):
-                        hostar.append(regel["host"])
+                    if not regel.get("host"):
+                        continue
+                    portar = set()
                     for stig in regel.get("http", {}).get("paths", []):
                         p = stig.get("backend", {}).get("service", {}).get("port", {}).get("number")
                         if p:
                             portar.add(int(p))
-                if hostar:
                     resultat.append({
-                        "namn": post.get("metadata", {}).get("name", ""),
-                        "host": hostar[0],
+                        "namn": namn,
+                        "host": regel["host"],
                         "portar": sorted(portar),
                     })
     except (OSError, subprocess.SubprocessError, json.JSONDecodeError, ValueError):

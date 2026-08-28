@@ -77,6 +77,23 @@ stoppa = "verktyg/starta-openwebui.sh --stoppa"
 halsa = "http://127.0.0.1:8081/health"
 egen_ingress = true
 
+[tjanst.eneo]
+namn = "Eneo"
+beskrivning = "Öppen AI-plattform för svensk offentlig sektor, med behörighetsmodell, revisionslogg och OIDC. Vår jämförelse mot Open WebUI när frågan är drift, inte demo."
+dok = "docs/60-miljo/eneo.md"
+# Delvis lokal: själva Eneo kör som arbetslaster i namnrymden och överlever en
+# poddomstart. Det som kör här i podden är proxyn som lägger frontend och
+# backend på samma origin — och den behöver den exponerade porten.
+typ = "lokal"
+steg = "begaran"
+port = 8084
+finns = "command -v caddy && kubectl get deployment eneo-backend"
+installera = "verktyg/installera/eneo.sh"
+starta = "verktyg/starta-eneo.sh --bakgrund"
+stoppa = "verktyg/starta-eneo.sh --stoppa"
+halsa = "http://127.0.0.1:8084/version"
+egen_ingress = true
+
 [tjanst.hello-mcp]
 namn = "Hello-MCP"
 beskrivning = "Minsta möjliga MCP-server, exponerar minnesbanken. Pratar stdio — den startas av klienten, inte av oss."
@@ -134,6 +151,13 @@ ingress_matchning = "metadatagraph"
 # Sådant som ska gå att köra med en knapp men inte är en tjänst. Samma lås och
 # samma loggar som tjänsterna, så panelen behöver inte veta något särskilt om
 # dem. Id:n delar namnrymd med tjänsterna — återanvänd inte ett id.
+
+[atgard.koppla-eneo]
+namn = "Koppla in modellerna i Eneo"
+beskrivning = "Lägger upp plattformens inferens som modelleverantör i Eneo, med chattmodell och embeddingmodell, och kontrollerar att båda svarar. Kör den när du bytt nyckel — Eneo läser inte nyckeln ur miljön."
+knapp = "Koppla in"
+kommando = "verktyg/konfigurera-eneo.py --skriv"
+dok = "docs/60-miljo/eneo.md"
 
 [atgard.koppla-openwebui]
 namn = "Koppla in modell och verktyg i Open WebUI"

@@ -1,0 +1,252 @@
+# Databas, kö och konfiguration — steg 1 av 3.
+#
+# Mall, renderas av verktyg/installera/eneo.sh: platshållarna ersätts där. Filen går
+# inte att köra med kubectl apply som den är.
+#
+# Eneo dokumenterar bara docker compose. De tre filerna här är samma sex
+# tjänster översatta till Kubernetes — db, redis, db-init, backend, worker,
+# frontend — i den ordning de måste komma upp. Skillnaderna mot compose-filen
+# står i docs/60-miljo/eneo.md.
+#
+# Hemligheterna ligger i Secret:en eneo-hemligheter, som skriptet skapar en
+# gång och sedan låter vara. Allt annat står i ConfigMap:arna nedan.
+
+# ── Databas ───────────────────────────────────────────────────────────────
+#
+# pgvector/pgvector:pg16 — samma image som Eneos compose-fil. PGDATA pekar på
+# en underkatalog med flit: monteringspunkten innehåller lost+found, och då
+# vägrar initdb.
+apiVersion: v1
+kind: Service
+metadata:
+  name: eneo-db
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  selector:
+    app.kubernetes.io/name: eneo-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: eneo-db
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  serviceName: eneo-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eneo-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eneo-db
+        app.kubernetes.io/part-of: eneo
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: postgres
+          image: ${DB_IMAGE}
+          env:
+            - name: POSTGRES_DB
+              value: eneo
+            - name: POSTGRES_USER
+              value: postgres
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eneo-hemligheter
+                  key: POSTGRES_PASSWORD
+          ports:
+            - containerPort: 5432
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app.kubernetes.io/part-of: eneo
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: ${DB_STORLEK}
+
+# ── Kö och cache ──────────────────────────────────────────────────────────
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eneo-redis
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  selector:
+    app.kubernetes.io/name: eneo-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: eneo-redis
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  serviceName: eneo-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eneo-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eneo-redis
+        app.kubernetes.io/part-of: eneo
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: redis
+          image: ${REDIS_IMAGE}
+          args: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app.kubernetes.io/part-of: eneo
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi
+
+# ── Konfiguration ─────────────────────────────────────────────────────────
+#
+# Värdena kommer från Eneos env_backend.template (v${ENEO_VERSION}). Bara det
+# som avviker från mallens standardvärden är värt att läsa här:
+#
+#   POSTGRES_HOST/REDIS_HOST  tjänstenamnen ovan i stället för compose-namnen
+#   PUBLIC_ORIGIN             poddens exponerade port 8084, se skriptet
+#   USING_CRAWL=false         webbkryparen drar långa jobb och minne, och det
+#                             är inte den vi jämför plattformar på
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eneo-backend-konfig
+  labels:
+    app.kubernetes.io/part-of: eneo
+data:
+  POSTGRES_USER: postgres
+  POSTGRES_DB: eneo
+  POSTGRES_HOST: eneo-db
+  POSTGRES_PORT: "5432"
+  REDIS_HOST: eneo-redis
+  REDIS_PORT: "6379"
+
+  API_PREFIX: /api/v1
+  API_KEY_LENGTH: "64"
+  API_KEY_HEADER_NAME: X-API-Key
+  JWT_AUDIENCE: "*"
+  JWT_ISSUER: ENEO
+  JWT_EXPIRY_TIME: "86400"
+  JWT_ALGORITHM: HS256
+  JWT_TOKEN_PREFIX: Bearer
+
+  PUBLIC_ORIGIN: ${PUBLIC_ORIGIN}
+  FEDERATION_PER_TENANT_ENABLED: "false"
+  TENANT_CREDENTIALS_ENABLED: "false"
+
+  DB_POOL_SIZE: "10"
+  DB_POOL_MAX_OVERFLOW: "5"
+  DB_POOL_TIMEOUT: "30"
+  DB_POOL_PRE_PING: "true"
+  NUM_WORKERS: "2"
+  WORKER_MAX_JOBS: "8"
+  TENANT_WORKER_CONCURRENCY_LIMIT: "4"
+  TENANT_WORKER_SEMAPHORE_TTL_SECONDS: "39600"
+
+  UPLOAD_FILE_TO_SESSION_MAX_SIZE: "10485760"
+  UPLOAD_IMAGE_TO_SESSION_MAX_SIZE: "10485760"
+  UPLOAD_MAX_FILE_SIZE: "10485760"
+  TRANSCRIPTION_MAX_FILE_SIZE: "10485760"
+  MAX_IN_QUESTION: "1"
+
+  USING_ACCESS_MANAGEMENT: "true"
+  USING_AZURE_MODELS: "false"
+  USING_IAM: "false"
+  USING_IMAGE_GENERATION: "false"
+  USING_CRAWL: "false"
+  TESTING: "false"
+  DEV: "false"
+
+  DEFAULT_TENANT_NAME: ArkAI-labbet
+  DEFAULT_TENANT_QUOTA_LIMIT: "10737418240"
+  DEFAULT_USER_NAME: labbadmin
+  DEFAULT_USER_EMAIL: ${ADMIN_EPOST}
+
+  MIGRATION_AUTO_RECALC_THRESHOLD: "30"
+  LOGLEVEL: INFO
+  JSON_LOGS: "true"
+  OTEL_SERVICE_NAME: eneo
+  OTEL_SERVICE_VERSION: "${ENEO_VERSION}"
+  OTEL_DEPLOYMENT_ENVIRONMENT: labb
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eneo-frontend-konfig
+  labels:
+    app.kubernetes.io/part-of: eneo
+data:
+  # SSR pratar med backend inifrån namnrymden, webbläsaren via samma origin
+  # som frontenden. Skiljer de sig åt hamnar sessionskakan på fel värdnamn.
+  ENEO_BACKEND_URL: ${PUBLIC_ORIGIN}
+  ENEO_BACKEND_SERVER_URL: http://eneo-backend:8000
+  PUBLIC_ENEO_BACKEND_URL: ${PUBLIC_ORIGIN}
+  ORIGIN: ${PUBLIC_ORIGIN}
+  PUBLIC_ORIGIN: ${PUBLIC_ORIGIN}
+  FEDERATION_PER_TENANT_ENABLED: "false"
+  SHOW_WEB_SEARCH: "false"
+  NODE_ENV: production
+  LOGLEVEL: INFO
+

@@ -12,7 +12,7 @@ Allt om SSP Cloud/Onyxia, verktygen och hur man får saker att köra.
 | [sspcloud-llm.md](sspcloud-llm.md) | Plattformens LLM-inferens och API-nyckel |
 | [ai-verktyg-i-imagen.md](ai-verktyg-i-imagen.md) | opencode och Continue är förinstallerade |
 | [openwebui.md](openwebui.md) | Open WebUI: installation, start, åtkomst |
-| [eneo.md](eneo.md) | Eneo som alternativ till Open WebUI — förutsättningar och plan. Kräver en miljö startad med andra inställningar |
+| [eneo.md](eneo.md) | Eneo: installerad i namnrymden, med proxy i podden. Kräver `kubernetes.role=edit` vid start |
 | [metadatagrafen.md](metadatagrafen.md) | Pilotinstansen med metadata som graf, och dess MCP-server |
 | [delade-resurser.md](delade-resurser.md) | Projekt, S3, Vault — hur vi delar med varandra |
 

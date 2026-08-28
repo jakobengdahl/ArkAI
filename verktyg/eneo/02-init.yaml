@@ -1,0 +1,46 @@
+# Migreringen och den första användaren — steg 2 av 3.
+#
+# Mall, renderas av verktyg/installera/eneo.sh. Körs efter att databasen svarar
+# och före backend och worker: både init_db.py och backendens egen start kör
+# `alembic upgrade head`, och två samtidiga migreringar mot samma databas är
+# inte värt att chansa på.
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: eneo-db-init
+  labels:
+    app.kubernetes.io/part-of: eneo
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eneo-db-init
+        app.kubernetes.io/part-of: eneo
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: db-init
+          image: ${BACKEND_IMAGE}
+          command:
+            - sh
+            - -c
+            - >-
+              until python -c "import socket; socket.create_connection(('eneo-db', 5432), 5)" 2>/dev/null;
+              do echo "väntar på databasen"; sleep 3; done;
+              exec python init_db.py
+          envFrom:
+            - configMapRef:
+                name: eneo-backend-konfig
+            - secretRef:
+                name: eneo-hemligheter
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+
