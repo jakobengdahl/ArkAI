@@ -62,6 +62,32 @@ Det är inte funktionaliteten. Det är allt annat.
 | Ägare | den som byggde | namngiven person | förvaltningsorganisation |
 | Dokumentation | en experimentfil | tillräckligt för att någon annan ska kunna köra det | tillräckligt för att någon annan ska kunna ta över |
 
+## Samma funktion, olika mängd byggstenar
+
+Det syns tydligast om man ritar upp vad lösningen faktiskt består av i vart och ett av
+stegen.
+
+![Tre kolumner med staplade komponenter. PoC består av modell och prompt, egna
+dokument i kontexten och ett verktyg. Piloten lägger till loggning, kända fall att
+mäta mot samt ägare och slutdatum. Produktion med känsliga uppgifter lägger dessutom
+till behörighet per användare, filtrering och gallring, regressionstest vid
+modellbyte samt översyn och förvaltning. Understa komponenten är densamma i alla
+tre.](../bilder/krav-vaxer.svg)
+
+Understa lådan är densamma överallt: modellen och prompten. Det är den som demon
+visar, och den som tar minst tid. Allt som skiljer kolumnerna åt är sådant som inte
+syns förrän någon annan än den som byggde ska använda lösningen — eller förrän någon
+frågar varför den svarade som den gjorde.
+
+**Känsliga uppgifter är det som ökar antalet komponenter mest.** Behörighet knuten
+till användaren i stället för till en teknisk användare, filtrering av vad som får
+skickas iväg, gallring, och en väg att eskalera när något går fel. Det är fyra
+konstruktionsfrågor och inte en instruktion i en prompt — och de går inte att lägga
+till på slutet utan att bygga om.
+
+Vilka byggstenar som finns att välja på, och vad var och en löser, står i
+[20-tekniker/byggstenar.md](../20-tekniker/byggstenar.md#när-modellen-inte-räcker).
+
 ## Fyra fällor
 
 **Att kalla en PoC för pilot.** Piloter har användare och ägare. Utan det är det en

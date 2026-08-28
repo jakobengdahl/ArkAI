@@ -25,8 +25,13 @@ Använd [MALL-teknik.md](MALL-teknik.md) för nya sidor.
 
 ## Hur de hänger ihop
 
-Det är lätt att läsa listan som åtta konkurrerande alternativ. De är det inte —
-de sitter på olika nivåer:
+Det är lätt att läsa listan som åtta konkurrerande alternativ. De är det inte. De
+sitter på olika nivåer, och de flesta lösningar använder flera samtidigt: språkmodellen
+i botten, och ovanpå den de tekniker som behövs för att komma upp i den säkerhet,
+precision eller spårbarhet som just det användningsfallet kräver. Den påbyggnaden är
+ritad i [byggstenar.md](byggstenar.md#när-modellen-inte-räcker).
+
+De fyra grupperna:
 
 **MCP** är rör. Det är hur ett verktyg kopplas in, inte vad verktyget gör. Nästan
 allt annat på listan kan levereras via MCP.
@@ -40,6 +45,11 @@ olika problem och används ofta tillsammans:
 - RAG svarar på *"vad står det om X i våra dokument?"*
 - Minnesbanken svarar på *"vad brukar vi göra i sådana här lägen?"*
 - Grafen svarar på *"vad hänger ihop med det här?"*
+
+![Tre kort bredvid varandra. Hämtning med RAG svarar på vad som står om X i våra
+dokument och ger stycken ur dokument. Minnesbanken svarar på vad vi brukar göra i
+sådana här lägen och ger kurerade lärdomar. Grafminnet svarar på vad som hänger ihop
+med det här och ger noder och relationer.](../bilder/tre-minnena.svg)
 
 Att blanda ihop de tre är den vanligaste orsaken till att en lösning känns nästan
 rätt men inte blir användbar.

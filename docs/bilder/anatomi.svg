@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 420" width="880" height="420"
+     font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-size="14" fill="#1a1a1a"
+     role="img" aria-labelledby="titel beskrivning">
+<title id="titel">Var byggstenarna sitter i en lösning</title>
+<desc id="beskrivning">Användaren möter applikationslagret, som går vidare till orkestreringen och modellen. Orkestreringen drar in kontext och minne, verktygslagret och arbetssätt som paket, vilka i sin tur når källsystem, register och dokument. Runt om alltihop ligger behörighet, loggning och mänsklig översyn; under ligger driftmiljö, utvärdering och livscykelhantering.</desc>
+<style>
+/* Ljust läge ligger i presentationsattribut på varje element, så figuren blir rätt
+   även i renderare som inte kör CSS. Här finns bara mörkerlägets avvikelser. */
+@media (prefers-color-scheme:dark){
+  .kort{fill:#202024;stroke:#3d3d46}
+  .ruta{fill:#2a2a31;stroke:#3d3d46}
+  .accruta{fill:#22303f;stroke:#6cb6ff}
+  .bas{fill:#6f6fd8;stroke:#6f6fd8}
+  .ram{stroke:#a3a3ae}
+  .lin{stroke:#3d3d46}
+  .pil{stroke:#a3a3ae}
+  .spets{fill:#a3a3ae}
+  text{fill:#e9e9ee}
+  .s,.h{fill:#a3a3ae}
+  .v,.vs{fill:#ffffff}
+}
+</style>
+<defs>
+  <marker id="pil" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path class="spets" d="M0 0 L10 5 L0 10 z" fill="#5f5f6a"/>
+  </marker>
+</defs>
+
+<rect class="kort" x="0.5" y="0.5" width="879" height="419" rx="10" fill="#ffffff" stroke="#d8d8de"/>
+<text class="h" x="24" y="44" font-size="12" font-weight="600" fill="#5f5f6a">Runt om alltihop: behörighet · loggning · mänsklig översyn</text>
+<rect class="ram" x="20" y="58" width="840" height="300" rx="12" fill="none" stroke="#5f5f6a" stroke-dasharray="5 5"/>
+
+<!-- kedjan -->
+<rect class="ruta" x="40" y="86" width="120" height="58" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="56" y="112" font-size="14" font-weight="600" fill="#1a1a1a">Användaren</text>
+<text class="s" x="56" y="129" font-size="11.5" fill="#5f5f6a">har uppgiften</text>
+
+<rect class="ruta" x="196" y="86" width="180" height="58" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="212" y="112" font-size="14" font-weight="600" fill="#1a1a1a">Applikationslagret</text>
+<text class="s" x="212" y="129" font-size="11.5" fill="#5f5f6a">chatt, editor, flöde</text>
+
+<rect class="ruta" x="412" y="86" width="180" height="58" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="428" y="112" font-size="14" font-weight="600" fill="#1a1a1a">Orkestrering</text>
+<text class="s" x="428" y="129" font-size="11.5" fill="#5f5f6a">håller ihop stegen</text>
+
+<rect class="bas" x="628" y="86" width="192" height="58" rx="7" fill="#1b1b6e" stroke="#1b1b6e"/>
+<text class="t v" x="644" y="112" font-size="14" font-weight="600" fill="#ffffff">Modellen</text>
+<text class="vs" x="644" y="129" font-size="11.5" fill="#ffffff" opacity=".85">resonemang och text</text>
+
+<path class="pil" d="M160 115 H196" stroke="#5f5f6a" fill="none" marker-end="url(#pil)"/>
+<path class="pil" d="M376 115 H412" stroke="#5f5f6a" fill="none" marker-end="url(#pil)"/>
+<path class="pil" d="M592 115 H628" stroke="#5f5f6a" fill="none" marker-end="url(#pil)"/>
+
+<!-- bussen ned till det orkestreringen drar in -->
+<path class="pil" d="M502 144 V170 M286 170 H718 M286 170 V190 M718 170 V190" stroke="#5f5f6a" fill="none"/>
+<path class="pil" d="M502 170 V190" stroke="#5f5f6a" fill="none"/>
+
+<rect class="ruta" x="196" y="196" width="180" height="58" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="212" y="222" font-size="14" font-weight="600" fill="#1a1a1a">Kontext och minne</text>
+<text class="s" x="212" y="239" font-size="11.5" fill="#5f5f6a">RAG · minnesbank · graf</text>
+
+<rect class="ruta" x="412" y="196" width="180" height="58" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="428" y="222" font-size="14" font-weight="600" fill="#1a1a1a">Verktygslagret</text>
+<text class="s" x="428" y="239" font-size="11.5" fill="#5f5f6a">MCP · funktioner</text>
+
+<rect class="ruta" x="628" y="196" width="180" height="58" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="644" y="222" font-size="14" font-weight="600" fill="#1a1a1a">Arbetssätt</text>
+<text class="s" x="644" y="239" font-size="11.5" fill="#5f5f6a">skills, mallar</text>
+
+<path class="pil" d="M286 254 V280" stroke="#5f5f6a" fill="none" marker-end="url(#pil)"/>
+<path class="pil" d="M502 254 V280" stroke="#5f5f6a" fill="none" marker-end="url(#pil)"/>
+
+<rect class="ruta" x="196" y="280" width="396" height="58" rx="7" fill="#f4f4f7" stroke="#d8d8de"/>
+<text class="t" x="212" y="306" font-size="14" font-weight="600" fill="#1a1a1a">Källsystem, register, dokument</text>
+<text class="s" x="212" y="323" font-size="11.5" fill="#5f5f6a">det som verktygen och hämtningen faktiskt når</text>
+
+<text class="h" x="24" y="382" font-size="12" font-weight="600" fill="#5f5f6a">Under alltihop: driftmiljö · utvärdering · livscykelhantering</text>
+<text class="s" x="24" y="404" font-size="11.5" fill="#5f5f6a">Det som saknas i nästan varje demo är ramen och botten — inte lådorna i mitten.</text>
+</svg>

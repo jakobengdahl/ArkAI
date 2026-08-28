@@ -29,6 +29,7 @@ en fil; ta bort raden när du tar bort filen.
 - [Installera i hemkatalogen, inte med apt](verktyg/installera-i-hemkatalogen-inte-med-apt.md) — Node och gh som tarball i ~/.local överlever omstart
 - [Sondera tillstånd, läs det inte](verktyg/sondera-tillstand-las-det-inte.md) — statusfiler ljuger efter en poddomstart
 - [Exponerad port kräver inloggning](verktyg/exponerad-port-kraver-inloggning.md) — publikt värdnamn, och Open WebUI godtar bara värdet True
+- [CSS-variabler i SVG blir svarta bilder](verktyg/svg-css-variabler-blir-svarta.md) — figurernas färger hör hemma i presentationsattribut
 
 ## Domänkunskap
 

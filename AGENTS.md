@@ -94,10 +94,15 @@ Kod, filnamn och kommandon på svenska där det är naturligt; följ det som red
 | `docs/10-anvandningsfall/` | `UF-NNN-namn.md` | `MALL-anvandningsfall.md` |
 | `docs/20-tekniker/` | `namn.md`, ingen numrering | `MALL-teknik.md` |
 | `docs/30-experiment/` | `EXP-NNN-namn.md` | `MALL-experiment.md` |
+| `docs/bilder/` | `namn.svg`, en fil per figur | [`docs/bilder/README.md`](docs/bilder/README.md) |
 | `minnesbank/` | en post per fil, i rätt kategori | `MALL-minnespost.md` |
 
 Använd mallarna. Uppdatera indexet (`MINNE.md`, README-tabellerna) när du lägger till
 en fil — en fil som inte står i indexet hittas inte.
+
+Figurer: SVG, svenska, alt-text som beskriver innehållet, och **ingen information i
+bilden som inte står i texten**. Färger och uppbyggnad står i
+[`docs/bilder/README.md`](docs/bilder/README.md) — läs den innan du ritar en ny.
 
 ## Skrivsätt
 

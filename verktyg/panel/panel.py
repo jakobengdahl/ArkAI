@@ -35,6 +35,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import markdown
+from markdown.extensions.toc import slugify_unicode
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import labb  # noqa: E402
@@ -192,6 +193,9 @@ def rendera_markdown(fil: Path) -> str:
     ut = markdown.markdown(
         text,
         extensions=["tables", "fenced_code", "sane_lists", "attr_list", "toc", "md_in_html"],
+        # Utan detta blir "## Två spår" id:t "tva-spar", medan GitHub behåller
+        # "två-spår". Länkarna i filerna är skrivna för GitHub — följ dem.
+        extension_configs={"toc": {"slugify": slugify_unicode}},
     )
     return gor_lankar_relativa(ut, fil)
 
