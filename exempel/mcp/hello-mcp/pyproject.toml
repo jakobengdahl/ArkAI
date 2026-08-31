@@ -5,6 +5,8 @@ description = "Minimal MCP-server som exponerar ArkAI:s minnesbank"
 requires-python = ">=3.11"
 dependencies = [
     "mcp>=1.2.0",
+    # Bara för --http. stdio-läget klarar sig utan.
+    "uvicorn>=0.30",
 ]
 
 [tool.uv]

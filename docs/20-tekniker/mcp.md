@@ -70,19 +70,33 @@ Det är den konkreta mekanismen bakom "teknikerna ska gå att kombinera": utan e
 delad källa driver tre konfigurationer isär, och man felsöker skillnader mellan
 klienter i stället för att jämföra dem.
 
-**Alla klienter pratar dock inte MCP.** Open WebUI kopplar in verktyg som
-OpenAPI-servrar, så där behövs bryggan `mcpo` som översätter:
+**Alla klienter pratar dock inte MCP, och de som gör det pratar inte samma
+transport.** Det är den praktiska skillnaden mellan klienterna, och den styr vad
+som går att koppla in var:
 
 ```
-hello-mcp (stdio) ─┐
-                   ├─→ mcpo :8083 (OpenAPI) ─→ Open WebUI
-metadatagrafen ────┘
+hello-mcp ──stdio──────────────→ Claude Code, Continue, OpenClaw
+          └─Streamable HTTP :8081 ─→ Eneo
 
-samma servrar ─────────────────────────────→ Claude Code, OpenClaw (MCP direkt)
+metadatagrafen ──SSE ────────────→ Claude Code, OpenClaw
+               └─Streamable HTTP ─→ Eneo
+
+(hello-mcp) ──stdio──→ mcpo :8083 (OpenAPI) ──→ Open WebUI
 ```
 
-Kör igång kedjan med `verktyg/kor.sh uppsattning chatt-med-verktyg`, eller från
-[labbpanelen](../60-miljo/panelen.md).
+Tre lärdomar ligger i den bilden:
+
+- **stdio räcker för klienter som startar servern själva.** Claude Code och
+  Continue gör det, och då är behörigheten given.
+- **Eneo gör det inte.** Den kör i namnrymden och når bara servrar på ett publikt
+  värdnamn, över Streamable HTTP. Se
+  [minnesbanken](../../minnesbank/verktyg/eneo-mcp-kraver-streamable-http.md).
+- **Open WebUI pratar inte MCP alls** och kräver bryggan `mcpo`. Att det ledet
+  behövdes var i sig ett resultat — och en av anledningarna till att Open WebUI
+  [avvecklas i labbet](../60-miljo/openwebui.md).
+
+Kör igång kedjan från [labbpanelen](../60-miljo/panelen.md), eller med
+`verktyg/kor.sh uppsattning eneo-med-verktyg`.
 
 ## När det passar
 
@@ -114,25 +128,30 @@ och gör dessutom modellen sämre på att välja rätt.
 
 ## Från MCP-server till verktyg i chatten
 
-Kedjan har tre led, och det är värt att hålla isär dem:
+Att servern kör betyder inte att någon kan använda den. Det sista ledet är rent
+klickande, och det är det som brukar glömmas — därför gör labbet det åt dig.
 
-1. **MCP-servern** installeras — den pratar MCP, det protokoll agenter förstår
-2. **Bryggan (mcpo)** läser `~/work/.labb/mcp.json` och exponerar varje server
-   som en OpenAPI-server på sin egen sökväg
-3. **Open WebUI** pekas mot de sökvägarna som *verktygsservrar*
-
-Steg 3 är det som brukar glömmas, och det är rent klickande. Därför gör labbet det
-åt dig: bryggan skriver in servrarna i Open WebUI när den startar, och panelen har
-knappen *Koppla in* under **Åtgärder** för att göra om det.
+**I Eneo** läggs servern upp per organisation, varefter varje assistent väljer
+vilka av dess verktyg den får använda:
 
 ```bash
-verktyg/konfigurera-openwebui.py --visa    # vilka servrar skulle kopplas in
-verktyg/kor.sh atgard koppla-openwebui     # samma sak som knappen
+verktyg/koppla-mcp-till-eneo.py hello-mcp      # vad som skulle sättas
+verktyg/kor.sh koppla_eneo hello-mcp           # samma sak som knappen i panelen
 ```
 
-Att kedjan är tre led och inte ett är i sig ett resultat värt att notera: en
-agent når MCP direkt, en chattbot behöver en översättning. Det säger något om var
-respektive upplägg passar.
+Kvittot är antalet verktyg Eneo hittade. Noll betyder att den inte nådde servern.
+
+**I Open WebUI** går det genom bryggan i stället — servern, sedan `mcpo` som
+exponerar den som OpenAPI, sedan Open WebUI som pekas mot sökvägen:
+
+```bash
+verktyg/konfigurera-openwebui.py --skriv       # Open WebUI avvecklas, se dokumentationen
+```
+
+Att det ena är ett led och det andra tre är i sig ett resultat värt att notera: en
+plattform byggd för förvaltning har verktygshantering som en egen funktion, med
+behörighet runt. En chattbot har det inte, och då blir bryggan både en extra del
+att förvalta och ett ställe där behörigheten försvinner.
 
 ## Vad vi har provat
 

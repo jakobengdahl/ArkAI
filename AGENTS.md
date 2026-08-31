@@ -154,6 +154,7 @@ Allt som går att installera eller starta står i
 verktyg/kor.sh status                        # vad är installerat, vad kör
 verktyg/kor.sh installera <tjänst>
 verktyg/kor.sh starta <tjänst>
+verktyg/kor.sh koppla_eneo <tjänst>          # lägg upp den som verktyg/modell i Eneo
 verktyg/kor.sh uppsattning <namn>
 ```
 

@@ -13,10 +13,17 @@ modellen ska veta *vad som finns* utan att behöva ha allt i kontexten.
 Kör:
     uv run server.py            # stdio, det klienter förväntar sig
     uv run server.py --lista    # snabbtest utan MCP-klient
+    uv run server.py --http     # Streamable HTTP, det Eneo kräver
+
+Två transporter, av olika skäl. Claude Code och OpenClaw startar servern själva
+och pratar stdio. Eneo kör i en annan podd och kan bara nå oss över HTTP — den
+stödjer *bara* Streamable HTTP, ingen stdio och ingen SSE. Se
+docs/60-miljo/eneo.md.
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -111,10 +118,68 @@ def sok_minnen(sokord: str) -> str:
     return "\n".join(träffar)
 
 
+# ── HTTP-läget ────────────────────────────────────────────────────────────
+#
+# Över stdio är behörigheten given: klienten startade processen. Över HTTP
+# ligger servern på ett publikt värdnamn, och då är token det enda som skiljer
+# den från öppen. Se minnesbank/verktyg/exponerad-port-kraver-inloggning.md.
+
+
+def _http_app():
+    """Starlette-appen, med token-kontroll framför."""
+    from mcp.server.transport_security import TransportSecuritySettings
+    from starlette.middleware import Middleware
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.responses import JSONResponse, PlainTextResponse
+    from starlette.routing import Route
+
+    token = os.environ.get("HELLO_MCP_TOKEN", "").strip()
+    if not token:
+        sys.exit("HELLO_MCP_TOKEN saknas. Starta med verktyg/starta-hello-mcp.sh.")
+
+    # Värdnamnen servern får svara på. MCP-SDK:n kontrollerar Host-huvudet som
+    # skydd mot DNS-rebinding, och bakom en ingress är värdnamnet inte vårt eget.
+    varden = [v for v in os.environ.get("HELLO_MCP_VARDAR", "").split(",") if v]
+
+    class Token(BaseHTTPMiddleware):
+        async def dispatch(self, begaran, nasta):
+            if begaran.url.path == "/halsa":
+                return await nasta(begaran)
+            huvud = begaran.headers.get("authorization", "")
+            if huvud != f"Bearer {token}":
+                return JSONResponse({"error": "unauthorized"}, status_code=401)
+            return await nasta(begaran)
+
+    app = mcp.streamable_http_app(
+        streamable_http_path="/mcp",
+        # Utan session mellan anropen: en klient bakom en proxy ska inte behöva
+        # hamna på samma process två gånger.
+        stateless_http=True,
+        transport_security=TransportSecuritySettings(
+            enable_dns_rebinding_protection=bool(varden),
+            allowed_hosts=varden,
+            allowed_origins=[f"https://{v}" for v in varden],
+        ),
+    )
+    app.user_middleware.insert(0, Middleware(Token))
+    app.middleware_stack = app.build_middleware_stack()
+    # Hälsokontroll utan token, så att panelen kan se om servern lever.
+    app.router.routes.append(
+        Route("/halsa", lambda _: PlainTextResponse("ok"), methods=["GET"])
+    )
+    return app
+
+
 if __name__ == "__main__":
     if "--lista" in sys.argv:
         # Snabbtest utan MCP-klient — anropar funktionerna direkt.
         print(f"Minnesbank: {MINNESBANK}\n")
         print(lista_minnen())
+    elif "--http" in sys.argv:
+        import uvicorn
+
+        port = int(os.environ.get("HELLO_MCP_PORT", "8081"))
+        print(f"Hello-MCP på http://0.0.0.0:{port}/mcp (Streamable HTTP, token krävs)")
+        uvicorn.run(_http_app(), host="0.0.0.0", port=port, log_level="info")
     else:
         mcp.run()

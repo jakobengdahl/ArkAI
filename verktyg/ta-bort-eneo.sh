@@ -18,7 +18,6 @@ cd "$(git rev-parse --show-toplevel)"
 export PATH="$HOME/.local/bin:$PATH"
 
 ETIKETT="app.kubernetes.io/part-of=eneo"
-LABB="${WORKSPACE_DIR:-$HOME/work}/.labb"
 BEHALL_DATA=nej
 [ "${1:-}" = "--behall-data" ] && BEHALL_DATA=ja
 
@@ -57,12 +56,10 @@ if [ "$BEHALL_DATA" = "ja" ]; then
   echo
   echo "Volymerna och hemligheten ligger kvar och volymerna tar av lagringskvoten."
   echo "En ny installation monterar dem igen — databasen är kvar som den var, och"
-  echo "inloggningen i ~/work/.labb/eneo-inloggning.txt gäller fortfarande."
+  echo "samma inloggning gäller fortfarande."
 else
   echo "3/3  Tar bort volymerna — databasen försvinner"
   kubectl delete pvc -l "$ETIKETT" --ignore-not-found || exit 1
-  rm -f "$LABB/eneo-inloggning.txt"
-  echo "     tog också bort $LABB/eneo-inloggning.txt (kontot finns inte längre)"
 fi
 
 echo

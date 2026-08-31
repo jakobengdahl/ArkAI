@@ -12,6 +12,10 @@ echo
 echo "Snabbtest utan MCP-klient:"
 uv run python server.py --lista | head -5
 echo
-echo "Servern pratar stdio och startas av klienten, inte av oss."
-echo "Den ligger nu i ~/work/.labb/mcp.json — vill du nå den från Open WebUI"
-echo "behövs bryggan: verktyg/kor.sh installera mcpo"
+echo "Två transporter, och skillnaden avgör vem som kan använda servern:"
+echo
+echo "  stdio            startas av klienten själv. Ligger nu i ~/work/.labb/mcp.json,"
+echo "                   alltså inkopplad i Claude Code, Continue och OpenClaw"
+echo "  Streamable HTTP  för Eneo, som kör i en annan podd och måste nå oss över nätet:"
+echo "                     verktyg/kor.sh starta hello-mcp"
+echo "                     verktyg/kor.sh koppla_eneo hello-mcp"

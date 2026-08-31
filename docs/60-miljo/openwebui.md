@@ -1,5 +1,22 @@
 # Open WebUI i labbmiljön
 
+> **Open WebUI avvecklas i labbet.** Den installeras inte längre automatiskt och
+> visas inte bland verktygen i panelen. Skripten, manifestraden och det här
+> dokumentet ligger kvar, och allt går att köra från terminalen — men huvudspåret
+> är [Eneo](eneo.md), som svarar på de frågor vi faktiskt undersöker: behörighet,
+> revisionslogg, förvaltning.
+>
+> Två saker att veta om du ändå startar den:
+>
+> - **Porten 8081 är Hello-MCP:s nu.** Stoppa Hello-MCP först, eller sätt
+>   `OPEN_WEBUI_PORT` till något annat. Utan en exponerad port når du bara
+>   instansen härifrån, och Open WebUI fungerar inte bakom code-servers
+>   sökvägsproxy.
+> - **`verktyg/kor.sh starta openwebui` fungerar**, men det finns ingen knapp.
+>
+> Vad avvecklingen betyder i manifestet: `avvecklas = true`, se
+> [panelen.md](panelen.md#att-ta-något-ur-bruk).
+
 Open WebUI är ett chattgränssnitt som kan prata med flera modellbackends (OpenAI-
 kompatibla API:er, Ollama) och som har inbyggt stöd för dokumentuppladdning, RAG,
 verktygsanrop och flera användare. Vi använder det som **testbänk för chattbot-
@@ -15,7 +32,7 @@ podden (ingen Docker, inga k8s-rättigheter). Vi installerar det som ett
 Python-verktyg i VS Code-tjänsten i stället.
 
 ```bash
-verktyg/kor.sh installera openwebui
+verktyg/kor.sh installera openwebui     # finns kvar, men ingen knapp i panelen
 ```
 
 eller, om du hellre ser vad som händer:
@@ -132,9 +149,9 @@ förvald modell.
 OpenAPI-servrar mot [bryggan](../20-tekniker/mcp.md) på port 8083 — en per
 MCP-server. Det är det Open WebUI förstår; MCP pratar den inte själv.
 
-Installerar du en MCP-server senare finns knappen **Koppla in** i
-[panelen](panelen.md), under *Åtgärder*. Bryggan gör dessutom det här av sig själv
-när den startar, så kör du en uppsättning behöver du inte trycka på något.
+Installerar du en MCP-server senare kör du `verktyg/konfigurera-openwebui.py
+--skriv` igen. Knappen i panelen finns inte längre — Open WebUI visas inte där, se
+noten högst upp. Bryggan gör dessutom det här av sig själv när den startar.
 
 Vill du se vad som skulle sättas, utan att sätta det:
 

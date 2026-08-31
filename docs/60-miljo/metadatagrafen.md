@@ -19,7 +19,7 @@ spåren, utan om att de svarar på samma fråga från olika håll:
 
 Om de ska vara två system eller ett är precis den sortens fråga repot finns för att
 besvara — och den går inte att svara på i teorin. Kör
-[uppsättningen "Metadatagraf i chatten"](panelen.md) och ställ samma fråga till båda.
+[grafen inkopplad i Eneo](eneo.md#verktyg-mcp-i-eneo) och ställ samma fråga till båda.
 
 Grafen är också en påminnelse om skillnaden mellan ett experiment och en pilot. Den
 har riktiga användare och ett inloggningsskydd. Det vi gör i det här repot har

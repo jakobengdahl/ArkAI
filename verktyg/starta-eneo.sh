@@ -28,9 +28,12 @@ export XDG_DATA_HOME="$LABB/caddy" XDG_CONFIG_HOME="$LABB/caddy"
 if [ "${1:-}" = "--stoppa" ]; then
   pkill -f "caddy run --config verktyg/eneo/Caddyfile" && echo "Proxyn stoppad." \
     || echo "Proxyn kördes inte."
-  # Tjänsterna skalas ner, inte bort: databasens volym och allt i den är kvar.
+  # Alla sex arbetslaster till noll — inga poddar blir kvar, ingenting tar CPU
+  # eller minne. Volymerna ligger kvar, och med dem konton, assistenter och
+  # kunskapskällor. Det är skillnaden mot ta-bort-eneo.sh.
   kubectl scale --replicas=0 $ARBETSLASTER statefulset/eneo-db statefulset/eneo-redis \
-    2>/dev/null && echo "Tjänsterna skalade till noll. Starta igen med kor.sh starta eneo."
+    2>/dev/null && echo "Alla poddar nerskalade. Data kvar på volymerna." \
+                && echo "Starta igen med: verktyg/kor.sh starta eneo"
   exit 0
 fi
 
@@ -92,7 +95,7 @@ mkdir -p "$LABB"
 echo "Startar Eneo"
 echo "  adress    $ORIGIN"
 echo "  proxy     port $PORT → $ENEO_FRONTEND, /api → $ENEO_BACKEND"
-echo "  inloggning $LABB/eneo-inloggning.txt"
+echo "  inloggning $(kubectl get configmap eneo-backend-konfig -o jsonpath='{.data.DEFAULT_USER_EMAIL}' 2>/dev/null)"
 echo "  logg      $LOGG"
 echo
 

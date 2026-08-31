@@ -27,13 +27,16 @@ REDIS_IMAGE="redis:7-alpine"
 DB_STORLEK="${ENEO_DB_STORLEK:-20Gi}"
 CADDY_VERSION="2.11.4"
 ENEO_PORT="${ENEO_PORT:-8084}"
-ADMIN_EPOST="${ENEO_ADMIN_EPOST:-labbadmin@exempel.se}"
-
-LABB="${WORKSPACE_DIR:-$HOME/work}/.labb"
-INLOGGNING="$LABB/eneo-inloggning.txt"
+# Inloggningen är medvetet enkel och står i klartext här: labbet har en enda
+# användare, och ett slumpat lösenord i en fil utanför repot var mest i vägen.
+# Porten är däremot publik — se docs/60-miljo/eneo.md. Sätt ENEO_ADMIN_EPOST och
+# ENEO_ADMIN_LOSEN före installationen om du vill ha något annat.
+ADMIN_EPOST="${ENEO_ADMIN_EPOST:-arkai@arkai.se}"
+ADMIN_NAMN="${ENEO_ADMIN_NAMN:-arkai}"
+ADMIN_LOSEN="${ENEO_ADMIN_LOSEN:-arkai2026}"
 
 export ENEO_VERSION BACKEND_IMAGE FRONTEND_IMAGE DB_IMAGE REDIS_IMAGE \
-       DB_STORLEK ADMIN_EPOST
+       DB_STORLEK ADMIN_EPOST ADMIN_NAMN
 
 rendera() {  # rendera <mallfil> — skriver färdig yaml till stdout
   python3 - "$1" <<'PY'
@@ -97,7 +100,6 @@ echo "3/6  Hemligheter"
 if kubectl get secret eneo-hemligheter >/dev/null 2>&1; then
   echo "     eneo-hemligheter finns redan — lämnas orörd"
 else
-  LOSEN="Labb-$(openssl rand -hex 8)!"
   kubectl create secret generic eneo-hemligheter \
     --from-literal=POSTGRES_PASSWORD="$(openssl rand -hex 16)" \
     --from-literal=JWT_SECRET="$(openssl rand -hex 32)" \
@@ -105,24 +107,10 @@ else
     --from-literal=ENCRYPTION_KEY="$(python3 -c 'import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).decode())')" \
     --from-literal=ENEO_SUPER_API_KEY="$(openssl rand -hex 32)" \
     --from-literal=ENEO_SUPER_DUPER_API_KEY="$(openssl rand -hex 32)" \
-    --from-literal=DEFAULT_USER_PASSWORD="$LOSEN" >/dev/null || exit 1
+    --from-literal=DEFAULT_USER_PASSWORD="$ADMIN_LOSEN" >/dev/null || exit 1
   kubectl label secret eneo-hemligheter app.kubernetes.io/part-of=eneo >/dev/null
 
-  mkdir -p "$LABB"
-  umask 077
-  cat >"$INLOGGNING" <<INL
-Eneo i labbet — första inloggningen
-$(date +%F)
-
-  adress    $PUBLIC_ORIGIN
-  e-post    $ADMIN_EPOST
-  lösenord  $LOSEN
-
-Byt lösenordet vid första inloggningen. Filen ligger utanför repot med flit —
-den ska inte kunna commitas. Lösenordet finns också i Secret:en
-eneo-hemligheter (nyckeln DEFAULT_USER_PASSWORD).
-INL
-  echo "     skapade eneo-hemligheter. Inloggningen står i $INLOGGNING"
+  echo "     skapade eneo-hemligheter"
 fi
 
 # ── 4. Databas och kö ─────────────────────────────────────────────────────
@@ -161,6 +149,10 @@ echo
 echo "Klart. Tjänsterna kör i namnrymden:"
 kubectl get pods -l app.kubernetes.io/part-of=eneo \
   -o custom-columns=NAMN:.metadata.name,STATUS:.status.phase,STARTAD:.status.startTime
+echo
+echo "Logga in på $PUBLIC_ORIGIN med"
+echo "  e-post    $ADMIN_EPOST"
+echo "  lösenord  $ADMIN_LOSEN"
 echo
 echo "Starta proxyn och öppna gränssnittet med:"
 echo "  verktyg/kor.sh starta eneo"

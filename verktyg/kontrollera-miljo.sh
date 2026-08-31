@@ -72,7 +72,7 @@ for p in 8080 8081 3000 7474 6333 11434; do
   if port_upptagen "$p"; then
     case $p in
       8080) ok "port $p" "code-server (VS Code) — använd inte till annat" ;;
-      8081) ok "port $p" "Open WebUI (om du startat det)" ;;
+      8081) ok "port $p" "Hello-MCP över HTTP (om du startat den)" ;;
       11434) ok "port $p" "Ollama" ;;
       *) ok "port $p" "något lyssnar" ;;
     esac

@@ -25,28 +25,88 @@ Installationen tar knappt tre minuter och är ett kommando.
 
 ## Köra det
 
-I panelen räcker det med knappen *Kör igång* på uppsättningen **Eneo som plattform**:
-den installerar, startar och kopplar in modellerna i ett svep. I terminalen är det
-samma sak:
+I panelen sitter knapparna på Eneos kort: *Installera*, *Starta*, *Koppla in
+modellerna*, *Stoppa*, *Ta bort*. I terminalen är det samma sak:
 
 ```bash
-verktyg/kor.sh uppsattning eneo-plattform   # allt nedan, i ordning
+verktyg/kor.sh installera eneo       # deployar i namnrymden, ~3 min
+verktyg/kor.sh starta eneo           # skalar upp och startar proxyn här i podden
+verktyg/kor.sh koppla_eneo eneo      # kopplar in plattformens modeller
+verktyg/kor.sh stoppa eneo           # proxyn ner, alla poddar till noll — data kvar
+verktyg/kor.sh avinstallera eneo     # tar bort allt, inklusive databasen
 
-verktyg/kor.sh installera eneo      # deployar i namnrymden, ~3 min
-verktyg/kor.sh starta eneo          # skalar upp och startar proxyn här i podden
-verktyg/kor.sh atgard koppla-eneo   # kopplar in plattformens modeller
-verktyg/kor.sh stoppa eneo          # proxyn ner, tjänsterna till noll — data kvar
-verktyg/kor.sh avinstallera eneo    # tar bort allt, inklusive databasen
+verktyg/kor.sh uppsattning eneo-plattform   # allt utom det sista, i ordning
 ```
 
-Adressen är värdnamnet för port 8084, och panelen visar den. Den första
-inloggningen skrivs till `~/work/.labb/eneo-inloggning.txt` (utanför repot, läge
-0600) och ligger också i Kubernetes-hemligheten `eneo-hemligheter`. **Byt lösenord
-vid första inloggningen** — porten är publik, se
-[minnesbanken](../../minnesbank/verktyg/exponerad-port-kraver-inloggning.md).
+Adressen är värdnamnet för port 8084, och panelen visar den. Inloggningen är
+`arkai@arkai.se` / `arkai2026` — samma i varje ny installation, satt av
+installationsskriptet och lagrad i `eneo-hemligheter` (`DEFAULT_USER_PASSWORD`)
+och `eneo-backend-konfig` (`DEFAULT_USER_EMAIL`).
+
+Att den står i klartext i repot är ett medvetet val för ett labb med en enda
+användare: ett slumpat lösenord i en fil utanför repot var mest i vägen. **Priset är
+att porten är publik.** 8084 ligger på ett värdnamn som vem som helst når, och Eneos
+egen inloggning är hela skyddet — se
+[minnesbanken](../../minnesbank/verktyg/exponerad-port-kraver-inloggning.md). Ska
+något känsligt in i den här instansen: sätt `ENEO_ADMIN_EPOST` och `ENEO_ADMIN_LOSEN`
+före installationen, eller byt lösenordet i gränssnittet och sätt `ENEO_ADMIN_LOSEN`
+för skripten.
 
 Eneo överlever att den här podden startas om: det enda som kör lokalt är proxyn.
 Databasen ligger på en egen volym i namnrymden.
+
+## Vilka byggstenar Eneo är
+
+Eneo är ett **applikationslager med en behörighetsmodell**. Det är den ärliga
+sammanfattningen, och den förklarar både vad man får gratis och vad man måste bygga
+på. Kartan står i [byggstenar.md](../20-tekniker/byggstenar.md); tabellen nedan är
+samma karta lagd över den här installationen. Panelen visar den på Eneos kort, och
+källan till båda är `[tjanst.eneo.byggstenar]` i
+[`verktyg/labb.toml`](../../verktyg/labb.toml).
+
+| Byggsten | Läge | Vad det betyder här |
+|---|---|---|
+| **Applikationslagret** | ingår | Chatt, assistenter, spaces och admingränssnitt. Det är produkten — den går inte att koppla bort |
+| **Säkerhet och behörighet** | ingår | Roller, organisationer, spaces och revisionslogg. OIDC och SCIM finns i produkten men är inte påslaget här |
+| **API-lagret** | ingår | Eneos eget API, och LiteLLM bakom modellhanteringen. Därför duger vilken OpenAI-kompatibel leverantör som helst |
+| **Driftmiljön** | ställs in | Sex arbetslaster i namnrymden. Imager, minne och volymstorlekar står i `verktyg/eneo/` |
+| **Modellen** | ställs in | Ingen modell från början. Leverantör med bas-URL och nyckel, sedan chatt- och embeddingmodell |
+| **Verktygslagret** | går att lägga till | Ingen MCP-server från början, och ingen inbyggd verktygslåda. Se nedan |
+| **Kontext och minne** | går att lägga till | Kunskapskällor per space — filer och webbsidor, indexerade med embeddingmodellen |
+| **Arbetssätt som paket** | går att lägga till | Assistenter med egna prompter, och assistentmallar som admin kan versionera |
+| **Orkestrering** | delvis | En assistent väljer bland sina verktyg i en tur. Flerstegsupplägg som planerar och kör vidare finns inte |
+| **Mänsklig översyn** | delvis | Enskilda verktyg kan kräva godkännande innan de körs. Granskning av svar är en arbetsordning, inte en funktion |
+| **Livscykelhantering** | delvis | Assistentmallar versioneras och går att rulla tillbaka. Modellversion, prompter och index gör det inte |
+| **Utvärdering** | saknas | Insights ger användningsstatistik, inte kända fall och regressionstest |
+
+De tre nedersta raderna är inte kritik av Eneo — de är samma tre som saknas i nästan
+varje plattform, och de är skälet till att en PoC och en drift är olika saker. Se
+[styrning-och-risk.md](../50-fran-poc-till-produktion/styrning-och-risk.md).
+
+### Verktyg: MCP i Eneo
+
+Eneo har inga verktyg från början. Adminen lägger upp **MCP-servrar per
+organisation**, Eneo hämtar deras verktygslista, och sedan väljer varje assistent
+vilka av dem den får använda. Två begränsningar styr vad som går att koppla in:
+
+- **Bara Streamable HTTP.** Inte stdio, inte SSE. En stdio-server måste alltså köras
+  över HTTP för att gå att koppla in — det är därför
+  [Hello-MCP](../../exempel/mcp/hello-mcp/README.md) kör båda transporterna.
+- **Eneo kör i namnrymden, inte i podden.** `127.0.0.1` betyder Eneos egen podd. En
+  server här i VS Code-podden måste ligga på en exponerad port, alltså ett publikt
+  värdnamn — och behöver då en token.
+
+Panelen har en *Koppla in i Eneo*-knapp på de kort där det går. I terminalen:
+
+```bash
+verktyg/kor.sh koppla_eneo hello-mcp
+verktyg/kor.sh koppla_eneo metadatagraf
+```
+
+Skriptet är [`verktyg/koppla-mcp-till-eneo.py`](../../verktyg/koppla-mcp-till-eneo.py).
+Det läser adress och token ur manifestet, lägger upp servern om den saknas,
+uppdaterar den annars, och säger hur många verktyg Eneo hittade. Noll verktyg
+betyder att Eneo inte nådde servern.
 
 ## Hur det är byggt
 
@@ -120,7 +180,7 @@ med, och vad som visade sig behövas.
 |---|---|---|
 | `kubernetes.role` | `edit` | **Krävs.** Standard är `view`, och då går ingenting av det här |
 | `networking.user.enabled` | `true` | Krävs för att exponera portar alls |
-| `networking.user.ports[0]` | `8081` | Open WebUI — den vi jämför mot |
+| `networking.user.ports[0]` | `8081` | Hello-MCP över HTTP, så att Eneo kan nå den. Var Open WebUI:s port |
 | `networking.user.ports[1]` | `8084` | Eneo, via proxyn |
 | `git.branch` | grenen du vill ha | Utan den klonas standardgrenen |
 | `vault.secret` | miljöns hemlighet | Modellnyckeln, se [starta-labbet.md](starta-labbet.md) |
@@ -140,8 +200,9 @@ det säger inget om behovet: 6,6 GB av disken är använd, och det mesta av det 
 
 URL:en som startar en miljö med de här inställningarna står i
 [starta-labbet.md](starta-labbet.md#urlen) — en enda gång, så att den inte hinner
-glida isär från den som faktiskt används. Profilen `bas eneo` gör att Eneo
-installeras direkt när miljön startar.
+glida isär från den som faktiskt används. Profilen `bas eneo` installerar Eneo redan
+vid start; standardprofilen `bas` gör det inte, så att en miljö som ingen använder
+inte har sex poddar igång.
 
 ## Modellerna
 
@@ -185,10 +246,36 @@ sidor. Se [minnesbanken](../../minnesbank/verktyg/namnrymden-overlever-podden.md
 
 Två olika saker, och skillnaden är inte kosmetisk:
 
-| | Vad som händer | Data |
-|---|---|---|
-| **Stoppa** | Proxyn ner, alla arbetslaster skalas till noll | Kvar på volymerna |
-| **Ta bort** | Allt märkt `app.kubernetes.io/part-of=eneo` raderas | Borta |
+| | Vad som händer | Poddar kvar | Data |
+|---|---|---|---|
+| **Stoppa** | Proxyn ner, alla sex arbetslaster skalas till noll | Nej — inga | Kvar på volymerna |
+| **Ta bort** | Allt märkt `app.kubernetes.io/part-of=eneo` raderas | Nej | Borta |
+
+*Stoppa* är alltså den normala vägen när man är klar för dagen: **inga poddar kör,
+ingenting tar CPU eller minne**, bara volymerna ligger kvar och tar av
+lagringskvoten. Nästa `starta` skalar upp igen och allt är som det var.
+
+### Assistenterna, och vad som överlever
+
+Assistenter, spaces, kunskapskällor, modellkopplingar och konton ligger i
+PostgreSQL, på volymen `eneo-db`. Den lever i **namnrymden**, inte i podden, och
+överlever därför:
+
+- att den här podden startas om,
+- att hela VS Code-tjänsten stoppas och startas igen,
+- `verktyg/kor.sh stoppa eneo`,
+- `verktyg/ta-bort-eneo.sh --behall-data`.
+
+Det enda som raderar dem är *Ta bort* i panelen, alltså `avinstallera` — och den går
+via en bekräftelsesida som visar exakt vilka volymer som försvinner.
+
+Det finns alltså **ingen export att komma ihåg**: en assistent du bygger i dag finns
+kvar nästa gång du startar miljön, så länge du stoppar i stället för att ta bort. Vad
+som *inte* finns är en säkerhetskopia: försvinner volymen finns ingen andra kopia, och
+Eneo har ingen inbyggd export av assistenter. Behöver en assistentdefinition
+överleva att databasen är borta får den skrivas ner i repot och läggas in igen för
+hand — eller så byggs en export mot API:et (`/api/v1/assistants/`), vilket ingen har
+gjort ännu.
 
 I panelen sitter *Ta bort* på Eneos kort. Den kör ingenting direkt: den leder till en
 sida som visar exakt vilka arbetslaster, tjänster och volymer som försvinner, och
@@ -208,7 +295,8 @@ det tar, så att det går att se att något står kvar utan att leta i `kubectl`
 ## Vad som inte är gjort
 
 - **Backup.** Databasen ligger på en volym utan säkerhetskopiering. Med CNPG hade det
-  följt med.
+  följt med. Det är den enda kopian av assistenter och kunskapskällor — se
+  [Assistenterna, och vad som överlever](#assistenterna-och-vad-som-överlever).
 - **Uppgradering.** Byte till en ny Eneo-version är att ändra digesterna i
   installationsskriptet och köra om det. Migreringarna kör i jobbet. Inte provat.
 - **OIDC och SCIM** — se ovan.
