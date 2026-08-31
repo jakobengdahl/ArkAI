@@ -20,21 +20,23 @@ Uppgifterna kommer ur miljön (Vault-hemligheten):
     OPENAI_API_KEY    din personliga nyckel
     OPENAI_MODEL      chattmodellen, om du vill ha en annan än standardvalet
 
-Inloggningen som admin hämtas ur Kubernetes-hemligheten eneo-hemligheter.
-Har du bytt lösenord i gränssnittet — vilket du ska — sätt ENEO_ADMIN_LOSEN.
+Inloggningen som admin hämtas ur Kubernetes: e-posten ur eneo-backend-konfig,
+lösenordet ur eneo-hemligheter. Har du bytt lösenord i gränssnittet — sätt
+ENEO_ADMIN_LOSEN.
 """
 
 from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
-import urllib.error
-import urllib.parse
 import urllib.request
+from pathlib import Path
 
-BAS = os.environ.get("ENEO_BAS_URL", "http://127.0.0.1:8084").rstrip("/")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import eneo_api as api  # noqa: E402
+from eneo_api import anrop, fel, logga_in, poster  # noqa: E402
+
 LEVERANTOR = "SSP Cloud"
 
 # Eneo behöver veta hur långt sammanhang modellen klarar — den trunkerar
@@ -42,12 +44,6 @@ LEVERANTOR = "SSP Cloud"
 # värdena är satta av oss och medvetet försiktiga.
 MAX_IN = int(os.environ.get("ENEO_MAX_INPUT", "32768"))
 MAX_UT = int(os.environ.get("ENEO_MAX_OUTPUT", "4096"))
-
-
-def fel(*rader: str) -> None:
-    for rad in rader:
-        print(rad, file=sys.stderr)
-    sys.exit(1)
 
 
 # ── Plattformens sida ─────────────────────────────────────────────────────
@@ -94,63 +90,9 @@ def valj_modeller(ider: list[str]) -> tuple[str | None, str | None]:
 # ── Eneos sida ────────────────────────────────────────────────────────────
 
 
-def hemlighet(nyckel: str) -> str:
-    ute = subprocess.run(
-        ["kubectl", "get", "secret", "eneo-hemligheter", "-o", f"jsonpath={{.data.{nyckel}}}"],
-        capture_output=True, text=True, timeout=15,
-    )
-    if ute.returncode != 0 or not ute.stdout:
-        return ""
-    import base64
-    return base64.b64decode(ute.stdout).decode()
-
-
-def anrop(vag: str, token: str | None = None, data: dict | None = None,
-          metod: str | None = None) -> dict:
-    kropp = json.dumps(data).encode() if data is not None else None
-    beg = urllib.request.Request(BAS + vag, data=kropp, method=metod or ("POST" if data else "GET"))
-    beg.add_header("Content-Type", "application/json")
-    if token:
-        beg.add_header("Authorization", "Bearer " + token)
-    try:
-        with urllib.request.urlopen(beg, timeout=60) as svar:
-            return json.load(svar)
-    except urllib.error.HTTPError as e:
-        return {"_fel": e.code, "_text": e.read().decode()[:400]}
-
-
-def logga_in() -> str:
-    epost = os.environ.get("ENEO_ADMIN_EPOST") or standardepost()
-    losen = os.environ.get("ENEO_ADMIN_LOSEN") or hemlighet("DEFAULT_USER_PASSWORD")
-    if not losen:
-        fel("Hittade inget adminlösenord i eneo-hemligheter. Sätt ENEO_ADMIN_LOSEN.")
-    kropp = urllib.parse.urlencode({"username": epost, "password": losen}).encode()
-    beg = urllib.request.Request(BAS + "/api/v1/users/login/token/", data=kropp)
-    beg.add_header("Content-Type", "application/x-www-form-urlencoded")
-    try:
-        with urllib.request.urlopen(beg, timeout=30) as svar:
-            return json.load(svar)["access_token"]
-    except urllib.error.HTTPError as e:
-        fel(f"Kunde inte logga in som {epost} ({e.code}).",
-            "Har du bytt lösenord i gränssnittet? Sätt ENEO_ADMIN_LOSEN.")
-    except urllib.error.URLError as e:
-        fel(f"Nådde inte Eneo på {BAS}: {e}", "Kör: verktyg/kor.sh starta eneo")
-
-
-def standardepost() -> str:
-    ute = subprocess.run(
-        ["kubectl", "get", "configmap", "eneo-backend-konfig",
-         "-o", "jsonpath={.data.DEFAULT_USER_EMAIL}"],
-        capture_output=True, text=True, timeout=15,
-    )
-    return ute.stdout.strip()
-
-
 def leverantor(token: str, koppling: dict) -> str:
     """Leverantörens id. Skapas om den saknas, annars uppdateras nyckeln."""
-    lista = anrop("/api/v1/admin/model-providers/", token)
-    poster = lista.get("items", lista) if isinstance(lista, dict) else lista
-    for p in poster if isinstance(poster, list) else []:
+    for p in poster(anrop("/api/v1/admin/model-providers/", token)):
         if p.get("name") == LEVERANTOR:
             anrop(f"/api/v1/admin/model-providers/{p['id']}/", token, metod="PUT", data={
                 "credentials": {"api_key": koppling["nyckel"]},
@@ -173,9 +115,7 @@ def leverantor(token: str, koppling: dict) -> str:
 
 
 def redan_upplagd(token: str, vag: str, namn: str) -> bool:
-    svar = anrop(vag, token)
-    poster = svar.get("items", []) if isinstance(svar, dict) else svar
-    return any(m.get("name") == namn for m in poster or [])
+    return any(m.get("name") == namn for m in poster(anrop(vag, token)))
 
 
 def validera(token: str, lev: str, namn: str, typ: str) -> None:
@@ -229,7 +169,7 @@ def main() -> None:
     print(f"Leverantör : {LEVERANTOR} → {koppling['bas']}")
     print(f"Chatt      : {chatt}")
     print(f"Embedding  : {embedding or '(ingen hittad)'}")
-    print(f"Eneo       : {BAS}")
+    print(f"Eneo       : {api.BAS}")
     if lage != "--skriv":
         print("\nInget skrivet. Kör med --skriv för att lägga in det i Eneo.")
         return

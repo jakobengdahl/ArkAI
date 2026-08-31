@@ -29,6 +29,15 @@ uv run python server.py --lista     # snabbtest utan MCP-klient
 uv run python server.py             # som MCP-server över stdio
 ```
 
+Eller, med labbets vanliga knappar och lås:
+
+```bash
+verktyg/kor.sh installera hello-mcp
+verktyg/kor.sh starta hello-mcp        # HTTP-läget, port 8081
+verktyg/kor.sh koppla_eneo hello-mcp   # lägger upp den som verktygsserver i Eneo
+verktyg/kor.sh stoppa hello-mcp
+```
+
 `--lista` anropar funktionerna direkt. Använd det när du ändrat något — det är
 mycket snabbare än att felsöka via en klient.
 
@@ -68,12 +77,38 @@ claude mcp add arkai-minnesbank -- \
 Se konfigurationsformatet i `~/.config/opencode/opencode.jsonc` och
 [opencode.ai](https://opencode.ai).
 
-### Open WebUI
+### Eneo — och därför HTTP-läget
 
-Open WebUI vill ha verktyg över HTTP, inte över stdio. Antingen kör du servern med
-`transport="streamable-http"` (se `mcp.run()` i SDK:n), eller så använder du Open
-WebUI:s eget verktygsformat. Det är ett bra experiment i sig — se
-[docs/30-experiment/](../../../docs/30-experiment/).
+Eneo kör i namnrymden, inte i den här podden, och kan därför inte starta servern
+åt sig. Den pratar dessutom **bara Streamable HTTP** — varken stdio eller SSE. Det
+är hela skälet till att servern har två transporter:
+
+```bash
+verktyg/starta-hello-mcp.sh --bakgrund
+```
+
+Skriptet startar `server.py --http`, som lyssnar på port 8081 och lägger
+MCP-slutpunkten på `/mcp`. Tre saker skiljer HTTP-läget från stdio-läget:
+
+- **Token krävs.** Porten är exponerad, alltså ett publikt värdnamn. Servern vägrar
+  starta utan `HELLO_MCP_TOKEN`, och startskriptet skapar den i
+  `~/work/.labb/hello-mcp-token` (läge 0600) första gången.
+- **Host-huvudet kontrolleras.** MCP-SDK:n skyddar mot DNS-rebinding genom att
+  jämföra `Host` mot en lista. Bakom en ingress är värdnamnet inte vårt eget, så
+  startskriptet skickar med det.
+- **Ingen session.** `stateless_http=True` — varje anrop står för sig, så en klient
+  bakom en proxy inte behöver hamna på samma process två gånger.
+
+`/halsa` svarar utan token, så att panelen kan se om servern lever utan att ha
+tokenet.
+
+Att koppla in den i Eneo är sedan ett kommando:
+
+```bash
+verktyg/kor.sh koppla_eneo hello-mcp
+```
+
+Se [docs/60-miljo/eneo.md](../../../docs/60-miljo/eneo.md#verktyg-mcp-i-eneo).
 
 ## Vad som är värt att titta på i koden
 

@@ -5,7 +5,8 @@
 #   verktyg/kor.sh starta eneo
 #   verktyg/kor.sh stoppa eneo
 #   verktyg/kor.sh avinstallera eneo
-#   verktyg/kor.sh uppsattning chatt-med-verktyg
+#   verktyg/kor.sh koppla_eneo metadatagraf
+#   verktyg/kor.sh uppsattning eneo-plattform
 #   verktyg/kor.sh lista
 #
 # Panelen anropar exakt det här skriptet. Det är avsiktligt: en installation du
@@ -28,8 +29,7 @@ manifest() { python3 verktyg/labb.py "$@" 2>/dev/null; }
 anvandning() {
   cat <<'SLUT'
 Användning:
-  verktyg/kor.sh <installera|starta|stoppa|avinstallera> <tjänst>
-  verktyg/kor.sh atgard <namn>
+  verktyg/kor.sh <installera|starta|stoppa|avinstallera|koppla_eneo> <tjänst>
   verktyg/kor.sh uppsattning <namn>
   verktyg/kor.sh status [tjänst]
   verktyg/kor.sh lista
@@ -38,20 +38,12 @@ SLUT
 
 # ── Enskild handling ──────────────────────────────────────────────────────
 
-utfor() { # utfor <handling> <tjänst|åtgärd>
+utfor() { # utfor <handling> <tjänst>
   local handling=$1 tjid=$2 kmd
-  if [ "$handling" = "atgard" ]; then
-    kmd=$(manifest atgard-kommando "$tjid")
-  else
-    kmd=$(manifest kommando "$tjid" "$handling")
-  fi
+  kmd=$(manifest kommando "$tjid" "$handling")
 
   if [ -z "$kmd" ]; then
-    if [ "$handling" = "atgard" ]; then
-      fel "Okänd åtgärd '$tjid' i verktyg/labb.toml."
-    else
-      fel "Tjänsten '$tjid' har ingen handling '$handling' i verktyg/labb.toml."
-    fi
+    fel "Tjänsten '$tjid' har ingen handling '$handling' i verktyg/labb.toml."
     return 2
   fi
 
@@ -69,8 +61,8 @@ utfor() { # utfor <handling> <tjänst|åtgärd>
     return 3
   fi
 
-  local bakgrund=nej
-  [ "$handling" = "atgard" ] || bakgrund=$(python3 - "$tjid" "$handling" <<'SLUTPY' 2>/dev/null
+  local bakgrund
+  bakgrund=$(python3 - "$tjid" "$handling" <<'SLUTPY' 2>/dev/null
 import sys
 sys.path.insert(0, "verktyg")
 import labb
@@ -188,21 +180,15 @@ SLUTPY
     esac
   done
 
-  # Åtgärder körs sist: de förutsätter att tjänsterna svarar. Modellkopplingen
-  # i Eneo är en sådan — den skriver mot ett API som måste vara uppe.
-  local atgarder
-  atgarder=$(python3 - "$namn" <<'SLUTPY' 2>/dev/null
-import sys
-sys.path.insert(0, "verktyg")
-import labb
-u = labb.uppsattningar().get(sys.argv[1]) or {}
-print(" ".join(u.get("atgarder", [])))
-SLUTPY
-)
-  local aid
-  for aid in $atgarder; do
-    utfor atgard "$aid"
-  done
+  # Kopplingarna in i Eneo körs sist: de skriver mot Eneos API, som måste vara
+  # uppe. Är Eneo inte med i uppsättningen finns det ingenting att koppla till.
+  if printf '%s\n' $tjanster | grep -qx eneo && python3 verktyg/labb.py levande eneo; then
+    for tjid in $tjanster; do
+      if [ -n "$(manifest kommando "$tjid" koppla_eneo)" ]; then
+        utfor koppla_eneo "$tjid"
+      fi
+    done
+  fi
 
   python3 verktyg/labb.py mcp-json >/dev/null 2>&1
   klar "Klart. Panelen visar vad som kör."
@@ -211,7 +197,7 @@ SLUTPY
 # ── Ingång ────────────────────────────────────────────────────────────────
 
 case "${1:-}" in
-  installera|starta|stoppa|avinstallera|atgard)
+  installera|starta|stoppa|avinstallera|koppla_eneo)
     [ $# -eq 2 ] || { anvandning; exit 2; }
     utfor "$1" "$2"
     ;;
@@ -247,10 +233,11 @@ for tjid, t in labb.tjanster().items():
 print("\nUppsättningar")
 for uid, u in labb.uppsattningar().items():
     print(f"  {uid:<20} {u.get('namn','')}  ({', '.join(u['tjanster'])})")
-if labb.atgarder():
-    print("\nÅtgärder")
-    for aid, a in labb.atgarder().items():
-        print(f"  {aid:<20} {a.get('namn','')}")
+koppla = [tjid for tjid, t in labb.tjanster().items() if t.get("koppla_eneo")]
+if koppla:
+    print("\nGår att koppla in i Eneo")
+    for tjid in koppla:
+        print(f"  {tjid}")
 PY
     ;;
   *)
