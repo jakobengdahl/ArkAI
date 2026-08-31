@@ -36,7 +36,7 @@ migrering, applikation — och ett skript som renderar och applicerar dem i ordn
 ```bash
 verktyg/kor.sh installera eneo      # ~3 min
 verktyg/kor.sh starta eneo
-verktyg/kor.sh atgard koppla-eneo
+verktyg/kor.sh koppla_eneo eneo
 ```
 
 Versioner: Eneo 2.1.1 (backend- och frontendimager pinnade till digesterna i
@@ -62,6 +62,7 @@ Verifierat efteråt, i den ordningen:
 | Modellerna genom Eneos `validate-model` | chatt och embedding svarar |
 | `kor.sh stoppa eneo` och `starta eneo` igen | uppe efter ~2 min, konto och modeller kvar |
 | `kor.sh uppsattning eneo-plattform` från tomt läge | installerar, startar och kopplar in modellerna i ett svep |
+| `kor.sh koppla_eneo hello-mcp` | Eneo hittade serverns tre verktyg över Streamable HTTP, via den exponerade porten |
 | `kor.sh avinstallera eneo` | namnrymden tom, `kubectl get all -l …=eneo` svarar tomt |
 | `ta-bort-eneo.sh --behall-data` + ny installation | samma konto, samma lösenord, samma modellkoppling |
 

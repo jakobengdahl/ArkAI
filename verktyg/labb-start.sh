@@ -55,7 +55,9 @@ sys.path.insert(0, "verktyg")
 import labb
 val = sys.argv[1:]
 if "minimal" not in val:
-    print(" ".join(tjid for tjid, t in labb.tjanster().items()
+    # Det som avvecklas installeras aldrig automatiskt, inte ens när profilen
+    # ber om det. Skripten finns kvar för den som vill köra dem för hand.
+    print(" ".join(tjid for tjid, t in labb.synliga_tjanster().items()
                    if t.get("steg") == "auto" or tjid in val))
 SLUTPY
 )
@@ -95,6 +97,6 @@ cat <<SLUT
 
   I terminalen gör du samma sak med:
     verktyg/kor.sh lista
-    verktyg/kor.sh uppsattning chatt-med-verktyg
+    verktyg/kor.sh uppsattning eneo-plattform
 
 SLUT

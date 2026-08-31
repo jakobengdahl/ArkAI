@@ -11,8 +11,8 @@ installerat.
 Kan också köras direkt:
 
     python3 verktyg/labb.py ids
-    python3 verktyg/labb.py kommando openwebui starta
-    python3 verktyg/labb.py status openwebui
+    python3 verktyg/labb.py kommando eneo starta
+    python3 verktyg/labb.py status eneo
     python3 verktyg/labb.py mcp-json
 """
 
@@ -93,16 +93,35 @@ def uppsattningar() -> dict[str, dict]:
     return katalog().get("uppsattning", {})
 
 
-def atgarder() -> dict[str, dict]:
-    """Sådant som går att köra från panelen men inte är en tjänst."""
-    return katalog().get("atgard", {})
+def synliga_tjanster() -> dict[str, dict]:
+    """Tjänsterna panelen visar. Det som avvecklas ligger kvar men syns inte.
+
+    Skillnaden finns för att en tjänst ska kunna tas ur bruk stegvis:
+    installationsskript och dokumentation kvar, men ingen knapp som lockar
+    någon att starta den igen. Se docs/60-miljo/openwebui.md.
+    """
+    return {i: t for i, t in tjanster().items() if not t.get("avvecklas")}
 
 
-def atgard(aid: str) -> dict:
-    a = atgarder().get(aid)
-    if a is None:
-        raise KeyError(f"okänd åtgärd: {aid}")
-    return a
+def byggstenar() -> list[dict]:
+    """Byggstenarna ur docs/20-tekniker/byggstenar.md, i bildens ordning."""
+    return katalog().get("byggsten", [])
+
+
+def byggstenar_for(tjid: str) -> list[dict]:
+    """[{id, namn, lage, not}] för en tjänst, i byggstenslistans ordning.
+
+    Ordningen kommer från listan, inte från tjänsten: två verktyg ska gå att
+    jämföra genom att läsa raderna på samma plats.
+    """
+    egna = tjanst(tjid).get("byggstenar", {})
+    ut = []
+    for b in byggstenar():
+        post = egna.get(b["id"])
+        if post:
+            ut.append({"id": b["id"], "namn": b["namn"],
+                       "lage": post.get("lage", "okand"), "not": post.get("not", "")})
+    return ut
 
 
 def navigering() -> list[dict]:
@@ -116,6 +135,15 @@ def panelport() -> int:
 def kommando(tjid: str, handling: str) -> str | None:
     """Kommandot för en handling, eller None om tjänsten inte stöder den."""
     return tjanst(tjid).get(handling)
+
+
+def eneo_uppe() -> bool:
+    """Svarar Eneo? Avgör om det är någon mening med att visa Koppla till Eneo.
+
+    Kopplingen skriver mot Eneos API. Är Eneo nere blir knappen ett fel i en
+    logg i stället för ett resultat, och då är det bättre att den inte finns.
+    """
+    return "eneo" in tjanster() and levande("eneo")
 
 
 # ── Miljön ────────────────────────────────────────────────────────────────
@@ -509,11 +537,8 @@ def _main(argv: list[str]) -> int:
             print(json.dumps(alla_statusar(), ensure_ascii=False, indent=2))
         case "mcp-json":
             print(skriv_mcp_json())
-        case "atgard-kommando":
-            a = atgarder().get(argv[1])
-            if not a or not a.get("kommando"):
-                return 1
-            print(a["kommando"])
+        case "byggstenar":
+            print(json.dumps(byggstenar_for(argv[1]), ensure_ascii=False, indent=2))
         case "uppsattning-finns":
             if argv[1] in uppsattningar():
                 print(argv[1])

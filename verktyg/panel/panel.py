@@ -104,6 +104,18 @@ form { display:inline; }
 .logg { background:#0d0d0f; color:#d8d8d8; padding:14px; border-radius:6px;
   overflow-x:auto; font-size:12.5px; line-height:1.5; max-height:70vh; }
 .tabellsvag td { color:var(--svag); }
+.stenar { margin:8px 0 10px; line-height:2.1; }
+.sten { font-size:12px; padding:2px 8px; border-radius:20px; border:1px solid currentColor;
+  margin-right:5px; white-space:nowrap; }
+.sten.inbyggd { color:var(--gron); } .sten.konfig { color:var(--bla); }
+.sten.tillval { color:var(--svag); } .sten.begransad { color:var(--gul); }
+.sten.saknas { color:var(--rod); opacity:.75; }
+details { margin:4px 0 12px; }
+details summary { cursor:pointer; font-size:13.5px; color:var(--svag); }
+details table { margin:8px 0 0; }
+details td:first-child { white-space:nowrap; }
+.teckenforklaring { font-size:13px; color:var(--svag); margin:6px 0 16px; }
+.teckenforklaring .sten { margin-right:3px; }
 """
 
 
@@ -217,7 +229,7 @@ def _okant(namn: str) -> str:
 
 
 def _statusar() -> dict[str, dict]:
-    ids = list(labb.tjanster())
+    ids = list(labb.synliga_tjanster())
     with ThreadPoolExecutor(max_workers=8) as pool:
         return dict(zip(ids, pool.map(labb.status, ids)))
 
@@ -231,7 +243,7 @@ TILLSTANDSTEXT = {
 }
 
 
-def _knappar(tjid: str, s: dict) -> str:
+def _knappar(tjid: str, s: dict, eneo_uppe: bool = False) -> str:
     t = labb.tjanst(tjid)
     delar = []
 
@@ -252,10 +264,17 @@ def _knappar(tjid: str, s: dict) -> str:
         if s["tillstand"] == "installerad" and t.get("starta"):
             delar.append(form("starta", "Starta", primar=True))
         if s["tillstand"] == "kor":
-            if s.get("url"):
+            # webbsida = false: tjänsten svarar på sin port men har inget att
+            # titta på i en webbläsare. En MCP-server ger 404 i roten, och en
+            # knapp som leder dit är sämre än ingen knapp.
+            if s.get("url") and t.get("webbsida", True):
                 delar.append(f'<a class="knapp" href="{e(s["url"])}" target="_blank">Öppna</a>')
             if t.get("stoppa"):
                 delar.append(form("stoppa", "Stoppa"))
+        # Kopplingen skriver mot Eneos API. Den visas när det finns något att
+        # skriva till — annars blir knappen ett fel i en logg.
+        if t.get("koppla_eneo") and s["tillstand"] == "kor" and eneo_uppe:
+            delar.append(form("koppla_eneo", t.get("koppla_eneo_knapp", "Koppla in i Eneo")))
         # Avinstallation är destruktiv och går via en bekräftelsesida, aldrig
         # direkt från ett kort. Sidan visar vad som faktiskt försvinner.
         if t.get("avinstallera") and s["tillstand"] in ("installerad", "kor"):
@@ -263,12 +282,49 @@ def _knappar(tjid: str, s: dict) -> str:
         if t.get("dok"):
             dok = urllib.parse.quote(t["dok"])
             delar.append(f'<a class="knapp" href="?sida={dok}">Läs mer</a>')
-        if labb.loggfil(tjid, "installera").exists() or labb.loggfil(tjid, "starta").exists():
+        if any(labb.loggfil(tjid, h).exists()
+               for h in ("installera", "starta", "koppla_eneo")):
             delar.append(f'<a class="knapp" href="?logg={e(tjid)}">Logg</a>')
     return "".join(delar)
 
 
-def _tjanstekort(tjid: str, s: dict) -> str:
+LAGETEXT = {
+    "inbyggd": "ingår, går inte att koppla bort",
+    "konfig": "ingår, men måste ställas in",
+    "tillval": "ingår inte — går att lägga till",
+    "begransad": "finns delvis, läs noten",
+    "saknas": "finns inte",
+}
+
+
+def _byggstenar(tjid: str) -> str:
+    """Vilka byggstenar verktyget består av, och vad som går att ställa in.
+
+    Kopplingen står i verktyg/labb.toml, bredvid tjänsten. Poängen med att visa
+    den här är att ett verktyg annars beskrivs med sitt eget produktspråk, och
+    då går det inte att jämföra med nästa verktyg. Se
+    docs/20-tekniker/byggstenar.md.
+    """
+    stenar = labb.byggstenar_for(tjid)
+    if not stenar:
+        return ""
+    chips = "".join(
+        f'<span class="sten {e(b["lage"])}">{e(b["namn"])}</span>' for b in stenar
+    )
+    rader = "".join(
+        f'<tr><td>{e(b["namn"])}</td><td class="{e(b["lage"])}">'
+        f'{e(LAGETEXT.get(b["lage"], b["lage"]))}</td><td>{e(b["not"])}</td></tr>'
+        for b in stenar
+    )
+    return (
+        f'<p class="stenar">{chips}</p>'
+        "<details><summary>Vad som ingår, och vad som går att ställa in</summary>"
+        f"<table><tr><th>Byggsten</th><th>Läge</th><th></th></tr>{rader}</table>"
+        "</details>"
+    )
+
+
+def _tjanstekort(tjid: str, s: dict, eneo_uppe: bool = False) -> str:
     t = labb.tjanst(tjid)
     text = TILLSTANDSTEXT.get(s["tillstand"], s["tillstand"])
     varning = ""
@@ -279,51 +335,39 @@ def _tjanstekort(tjid: str, s: dict) -> str:
             'Se <a href="?sida=docs/60-miljo/starta-labbet.md">Starta labbet</a> för URL:en '
             "som startar om med rätt inställning.</div>"
         )
+    adress = ""
+    if s.get("url") and not t.get("webbsida", True) and s["tillstand"] == "kor":
+        # Ingen knapp, men adressen är det man behöver veta: det är den Eneo
+        # och andra klienter utifrån ska peka på.
+        adress = (f'<p style="font-size:13px"><code>'
+                  f'{e(s["url"].rstrip("/") + t.get("mcp_http_sokvag", ""))}</code></p>')
     return (
         f'<div class="kort"><h3>{e(t.get("namn", tjid))}'
         f'<span class="märke {s["tillstand"]}">{text}</span></h3>'
-        f'<p>{e(t.get("beskrivning", ""))}</p>{varning}{_knappar(tjid, s)}</div>'
+        f'<p>{e(t.get("beskrivning", ""))}</p>{varning}{adress}'
+        f'{_byggstenar(tjid)}{_knappar(tjid, s, eneo_uppe)}</div>'
     )
 
 
-def block_tjanster(_: str) -> str:
+def block_verktyg(_: str) -> str:
+    """Ett kort per verktyg, med byggstenarna det består av."""
     statusar = _statusar()
+    eneo_uppe = labb.eneo_uppe()
     ordning = {"arbetar": 0, "kor": 1, "installerad": 2, "saknas": 3, "okand": 4}
     ids = sorted(statusar, key=lambda i: (ordning.get(statusar[i]["tillstand"], 9), i))
-    return '<div class="rutnat">' + "".join(_tjanstekort(i, statusar[i]) for i in ids) + "</div>"
-
-
-def block_uppsattningar(_: str) -> str:
-    statusar = _statusar()
-    kort = []
-    for uid, u in labb.uppsattningar().items():
-        delar = []
-        for tjid in u["tjanster"]:
-            s = statusar.get(tjid, {"tillstand": "okand"})
-            namn = labb.tjanst(tjid).get("namn", tjid)
-            delar.append(
-                f'<span class="märke {s["tillstand"]}">{e(namn)}</span>'
-            )
-        arbetar = any(statusar.get(t, {}).get("tillstand") == "arbetar" for t in u["tjanster"])
-        knapp = (
-            f'<a class="knapp" href="?logg={e(uid)}">Arbetar …</a>'
-            if arbetar
-            else (
-                f'<form method="post" action=""><input type="hidden" name="nonce" value="{NONCE}">'
-                f'<input type="hidden" name="id" value="{e(uid)}">'
-                f'<input type="hidden" name="handling" value="uppsattning">'
-                f'<button type="submit" class="primar">Kör igång</button></form>'
-            )
+    forklaring = " ".join(
+        f'<span class="sten {lage}">{namn}</span>'
+        for lage, namn in (
+            ("inbyggd", "ingår"), ("konfig", "ställs in"), ("tillval", "går att lägga till"),
+            ("begransad", "delvis"), ("saknas", "saknas"),
         )
-        dok = (
-            f'<a class="knapp" href="?sida={urllib.parse.quote(u["dok"])}">Läs mer</a>'
-            if u.get("dok") else ""
-        )
-        kort.append(
-            f'<div class="kort"><h3>{e(u["namn"])}</h3><p>{e(u.get("beskrivning", ""))}</p>'
-            f'<p>{" ".join(delar)}</p>{knapp}{dok}</div>'
-        )
-    return '<div class="rutnat">' + "".join(kort) + "</div>"
+    )
+    return (
+        f'<p class="teckenforklaring">{forklaring}</p>'
+        '<div class="rutnat">'
+        + "".join(_tjanstekort(i, statusar[i], eneo_uppe) for i in ids)
+        + "</div>"
+    )
 
 
 def block_status(_: str) -> str:
@@ -354,7 +398,7 @@ def _finns(kmd: str) -> bool:
 
 def block_miljo(_: str) -> str:
     m = labb.miljo()
-    verktyg = ["git", "uv", "python3", "node", "gh", "open-webui", "mcpo", "openclaw"]
+    verktyg = ["git", "uv", "python3", "node", "gh", "kubectl", "caddy", "mcpo", "openclaw"]
     with ThreadPoolExecutor(max_workers=8) as pool:
         finns = dict(zip(verktyg, pool.map(_finns, verktyg)))
     prickar = " ".join(
@@ -466,39 +510,8 @@ def block_kvot(_: str) -> str:
     return tabell + notis
 
 
-def block_atgarder(_: str) -> str:
-    """Knappar för sådant som inte är en tjänst men ska gå att köra härifrån."""
-    atgarder = labb.atgarder()
-    if not atgarder:
-        return ""
-    kort = []
-    for aid, a in atgarder.items():
-        arbetar = labb.kors_nu(aid)
-        knappar = []
-        if arbetar:
-            knappar.append(f'<a class="knapp" href="?logg={e(aid)}">Visa vad som händer</a>')
-        else:
-            knappar.append(
-                f'<form method="post" action=""><input type="hidden" name="nonce" value="{NONCE}">'
-                f'<input type="hidden" name="id" value="{e(aid)}">'
-                f'<input type="hidden" name="handling" value="atgard">'
-                f'<button type="submit" class="primar">{e(a.get("knapp", "Kör"))}</button></form>'
-            )
-        if a.get("dok"):
-            knappar.append(f'<a class="knapp" href="?sida={urllib.parse.quote(a["dok"])}">Läs mer</a>')
-        if labb.loggfil(aid, "atgard").exists():
-            knappar.append(f'<a class="knapp" href="?logg={e(aid)}">Logg</a>')
-        kort.append(
-            f'<div class="kort"><h3>{e(a.get("namn", aid))}</h3>'
-            f'<p>{e(a.get("beskrivning", ""))}</p>{"".join(knappar)}</div>'
-        )
-    return '<div class="rutnat">' + "".join(kort) + "</div>"
-
-
 _BLOCKBYGGARE = {
-    "atgarder": block_atgarder,
-    "tjanster": block_tjanster,
-    "uppsattningar": block_uppsattningar,
+    "verktyg": block_verktyg,
     "status": block_status,
     "miljo": block_miljo,
     "namnrymd": block_namnrymd,
@@ -544,11 +557,11 @@ def sida_markdown(rel: str) -> tuple[int, bytes]:
 
 
 def sida_logg(tjid: str) -> tuple[int, bytes]:
-    handlingar = ("installera", "starta", "stoppa", "avinstallera", "uppsattning", "atgard")
+    handlingar = ("installera", "starta", "stoppa", "avinstallera", "koppla_eneo",
+                  "uppsattning")
     känd = (
         tjid in labb.tjanster()
         or tjid in labb.uppsattningar()
-        or tjid in labb.atgarder()
         or any(labb.loggfil(tjid, h).exists() for h in handlingar)
     )
     if not känd or "/" in tjid:
@@ -631,24 +644,17 @@ def sida_bekrafta(tjid: str) -> tuple[int, bytes]:
 
 
 def starta_handling(handling: str, tjid: str) -> str:
-    """Startar kor.sh frånkopplat och returnerar vart vi ska skicka läsaren."""
-    if handling == "uppsattning":
-        if tjid not in labb.uppsattningar():
-            return "?sida=docs/START.md"
-        kmd = ["verktyg/kor.sh", "uppsattning", tjid]
-        mal = f"?logg={urllib.parse.quote(tjid)}"
-    elif handling == "atgard":
-        if tjid not in labb.atgarder():
-            return "?sida=docs/START.md"
-        kmd = ["verktyg/kor.sh", "atgard", tjid]
-        mal = f"?logg={urllib.parse.quote(tjid)}"
-    else:
-        if tjid not in labb.tjanster() or handling not in (
-            "installera", "starta", "stoppa", "avinstallera"
-        ):
-            return "?sida=docs/START.md"
-        kmd = ["verktyg/kor.sh", handling, tjid]
-        mal = f"?logg={urllib.parse.quote(tjid)}"
+    """Startar kor.sh frånkopplat och returnerar vart vi ska skicka läsaren.
+
+    Uppsättningar körs bara från terminalen. Panelens ingång är verktyget och
+    dess knappar — se docs/60-miljo/panelen.md.
+    """
+    if tjid not in labb.tjanster() or handling not in (
+        "installera", "starta", "stoppa", "avinstallera", "koppla_eneo"
+    ):
+        return "?sida=docs/START.md"
+    kmd = ["verktyg/kor.sh", handling, tjid]
+    mal = f"?logg={urllib.parse.quote(tjid)}"
     labb.se_till_att_kataloger_finns()
     # kor.sh skriver själv tjänstens logg. Panelens egen omdirigering går till
     # en separat fil — annars hamnar varje rad två gånger i loggvyn.

@@ -6,28 +6,63 @@ vad som krävs för att ta något hela vägen från demo till drift.
 Den här sidan är startsidan i [labbpanelen](60-miljo/panelen.md). Blocken nedan är
 tomma när du läser filen på GitHub och fyllda när du läser den i panelen.
 
-## Kör igång en uppsättning
+## Kartan: en lösning är byggstenar, inte en produkt
 
-Varje uppsättning är en kombination av tjänster som är tänkta att fungera ihop.
-Panelen installerar det som saknas, startar i rätt ordning och skriver den delade
-MCP-konfigurationen. Du kan trycka igen — det som redan kör lämnas i fred.
+![Användaren möter applikationslagret, som går vidare till orkestreringen och
+modellen. Orkestreringen drar in kontext och minne, verktygslagret och arbetssätt som
+paket, vilka i sin tur når källsystem, register och dokument. Runt om alltihop ligger
+behörighet, loggning och mänsklig översyn; under ligger driftmiljö, utvärdering och
+livscykelhantering.](bilder/anatomi.svg)
 
-<!-- panel:uppsattningar -->
+Ingen lösning använder alla. Poängen med kartan är att kunna se vilka ett förslag
+saknar, för det är där de obehagliga överraskningarna sitter — och de fyra nedersta
+(driftmiljö, utvärdering, mänsklig översyn, livscykelhantering) är de som saknas i
+nästan varje demo. Hela resonemanget står i
+[byggstenar.md](20-tekniker/byggstenar.md); nivåstegen som fungerar i ett
+verksamhetsmöte finns
+[längst ned där](20-tekniker/byggstenar.md#nivåstegen-språket-som-håller-i-ett-möte).
+
+Nedan är samma karta lagd över det som faktiskt går att starta här. Ett verktyg
+beskriver sig alltid med sitt eget produktspråk; byggstenarna är det gemensamma
+måttet som gör två verktyg jämförbara — och som visar vad du behöver bygga på med.
+
+## Verktygen, och vad de består av
+
+Varje kort säger vilka byggstenar verktyget innehåller, vilka som måste ställas in
+och vilka det inte har. Knapparna gör det: starta, stoppa, ta bort, och koppla in i
+Eneo där det går.
+
+<!-- panel:verktyg -->
+
+**Stoppa och Ta bort är två olika saker.** *Stoppa* släpper processerna och skalar
+arbetslasterna i namnrymden till noll — inga poddar blir kvar och ingenting tar
+CPU eller minne, men all data ligger kvar på volymerna. *Ta bort* raderar. Kör
+*Stoppa* när du är klar för dagen; det är det som gör att en labbmiljö inte lämnar
+igångvarande tjänster efter sig. Se [eneo.md](60-miljo/eneo.md#ta-bort-eneo-igen).
 
 ## Vad kör just nu
 
 <!-- panel:status -->
 
-## Enskilda tjänster
+## Att koppla in något i Eneo
 
-<!-- panel:tjanster -->
+Eneo har **inga verktyg från början**, och ingen inbyggd verktygslåda. Adminen
+lägger upp MCP-servrar per organisation, och sedan väljer varje assistent vilka av
+deras verktyg den får använda. Modellerna fungerar likadant: ingen modell finns
+förrän en leverantör är upplagd.
 
-## Åtgärder
+Det är därför korten ovan har en *koppla in*-knapp: den skriver det som annars är
+sexton klick i ett formulär, och den kan köras om när du bytt nyckel eller startat
+om en server. Två saker begränsar vad som går att koppla in:
 
-Sådant som inte är en tjänst men som är bra att kunna köra om. Kör du en
-uppsättning ovan görs det här automatiskt.
+- **Eneo pratar bara Streamable HTTP.** Inte stdio, inte SSE. En stdio-server måste
+  köras över HTTP för att gå att koppla in.
+- **Eneo kör i namnrymden, inte i den här podden.** Den når bara servrar som ligger
+  på en exponerad port, alltså ett publikt värdnamn — och då behövs en token.
 
-<!-- panel:atgarder -->
+Det gäller [Hello-MCP](../exempel/mcp/hello-mcp/README.md), som kör båda
+transporterna av just det skälet. Se [eneo.md](60-miljo/eneo.md) och
+[mcp.md](20-tekniker/mcp.md).
 
 ## Vad vi försöker ta reda på
 
@@ -44,8 +79,8 @@ där resultatet är ett underlag att ta vidare tillsammans med dem. Vad styrning
 kräver i respektive: [förutsättningar](00-oversikt/forutsattningar.md).
 
 Ny här? [Läsordningen](README.md) tar dig igenom repot. Har du en halvtimme och vill
-göra något: kör uppsättningen *Eneo som plattform* ovan och läs
-[eneo.md](60-miljo/eneo.md) medan den installeras — den tar en plattform hela vägen
+göra något: starta **Eneo** ovan, tryck *Koppla in modellerna*, och läs
+[eneo.md](60-miljo/eneo.md) medan installationen går. Den tar en plattform hela vägen
 till något som liknar drift, och det är där de svåra frågorna sitter.
 
 ## Miljön
@@ -62,8 +97,8 @@ Det här kör redan, oberoende av den här podden. Somligt ligger bakom inloggni
 
 Allt nedan lever kvar när den här podden stoppas — det är poängen med att köra
 saker i namnrymden, och samtidigt det som gör att kvoten tar slut om ingen städar.
-Tjänster som labbet självt deployat står med i kolumnen *Del av* och tas bort med
-**Ta bort** på tjänstens kort ovan.
+Tjänster som labbet självt deployat står med i kolumnen *Del av*. Är du klar för
+dagen: *Stoppa* på kortet ovan tar ner poddarna men behåller datan.
 
 <!-- panel:kvot -->
 

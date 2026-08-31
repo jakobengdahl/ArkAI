@@ -39,8 +39,8 @@ processer.
 | Läsa dokumentationen med navigering | `less docs/…` |
 | Se vad som är installerat och vad som kör | `verktyg/kor.sh status` |
 | Installera och starta en tjänst | `verktyg/kor.sh installera eneo` |
+| Koppla in en tjänst i Eneo | `verktyg/kor.sh koppla_eneo metadatagraf` |
 | Köra igång en hel uppsättning | `verktyg/kor.sh uppsattning eneo-plattform` |
-| Köra en åtgärd | `verktyg/kor.sh atgard koppla-eneo` |
 | **Ta bort en tjänst ur namnrymden** | `verktyg/kor.sh avinstallera eneo` |
 | Följa en installationslogg | `tail -f ~/work/.labb/logg/*.log` |
 | Se vad som kör i namnrymden och vad det kostar | `python3 verktyg/labb.py namnrymd` |
@@ -59,6 +59,10 @@ Panelen gissar aldrig ett tillstånd — den sonderar det, varje gång sidan lad
 | Svarar hälsokontrollen eller porten? | **kör** — knappen blir "öppna" och "stoppa" |
 | Lyckas `finns`-kommandot i manifestet? | **installerad** — knappen blir "starta" |
 | Annars | **ej installerad** — knappen blir "installera" |
+
+*Koppla in i Eneo* dyker upp bara när två saker gäller samtidigt: tjänsten har
+`koppla_eneo` i manifestet, och Eneo svarar. Kopplingen skriver mot Eneos API, så
+utan Eneo uppe hade knappen bara producerat ett fel i en logg.
 
 Därför spelar det ingen roll att en pod-omstart dödar alla processer men lämnar
 kvar filerna: panelen påstår inte att något kör bara för att det gjorde det förut.
@@ -103,19 +107,55 @@ installera = "verktyg/installera/mittverktyg.sh"
 starta = "verktyg/starta-mittverktyg.sh --bakgrund"
 stoppa = "verktyg/starta-mittverktyg.sh --stoppa"
 avinstallera = "verktyg/ta-bort-mittverktyg.sh"   # frivilligt, se nedan
+koppla_eneo = "verktyg/koppla-mcp-till-eneo.py mittverktyg --skriv"  # frivilligt
 halsa = "http://127.0.0.1:8085/health"
+
+[tjanst.mittverktyg.byggstenar]
+verktygslagret = { lage = "inbyggd", not = "En rad om vad just den här byggstenen blir här." }
+sakerhet-och-behorighet = { lage = "saknas", not = "Och en ärlig rad om vad som inte finns." }
 ```
 
-En **uppsättning** är flera tjänster som ska fungera ihop:
+**Byggstenarna är det som gör korten jämförbara.** Ett verktyg beskriver sig alltid
+med sitt eget produktspråk; `[tjanst.<id>.byggstenar]` översätter det till den
+gemensamma kartan i [byggstenar.md](../20-tekniker/byggstenar.md), så att två
+verktyg går att läsa på samma rader. Id:na kommer från `[[byggsten]]` högst upp i
+manifestet, och lägena är:
+
+| Läge | Betyder |
+|---|---|
+| `inbyggd` | ingår, och går inte att koppla bort |
+| `konfig` | ingår, men måste ställas in innan den gör någon nytta |
+| `tillval` | ingår inte från början, går att lägga till |
+| `begransad` | finns delvis — läs noten innan du räknar med den |
+| `saknas` | finns inte, och det är en känd lucka |
+
+Skriv noten så att den säger något man inte redan gissar. "Ingen behörighetsmodell"
+är en not; "säkerhet saknas" är en tom ruta.
+
+En **uppsättning** är flera tjänster som ska fungera ihop. De körs bara från
+terminalen — panelens ingång är verktyget och dess knappar:
 
 ```toml
 [uppsattning.mitt-experiment]
 namn = "Mitt experiment"
 beskrivning = "Vad kombinationen är till för."
-tjanster = ["openwebui", "mittverktyg", "mcpo"]
-atgarder = ["koppla-openwebui"]   # körs sist, när tjänsterna svarar
+tjanster = ["eneo", "mittverktyg"]
 dok = "docs/30-experiment/EXP-00N-mitt-experiment.md"
 ```
+
+Uppsättningen installerar det som saknas, startar i ordning och kör sist
+`koppla_eneo` för varje tjänst som har det — förutsatt att Eneo är med och svarar.
+
+## Att ta något ur bruk
+
+`avvecklas = true` gör att en tjänst inte längre installeras automatiskt och inte
+visas bland verktygen. Skript, manifestrad och dokumentation ligger kvar, och
+`verktyg/kor.sh starta <id>` fungerar som förut.
+
+Det finns för att en tjänst ska kunna tas ur bruk *stegvis*. Att radera allt på en
+gång slänger både verktyget och skälen till att det fanns; att låta det ligga kvar
+med en startknapp lockar nästa person att gå tillbaka. Open WebUI är det första
+fallet — se [openwebui.md](openwebui.md).
 
 ## Dynamiska block i markdown
 
@@ -124,9 +164,7 @@ vilket är poängen — markdownfilen förblir läsbar på båda ställena.
 
 | Block | Vad det blir |
 |---|---|
-| `<!-- panel:uppsattningar -->` | Kort med "kör igång"-knappar |
-| `<!-- panel:tjanster -->` | Kort per tjänst med status och knappar |
-| `<!-- panel:atgarder -->` | Kort med knappar för sådant som inte är en tjänst |
+| `<!-- panel:verktyg -->` | Kort per verktyg: status, byggstenar och knappar |
 | `<!-- panel:status -->` | Tabell över det som kör |
 | `<!-- panel:miljo -->` | Verktyg, namnrymd, hur tjänsten startades |
 | `<!-- panel:namnrymd -->` | Ingresser i namnrymden, som klickbara adresser |
@@ -156,30 +194,23 @@ namnrymden av installationer vars miljö inte längre finns. Blocket
 kvoten det tar. Se
 [minnesbanken](../../minnesbank/verktyg/namnrymden-overlever-podden.md).
 
-## Åtgärder
+## Koppla in i Eneo
 
-Vissa saker ska gå att köra med en knapp utan att vara en tjänst — de har inget
-tillstånd, de bara utförs. Just nu två: att koppla in plattformens modeller i Eneo,
-och att koppla in modell och verktygsservrar i Open WebUI. Båda är användbara när
-man bytt nyckel eller installerat en ny MCP-server.
-
-De deklareras som `[atgard.<id>]` i [`verktyg/labb.toml`](../../verktyg/labb.toml):
+Eneo har inga verktyg och ingen modell från början — allt läggs upp per
+organisation. `koppla_eneo` i manifestet är kommandot som gör det, och panelen
+lägger en knapp på kortet:
 
 ```toml
-[atgard.koppla-eneo]
-namn = "Koppla in modellerna i Eneo"
-beskrivning = "..."
-knapp = "Koppla in"
-kommando = "verktyg/konfigurera-eneo.py --skriv"
-dok = "docs/60-miljo/eneo.md"
+[tjanst.metadatagraf]
+koppla_eneo = "verktyg/koppla-mcp-till-eneo.py metadatagraf --skriv"
 ```
 
-De går genom samma `kor.sh`, tar samma lås och skriver samma sorts logg som
-tjänsterna. Id:n delar namnrymd med tjänsterna, så återanvänd inte ett id.
+Eneos eget kort har samma nyckel, men pekar på modellkopplingen och byter etikett
+med `koppla_eneo_knapp = "Koppla in modellerna"`.
 
-En uppsättning kan räkna upp åtgärder som ska köras när tjänsterna är uppe:
-`atgarder = ["koppla-eneo"]`. Det är det som gör *Eneo som plattform* till en enda
-knapp — installera, starta, koppla in modellerna.
+Kommandot går genom samma `kor.sh`, tar samma lås och skriver samma sorts logg som
+tjänsternas övriga handlingar. Det ska gå att köra om: efter ett nyckelbyte, efter
+att en server startats om, eller efter att Eneo installerats på nytt.
 
 ## Starta och stoppa panelen
 

@@ -5,7 +5,7 @@
 #   URL till ett skript. Argument läggs i init.personalInitArgs:
 #
 #       init.personalInit      https://raw.githubusercontent.com/jakobengdahl/ArkAI/main/verktyg/onyxia-init.sh
-#       init.personalInitArgs  bas openwebui
+#       init.personalInitArgs  bas
 #
 # Skriptet gör med flit ingenting tungt. Allt det gör tar ett par sekunder, för
 # tjänsten blir inte tillgänglig förrän det är klart. Installationerna sker i

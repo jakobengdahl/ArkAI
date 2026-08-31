@@ -44,6 +44,59 @@ titel = "Bidra"
 fil = "BIDRA.md"
 
 
+# ── Byggstenarna ──────────────────────────────────────────────────────────
+#
+# Listan från docs/20-tekniker/byggstenar.md, i samma ordning som bilden.
+# Finns här för att varje verktyg nedan ska kunna säga vilka av dem det
+# faktiskt innehåller — det är den kopplingen som gör startsidan användbar.
+# Id:na är desamma som filnamnen i docs/bilder/byggstenar/.
+#
+# Lägen ett verktyg kan ange, och vad de betyder:
+#
+#   inbyggd    ingår, och går inte att koppla bort
+#   konfig     ingår, men måste ställas in innan den gör någon nytta
+#   tillval    ingår inte från början, går att lägga till
+#   begransad  finns delvis — läs noten innan du räknar med den
+#   saknas     finns inte, och det är en känd lucka
+
+[[byggsten]]
+id = "applikationslagret"
+namn = "Applikationslagret"
+[[byggsten]]
+id = "api-lagret"
+namn = "API-lagret"
+[[byggsten]]
+id = "orkestrering"
+namn = "Orkestrering"
+[[byggsten]]
+id = "modellen"
+namn = "Modellen"
+[[byggsten]]
+id = "kontext-och-minne"
+namn = "Kontext och minne"
+[[byggsten]]
+id = "verktygslagret"
+namn = "Verktygslagret"
+[[byggsten]]
+id = "arbetssatt"
+namn = "Arbetssätt som paket"
+[[byggsten]]
+id = "sakerhet-och-behorighet"
+namn = "Säkerhet och behörighet"
+[[byggsten]]
+id = "driftmiljon"
+namn = "Driftmiljön"
+[[byggsten]]
+id = "utvardering"
+namn = "Utvärdering"
+[[byggsten]]
+id = "mansklig-oversyn"
+namn = "Mänsklig översyn"
+[[byggsten]]
+id = "livscykelhantering"
+namn = "Livscykelhantering"
+
+
 # ── Tjänster ──────────────────────────────────────────────────────────────
 #
 #   typ         lokal  = en process i den här podden
@@ -53,6 +106,12 @@ fil = "BIDRA.md"
 #   finns       kommando som lyckas när tjänsten är installerad
 #   halsa       URL som svarar när tjänsten kör (annars används port)
 #   egen_ingress  true = kräver att porten exponerades när tjänsten startade
+#   webbsida      false = svarar på sin port men har inget att titta på i en
+#                 webbläsare. Panelen visar adressen i stället för Öppna
+#   koppla_eneo   kommando som kopplar in tjänsten i Eneo. Panelen visar
+#                 knappen bara när Eneo svarar — den skriver mot Eneos API
+#   avvecklas     true = på väg ut. Installeras inte automatiskt och visas
+#                 inte bland verktygen. Skripten finns kvar
 #   avinstallera  kommando som tar bort tjänsten. Panelen visar knappen "Ta
 #                 bort", frågar först och kör aldrig det direkt från kortet
 #   avinstallera_varning  vad som går förlorat — visas på bekräftelsesidan
@@ -67,10 +126,12 @@ typ = "verktyg"
 steg = "auto"
 finns = "command -v node && command -v gh"
 installera = "verktyg/installera/bas.sh"
+[tjanst.grund.byggstenar]
+driftmiljon = { lage = "inbyggd", not = "Podden allt annat kör i. Det som installeras här ligger under ~/.local och överlever en omstart." }
 
 [tjanst.eneo]
 namn = "Eneo"
-beskrivning = "Öppen AI-plattform för svensk offentlig sektor, med behörighetsmodell, revisionslogg och OIDC. Vår jämförelse mot Open WebUI när frågan är drift, inte demo."
+beskrivning = "Öppen AI-plattform för svensk offentlig sektor, med behörighetsmodell, revisionslogg och OIDC. Labbets huvudspår när frågan är drift, inte demo."
 dok = "docs/60-miljo/eneo.md"
 # Delvis lokal: själva Eneo kör som arbetslaster i namnrymden och överlever en
 # poddomstart. Det som kör här i podden är proxyn som lägger frontend och
@@ -82,42 +143,64 @@ finns = "command -v caddy && kubectl get deployment eneo-backend"
 installera = "verktyg/installera/eneo.sh"
 starta = "verktyg/starta-eneo.sh --bakgrund"
 stoppa = "verktyg/starta-eneo.sh --stoppa"
+koppla_eneo = "verktyg/konfigurera-eneo.py --skriv"
+koppla_eneo_knapp = "Koppla in modellerna"
 halsa = "http://127.0.0.1:8084/version"
 egen_ingress = true
 # Stoppa skalar till noll och behåller allt. Ta bort raderar — och det är inte
 # en detalj: Eneo kör i namnrymden och fortsätter göra det när den här podden
 # är borta. Panelen frågar först och visar vad som försvinner.
 avinstallera = "verktyg/ta-bort-eneo.sh"
-avinstallera_varning = "Eneos databas raderas — konton, chattar och kunskapskällor försvinner. Vill du bara stänga av tills vidare, använd Stoppa: då skalas tjänsterna till noll och all data ligger kvar."
+avinstallera_varning = "Eneos databas raderas — konton, assistenter, chattar och kunskapskällor försvinner. Vill du bara stänga av tills vidare, använd Stoppa: då skalas alla poddar till noll och all data ligger kvar."
 avinstallera_visa = "kubectl get deployments,statefulsets,jobs,services,pvc -l app.kubernetes.io/part-of=eneo"
-
-[tjanst.openwebui]
-namn = "Open WebUI"
-beskrivning = "Chattgränssnitt med dokumentuppladdning, RAG och verktygsanrop. Vår testbänk för chattbot-upplägg."
-dok = "docs/60-miljo/openwebui.md"
-typ = "lokal"
-steg = "begaran"
-port = 8081
-finns = "command -v open-webui"
-installera = "verktyg/installera/openwebui.sh"
-starta = "verktyg/starta-openwebui.sh --bakgrund"
-stoppa = "verktyg/starta-openwebui.sh --stoppa"
-halsa = "http://127.0.0.1:8081/health"
-egen_ingress = true
+[tjanst.eneo.byggstenar]
+applikationslagret = { lage = "inbyggd", not = "Chatt, assistenter, spaces och admingränssnitt. Det är produkten — den går inte att koppla bort." }
+sakerhet-och-behorighet = { lage = "inbyggd", not = "Roller, organisationer, spaces och revisionslogg ingår. OIDC och SCIM finns i produkten men är inte påslaget här — det kräver en identitetsleverantör att federera mot." }
+api-lagret = { lage = "inbyggd", not = "Eneos eget API, och LiteLLM bakom modellhanteringen. Det är därför vilken OpenAI-kompatibel leverantör som helst duger." }
+driftmiljon = { lage = "konfig", not = "Sex arbetslaster i namnrymden. Imager, minne och volymstorlekar står i verktyg/eneo/ och ändras genom att köra om installationen." }
+modellen = { lage = "konfig", not = "Ingen modell från början. Läggs upp per organisation: en leverantör med bas-URL och nyckel, sedan chatt- och embeddingmodell. Knappen Koppla in modellerna gör det åt dig." }
+verktygslagret = { lage = "tillval", not = "Ingen MCP-server från början, och ingen inbyggd verktygslåda. Adminen lägger upp MCP-servrar — bara Streamable HTTP, varken stdio eller SSE — och varje assistent väljer sedan vilka av deras verktyg den får använda." }
+kontext-och-minne = { lage = "tillval", not = "Kunskapskällor per space: filer och webbsidor, indexerade med embeddingmodellen. Kräver alltså att en embeddingmodell är upplagd. Webbkryparen är avstängd här." }
+arbetssatt = { lage = "tillval", not = "Assistenter med egna prompter, och assistentmallar som admin kan versionera och rulla tillbaka." }
+orkestrering = { lage = "begransad", not = "En assistent kan välja bland sina verktyg i en tur. Flerstegsupplägg där något planerar, kör vidare och kommer tillbaka finns inte." }
+mansklig-oversyn = { lage = "begransad", not = "Enskilda verktyg kan kräva godkännande innan de körs. Granskning av svar är en arbetsordning, inte en funktion." }
+livscykelhantering = { lage = "begransad", not = "Assistentmallar versioneras och går att rulla tillbaka. Modellversion, prompter och index gör det inte." }
+utvardering = { lage = "saknas", not = "Insights ger användningsstatistik — vem som frågar hur mycket. Kända fall, mätning och regressionstest får byggas utanför." }
 
 [tjanst.hello-mcp]
 namn = "Hello-MCP"
-beskrivning = "Minsta möjliga MCP-server, exponerar minnesbanken. Pratar stdio — den startas av klienten, inte av oss."
+beskrivning = "Minsta möjliga MCP-server, exponerar minnesbanken. Pratar stdio för klienter som startar den själva, och Streamable HTTP för Eneo som når den över nätet."
 dok = "exempel/mcp/hello-mcp/README.md"
-typ = "verktyg"
+typ = "lokal"
 steg = "begaran"
+# Porten Open WebUI hade. Den är exponerad i start-URL:en, och en exponerad
+# port är det enda sättet för Eneo — som kör i en annan podd — att nå oss.
+port = 8081
 finns = "test -d exempel/mcp/hello-mcp/.venv"
 installera = "verktyg/installera/hello-mcp.sh"
+starta = "verktyg/starta-hello-mcp.sh --bakgrund"
+stoppa = "verktyg/starta-hello-mcp.sh --stoppa"
+halsa = "http://127.0.0.1:8081/halsa"
+egen_ingress = true
+# Ingen webbsida: roten svarar 404, det är MCP-slutpunkten som är poängen.
+# Panelen visar adressen i stället för en Öppna-knapp.
+webbsida = false
+koppla_eneo = "verktyg/koppla-mcp-till-eneo.py hello-mcp --skriv"
+# stdio-varianten, för klienter som startar servern själva. Skrivs till
+# ~/work/.labb/mcp.json och kräver ingen port.
 mcp_kommando = "uv run --directory {rot}/exempel/mcp/hello-mcp server.py"
+# HTTP-varianten, för Eneo. URL:en byggs av ingressen för porten.
+mcp_http_port = 8081
+mcp_http_sokvag = "/mcp"
+mcp_http_token_fil = "hello-mcp-token"
+[tjanst.hello-mcp.byggstenar]
+verktygslagret = { lage = "inbyggd", not = "Tre verktyg: lista, sök, läs. Det är hela servern — den finns för att visa mönstret, inte för att göra ett jobb." }
+kontext-och-minne = { lage = "inbyggd", not = "Minnesbanken i det här repot. Index före innehåll: modellen ser vad som finns innan den hämtar något." }
+sakerhet-och-behorighet = { lage = "konfig", not = "Över stdio är behörigheten given — klienten startade processen. Över HTTP ligger servern på ett publikt värdnamn, och då är token i ~/work/.labb/hello-mcp-token hela skyddet." }
 
 [tjanst.mcpo]
 namn = "MCP-brygga (mcpo)"
-beskrivning = "Översätter MCP till OpenAPI. Behövs för att Open WebUI ska nå våra MCP-servrar — Open WebUI pratar verktygsservrar över OpenAPI, inte MCP."
+beskrivning = "Översätter MCP till OpenAPI. Byggdes för Open WebUI, som inte pratar MCP. Eneo gör det, så bryggan behövs inte längre i huvudspåret."
 dok = "docs/20-tekniker/mcp.md"
 typ = "lokal"
 steg = "begaran"
@@ -127,10 +210,14 @@ installera = "verktyg/installera/mcpo.sh"
 starta = "verktyg/starta-mcpo.sh --bakgrund"
 stoppa = "verktyg/starta-mcpo.sh --stoppa"
 halsa = "http://127.0.0.1:8083/openapi.json"
+webbsida = false
+[tjanst.mcpo.byggstenar]
+api-lagret = { lage = "inbyggd", not = "Ett protokollbyte och inget annat: MCP in, OpenAPI ut. Att det behövdes säger mer om klienten än om bryggan." }
+verktygslagret = { lage = "konfig", not = "Vilka servrar som exponeras kommer ur ~/work/.labb/mcp.json, som genereras ur den här filen." }
 
 [tjanst.openclaw]
 namn = "OpenClaw"
-beskrivning = "Självhostad agent-gateway. Här som experimentobjekt — kontrasten mot Open WebUI är att agenten når filer och kommandon och kan drivas utifrån."
+beskrivning = "Självhostad agent-gateway. Här som experimentobjekt — kontrasten mot en chatt är att agenten når filer och kommandon och kan drivas utifrån."
 dok = "docs/20-tekniker/agentupplagg.md"
 typ = "lokal"
 steg = "begaran"
@@ -144,6 +231,11 @@ starta_bakgrund = true   # kommandot återvänder inte av sig självt
 # i stället för att ankra, så mönstret blir specifikt utan att bli fel.
 stoppa = "pkill -f 'openclaw gateway --port 18789'"
 egen_ingress = true
+[tjanst.openclaw.byggstenar]
+orkestrering = { lage = "inbyggd", not = "Det är hela poängen med den: agenten planerar, kör och kommer tillbaka utan att någon trycker på knappen mellan stegen." }
+applikationslagret = { lage = "inbyggd", not = "Eget gränssnitt, och en gateway som går att driva utifrån." }
+verktygslagret = { lage = "konfig", not = "Läser ~/work/.labb/mcp.json — samma verktygsuppsättning som de andra klienterna." }
+sakerhet-och-behorighet = { lage = "saknas", not = "Agenten når filer och kommandon i podden. Det finns ingen behörighetsmodell mellan den och dem — kör den bara på sådant du hade kört själv." }
 
 [tjanst.metadatagraf]
 namn = "Metadatagrafen"
@@ -155,53 +247,60 @@ halsa_sokvag = "/health"
 mcp_sokvag = "/mcp/sse"
 token_env = "METADATAGRAF_TOKEN"
 ingress_matchning = "metadatagraph"
+koppla_eneo = "verktyg/koppla-mcp-till-eneo.py metadatagraf --skriv"
+# Eneo pratar bara Streamable HTTP. Grafen svarar på /mcp/ i roten — inte på
+# den /web/-sökväg METADATAGRAF_URL pekar på, och inte på /mcp/sse.
+mcp_http_url_env = "METADATAGRAF_URL"
+mcp_http_sokvag = "/mcp/"
+[tjanst.metadatagraf.byggstenar]
+kontext-och-minne = { lage = "inbyggd", not = "Metadata som graf: inte vad som står om X, utan vad som hänger ihop med X. Den tredje av de tre sorters minne som blandas ihop." }
+verktygslagret = { lage = "inbyggd", not = "Ett sextiotal verktyg över MCP — sök, hämta noder, följ relationer." }
+sakerhet-och-behorighet = { lage = "konfig", not = "Bearer-token, utdelad av den som driver piloten. Den ligger i miljöns Vault-hemlighet, aldrig i repot." }
 
-
-# ── Åtgärder ──────────────────────────────────────────────────────────────
-#
-# Sådant som ska gå att köra med en knapp men inte är en tjänst. Samma lås och
-# samma loggar som tjänsterna, så panelen behöver inte veta något särskilt om
-# dem. Id:n delar namnrymd med tjänsterna — återanvänd inte ett id.
-
-[atgard.koppla-eneo]
-namn = "Koppla in modellerna i Eneo"
-beskrivning = "Lägger upp plattformens inferens som modelleverantör i Eneo, med chattmodell och embeddingmodell, och kontrollerar att båda svarar. Kör den när du bytt nyckel — Eneo läser inte nyckeln ur miljön."
-knapp = "Koppla in"
-kommando = "verktyg/konfigurera-eneo.py --skriv"
-dok = "docs/60-miljo/eneo.md"
-
-[atgard.koppla-openwebui]
-namn = "Koppla in modell och verktyg i Open WebUI"
-beskrivning = "Skriver in modellkopplingen från miljöns hemlighet och de MCP-servrar som bryggan exponerar. Kör den när du installerat en ny MCP-server, eller när du bytt nyckel."
-knapp = "Koppla in"
-kommando = "verktyg/konfigurera-openwebui.py --skriv"
+[tjanst.openwebui]
+namn = "Open WebUI"
+beskrivning = "Chattgränssnitt med dokumentuppladdning, RAG och verktygsanrop. Var labbets testbänk innan Eneo — på väg ut, se dokumentationen."
 dok = "docs/60-miljo/openwebui.md"
+typ = "lokal"
+steg = "begaran"
+# På väg ut: installeras inte automatiskt och visas inte bland verktygen.
+# Skripten finns kvar och fungerar från terminalen.
+avvecklas = true
+finns = "command -v open-webui"
+installera = "verktyg/installera/openwebui.sh"
+starta = "verktyg/starta-openwebui.sh --bakgrund"
+stoppa = "verktyg/starta-openwebui.sh --stoppa"
+# Ingen port här med flit: 8081 är Hello-MCP:s nu. Startar du Open WebUI för
+# hand tar den porten om den är ledig, men panelen ska inte rapportera
+# "Open WebUI kör" för att något annat svarar på 8081.
+[tjanst.openwebui.byggstenar]
+applikationslagret = { lage = "inbyggd", not = "Chatt, dokumentuppladdning, verktygsanrop." }
+sakerhet-och-behorighet = { lage = "begransad", not = "Inloggning finns, men slås på bara av strängen True. Ingen behörighetsmodell utöver användarkonton — det var det som gjorde att jämförelsen med Eneo blev intressant." }
+verktygslagret = { lage = "konfig", not = "Pratar inte MCP. Kräver bryggan mcpo, som översätter till OpenAPI." }
 
 
 # ── Uppsättningar ─────────────────────────────────────────────────────────
 #
-# Kombinationer som är tänkta att fungera ihop. Panelen installerar det som
-# saknas, startar i ordning och skriver ~/work/.labb/mcp.json som klienterna
-# läser. Listan `atgarder` körs sist, när tjänsterna svarar.
+# Kombinationer som är tänkta att fungera ihop, för terminalen:
+#
+#   verktyg/kor.sh uppsattning eneo-plattform
+#
+# Panelen visar dem inte längre — där är verktygen och deras byggstenar
+# ingången, och varje kort har sina egna knappar. Uppsättningen installerar det
+# som saknas, startar i ordning, kopplar in det som går att koppla in i Eneo och
+# skriver ~/work/.labb/mcp.json.
 
 [uppsattning.eneo-plattform]
 namn = "Eneo som plattform"
 beskrivning = "Installerar Eneo i namnrymden, startar det och kopplar in plattformens modeller. Frågan: vad kostar det i styrning och drift att köra en plattform som är byggd för att förvaltas?"
 tjanster = ["eneo"]
-atgarder = ["koppla-eneo"]
 dok = "docs/60-miljo/eneo.md"
 
-[uppsattning.chatt-med-verktyg]
-namn = "Chattbot + verktyg"
-beskrivning = "Open WebUI med en egen MCP-server inkopplad via bryggan. Frågan: var går gränsen mellan att modellen svarar och att modellen gör?"
-tjanster = ["openwebui", "hello-mcp", "mcpo"]
+[uppsattning.eneo-med-verktyg]
+namn = "Eneo med verktyg"
+beskrivning = "Eneo, plus labbets två MCP-servrar inkopplade som verktygsservrar. Frågan: var går gränsen mellan att modellen svarar och att modellen gör — när verktygen ligger bakom en behörighetsmodell?"
+tjanster = ["eneo", "hello-mcp", "metadatagraf"]
 dok = "docs/20-tekniker/chattbot-plus-verktyg.md"
-
-[uppsattning.graf-i-chatt]
-namn = "Metadatagraf i chatten"
-beskrivning = "Open WebUI mot metadatagrafens MCP-server. Kunskap som redan finns, i ett gränssnitt vi kan variera."
-tjanster = ["openwebui", "metadatagraf", "mcpo"]
-dok = "docs/20-tekniker/grafminne.md"
 
 [uppsattning.graf-och-agent]
 namn = "Metadatagraf + agent"
