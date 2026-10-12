@@ -249,18 +249,31 @@ Eneo trunkerar själv utifrån värdet.
 ## Byte till 2.2.2
 
 **Har du installerat Eneo från det här repot före 2026-10-12 kör du 2.1.1, och
-kunskapsuppladdningen fungerar inte hos dig.** Enklaste vägen är att ta bort och
+kunskapsuppladdningen fungerar inte hos dig.** Vägen framåt är att ta bort och
 installera om — då hoppar du över 2.2:s engångsmigrering helt. Kontona, spacen,
-assistenterna och modellkopplingarna försvinner och måste läggas upp igen.
+assistenterna och kunskapskällorna försvinner. **Kopiera assistenternas promptar
+och inställningar till en textfil innan du börjar.** Modellerna kopplas in igen av
+sig själva, och Metadatagrafen också när tjänsten startas via URL:en med dess
+uppgifter i Vault.
+
+Utan terminal, tre steg:
+
+1. **I panelen:** *Ta bort* på Eneos kort, och bekräfta. Det tar bort Eneo ur
+   namnrymden — det gör inte att stänga VS Code-tjänsten.
+2. **I Onyxia:** ta bort VS Code-tjänsten under *My services*.
+3. **Starta en ny** med [URL:en](starta-labbet.md#urlen), med profilen `bas eneo`.
+   Vänta några minuter och öppna länken *Port 8084* på tjänstens sida i Onyxia.
+
+Den nya tjänsten klonar repot på nytt och får därmed den nya versionen. Steg 2 och
+3 kan inte ersättas av att bara trycka *Installera* i den gamla panelen: den kör
+koden som klonades när tjänsten startades, alltså 2.1.1.
+
+Med terminal går det också att behålla tjänsten:
 
 ```bash
-git pull                                   # den här versionen av repot
-# Skriv ner det du vill behålla: assistenternas promptar, spaces, grupper
-verktyg/ta-bort-eneo.sh                    # raderar databasen
-verktyg/kor.sh installera eneo
-verktyg/kor.sh starta eneo
-verktyg/konfigurera-eneo.py --skriv        # leverantör, chatt- och embeddingmodell
-verktyg/koppla-mcp-till-eneo.py <tjänst> --skriv   # för varje MCP-server du använde
+cd ~/work/ArkAI && git pull                # hämta den nya versionen
+verktyg/kor.sh avinstallera eneo           # raderar databasen
+verktyg/kor.sh installera eneo             # installerar, startar och kopplar in modellerna
 ```
 
 Det som ändrats och som du märker:

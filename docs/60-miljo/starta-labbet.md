@@ -126,14 +126,20 @@ läggs där behöver sitt eget skydd: Eneo har sin inloggning, Hello-MCP en toke
 
 | När | Vad | Hur lång tid |
 |---|---|---|
-| Tjänsten startar | `onyxia-init.sh` skriver inställningar och startar panelen | ~2 sekunder |
-| VS Code öppnas | En terminal öppnas automatiskt och installerar grunden | ~10 sekunder |
-| Strax därefter | Samma terminal installerar det profilen ber om — med enbart `bas` finns inget mer att göra | ~0–3 minuter |
-| Hela tiden | Panelen är igång och visar vad som pågår | — |
+| Tjänsten startar | `onyxia-init.sh` skriver inställningar, startar panelen och sätter igång installationen i bakgrunden | ~2 sekunder |
+| Direkt därefter | Grunden och det profilen ber om installeras — **utan att du öppnar VS Code** | ~10 sekunder till ~5 minuter |
+| Samma körning | Det som är installerat startas, och Eneo får sina modeller inkopplade | ~30 sekunder |
+| Öppnar du VS Code | En terminal visar samma körning — den startar ingen ny | — |
 
-Startskriptet gör med flit **ingenting tungt**. Tjänsten blir inte tillgänglig
-förrän det är klart, så allt som tar tid ligger i terminalfönstret i stället — där
-du kan se det, och där det inte hindrar dig från att börja jobba.
+Startskriptet gör med flit **ingenting tungt** själv: det startar installationen
+frånkopplad och avslutar. Tjänsten blir alltså tillgänglig efter några sekunder,
+och installationen fortsätter i bakgrunden. Loggen ligger i
+`~/work/.labb/logg/labb-start.log`.
+
+**Med profilen `bas eneo` behöver du inte öppna VS Code alls.** När installationen
+är klar fungerar länken *Port 8084* på tjänstens sida i Onyxia — den går direkt till
+Eneos inloggning. Innan dess ger den `502 Bad Gateway`; vänta och ladda om.
+Inloggningen står i [eneo.md](eneo.md#köra-det).
 
 Öppna panelen med `Ctrl+Shift+P` → *Simple Browser: Show* och URL:en som skrivs ut
 i terminalen. Se [panelen.md](panelen.md).
@@ -147,8 +153,8 @@ inställningen åt dig, men skulle den inte ha slagit igenom:
 Ctrl+Shift+P → "Tasks: Run Task" → "Labbet: installera"
 ```
 
-Panelen kör ändå — den startas av startskriptet, inte av tasken — och har en knapp
-för grundinstallationen.
+Panelen och installationen kör ändå — de startas av startskriptet, inte av
+tasken. Tasken visar bara körningen.
 
 ## Utan URL
 

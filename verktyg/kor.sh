@@ -199,7 +199,22 @@ SLUTPY
 case "${1:-}" in
   installera|starta|stoppa|avinstallera|koppla_eneo)
     [ $# -eq 2 ] || { anvandning; exit 2; }
-    utfor "$1" "$2"
+    utfor "$1" "$2" || exit $?
+    # efter_installation i manifestet: handlingar som körs direkt efter en
+    # lyckad installation, så att Installera lämnar en tjänst som går att
+    # använda. Ett fel här gör inte installationen ogjord — det syns i
+    # handlingens egen logg, och knappen finns kvar i panelen.
+    if [ "$1" = "installera" ]; then
+      for efter in $(python3 - "$2" <<'SLUTPY' 2>/dev/null
+import sys
+sys.path.insert(0, "verktyg")
+import labb
+print(" ".join(labb.tjanst(sys.argv[1]).get("efter_installation", [])))
+SLUTPY
+      ); do
+        utfor "$efter" "$2" || info "  $efter $2 gick inte — gör det från panelen"
+      done
+    fi
     ;;
   uppsattning)
     [ $# -eq 2 ] || { anvandning; exit 2; }
