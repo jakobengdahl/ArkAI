@@ -16,12 +16,16 @@ set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 export PATH="$HOME/.local/bin:$PATH"
 
-# Imagerna är pinnade till Eneos egna attesterade digester för v2.1.1
-# (IMAGE-DIGESTS.txt i releasen). Taggen 2.1.1 pekar på samma sak i dag, men
-# en digest kan inte flyttas.
-ENEO_VERSION="2.1.1"
-BACKEND_IMAGE="ghcr.io/eneo-ai/eneo-backend@sha256:b1c9f3790f803e2c5e951ffe64dec73d1fc13958d9f0a99bd8d1b513dce27b84"
-FRONTEND_IMAGE="ghcr.io/eneo-ai/eneo-frontend@sha256:e9e466828f6aae871a652a3f06c2b69793f0afa10f0682437e9b4a9738b5958d"
+# Imagerna är pinnade till digesterna som taggen 2.2.2 pekade på när vi bytte
+# (taggen i GHCR saknar "v", till skillnad från releasen på GitHub). En digest
+# kan inte flyttas.
+#
+# Byte från 2.1.x till 2.2.x är inte ett digestbyte: 2.2 kräver en
+# engångsmigrering av fil- och ikoninnehåll med stoppade tjänster. Vi har inte
+# provat den vägen — vi tog bort och installerade om. Se docs/60-miljo/eneo.md.
+ENEO_VERSION="2.2.2"
+BACKEND_IMAGE="ghcr.io/eneo-ai/eneo-backend@sha256:2a332becf682875da6dbf3c7482176c6cb3971bac44cf897f9a58620e7c8d22a"
+FRONTEND_IMAGE="ghcr.io/eneo-ai/eneo-frontend@sha256:97b833c54b937635054e60c1f67c955efff8684df76dd71e1ceb78fbc630d005"
 DB_IMAGE="pgvector/pgvector:pg16"
 REDIS_IMAGE="redis:7-alpine"
 DB_STORLEK="${ENEO_DB_STORLEK:-20Gi}"
@@ -31,9 +35,13 @@ ENEO_PORT="${ENEO_PORT:-8084}"
 # användare, och ett slumpat lösenord i en fil utanför repot var mest i vägen.
 # Porten är däremot publik — se docs/60-miljo/eneo.md. Sätt ENEO_ADMIN_EPOST och
 # ENEO_ADMIN_LOSEN före installationen om du vill ha något annat.
+#
+# Sedan 2.2 kräver Eneo minst 12 tecken. Ett kortare lösenord stoppar inte
+# migreringen — init_db.py loggar felet och avslutar ändå med 0, och då finns
+# det ingen användare att logga in med. Därför kontrolleras loggen i steg 5.
 ADMIN_EPOST="${ENEO_ADMIN_EPOST:-arkai@arkai.se}"
 ADMIN_NAMN="${ENEO_ADMIN_NAMN:-arkai}"
-ADMIN_LOSEN="${ENEO_ADMIN_LOSEN:-arkai2026}"
+ADMIN_LOSEN="${ENEO_ADMIN_LOSEN:-arkai-labb-2026}"
 
 export ENEO_VERSION BACKEND_IMAGE FRONTEND_IMAGE DB_IMAGE REDIS_IMAGE \
        DB_STORLEK ADMIN_EPOST ADMIN_NAMN
@@ -106,7 +114,6 @@ else
     --from-literal=URL_SIGNING_KEY="$(openssl rand -hex 32)" \
     --from-literal=ENCRYPTION_KEY="$(python3 -c 'import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).decode())')" \
     --from-literal=ENEO_SUPER_API_KEY="$(openssl rand -hex 32)" \
-    --from-literal=ENEO_SUPER_DUPER_API_KEY="$(openssl rand -hex 32)" \
     --from-literal=DEFAULT_USER_PASSWORD="$ADMIN_LOSEN" >/dev/null || exit 1
   kubectl label secret eneo-hemligheter app.kubernetes.io/part-of=eneo >/dev/null
 
@@ -136,13 +143,20 @@ if ! kubectl wait --for=condition=complete job/eneo-db-init --timeout=900s; then
   kubectl logs job/eneo-db-init --tail=40
   exit 1
 fi
+if kubectl logs job/eneo-db-init 2>/dev/null | grep -q "Error adding tenant and user"; then
+  echo
+  echo "Migreringen gick igenom, men första användaren skapades inte:"
+  kubectl logs job/eneo-db-init | grep "Error adding tenant and user"
+  echo "Rätta DEFAULT_USER_PASSWORD i eneo-hemligheter (eller ENEO_ADMIN_LOSEN"
+  echo "före en ny installation) och kör installationen igen."
+  exit 1
+fi
 
 # ── 6. Backend, worker och frontend ───────────────────────────────────────
 
-echo "6/6  Backend, worker och frontend"
+echo "6/6  Backend med worker, och frontend"
 rendera verktyg/eneo/03-app.yaml | kubectl apply -f - || exit 1
 kubectl rollout status deployment/eneo-backend --timeout=900s || exit 1
-kubectl rollout status deployment/eneo-worker --timeout=600s || exit 1
 kubectl rollout status deployment/eneo-frontend --timeout=600s || exit 1
 
 echo

@@ -16,7 +16,7 @@ export PATH="$HOME/.local/bin:$PATH"
 PORT="${ENEO_PORT:-8084}"
 LABB="${WORKSPACE_DIR:-$HOME/work}/.labb"
 LOGG="$LABB/eneo-proxy.log"
-ARBETSLASTER="deployment/eneo-backend deployment/eneo-worker deployment/eneo-frontend"
+ARBETSLASTER="deployment/eneo-backend deployment/eneo-frontend"
 
 export ENEO_PORT="$PORT"
 export ENEO_BACKEND="${ENEO_BACKEND:-eneo-backend:8000}"
@@ -28,7 +28,7 @@ export XDG_DATA_HOME="$LABB/caddy" XDG_CONFIG_HOME="$LABB/caddy"
 if [ "${1:-}" = "--stoppa" ]; then
   pkill -f "caddy run --config verktyg/eneo/Caddyfile" && echo "Proxyn stoppad." \
     || echo "Proxyn kördes inte."
-  # Alla sex arbetslaster till noll — inga poddar blir kvar, ingenting tar CPU
+  # Alla arbetslaster till noll — inga poddar blir kvar, ingenting tar CPU
   # eller minne. Volymerna ligger kvar, och med dem konton, assistenter och
   # kunskapskällor. Det är skillnaden mot ta-bort-eneo.sh.
   kubectl scale --replicas=0 $ARBETSLASTER statefulset/eneo-db statefulset/eneo-redis \

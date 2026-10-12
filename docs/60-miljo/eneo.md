@@ -7,14 +7,14 @@ behörighetsmodell per organisation, revisionslogg, OIDC-federation, SCIM. Det g
 intressant för oss, för det är precis den sortens frågor som skiljer en PoC från
 något som får köras i drift. Se [50-fran-poc-till-produktion](../50-fran-poc-till-produktion/).
 
-**Eneo v2.1.1 kör i labbet sedan 2026-08-28.** Det här dokumentet beskriver hur, och
+**Eneo v2.2.2 kör i labbet sedan 2026-10-12** (v2.1.1 från 2026-08-28). Det här dokumentet beskriver hur, och
 var installationen avviker från det Eneo själva dokumenterar. Underlaget för vägvalen
 finns i [EXP-002](../30-experiment/EXP-002-eneo-i-kubernetes.md).
 
 ## Kort svar
 
 Eneo dokumenterar bara `docker compose`, och det finns ingen containerruntime i
-labbtjänsten. I stället kör Eneo som **sex arbetslaster i namnrymden** — samma
+labbtjänsten. I stället kör Eneo som **fem arbetslaster i namnrymden** — samma
 tjänster som compose-filen, översatta till Kubernetes-manifest — plus en **Caddy i
 VS Code-podden** som lägger frontend och backend på samma värdnamn.
 
@@ -39,7 +39,7 @@ verktyg/kor.sh uppsattning eneo-plattform   # allt utom det sista, i ordning
 ```
 
 Adressen är värdnamnet för port 8084, och panelen visar den. Inloggningen är
-`arkai@arkai.se` / `arkai2026` — samma i varje ny installation, satt av
+`arkai@arkai.se` / `arkai-labb-2026` — samma i varje ny installation, satt av
 installationsskriptet och lagrad i `eneo-hemligheter` (`DEFAULT_USER_PASSWORD`)
 och `eneo-backend-konfig` (`DEFAULT_USER_EMAIL`).
 
@@ -115,18 +115,17 @@ betyder att Eneo inte nådde servern.
 | `eneo-db` | `pgvector/pgvector:pg16` | PostgreSQL 16 med pgvector, 20 Gi volym |
 | `eneo-redis` | `redis:7-alpine` | Cache och jobbkö (ARQ), 2 Gi volym |
 | `eneo-db-init` | `eneo-backend` (Job) | Migreringar och första tenant/användare |
-| `eneo-backend` | `ghcr.io/eneo-ai/eneo-backend` | FastAPI på 8000 |
-| `eneo-worker` | samma image, `RUN_AS_WORKER=true` | Bakgrundsjobb |
+| `eneo-backend` | `ghcr.io/eneo-ai/eneo-backend` | Två containrar i samma podd: FastAPI på 8000, och workern (samma image, `RUN_AS_WORKER=true`) för bakgrundsjobb |
 | `eneo-frontend` | `ghcr.io/eneo-ai/eneo-frontend` | SvelteKit med SSR på 3000 |
 
 Manifesten ligger i [`verktyg/eneo/`](../../verktyg/eneo/) och är mallar — de
 renderas av installationsskriptet, som fyller i värdnamn, imager och storlekar.
 Numreringen är körordningen: databasen först, sedan migreringen, sedan applikationen.
 
-Backend- och frontendimagerna är pinnade till **de digester Eneo attesterar för
-v2.1.1** (`IMAGE-DIGESTS.txt` i releasen), inte till en tagg. `/version` svarar
-`2.1.1-dev` — versionssträngen i den släppta imagen är byggd så, det är inte en
-utvecklingsbygge.
+Backend- och frontendimagerna är pinnade till **digesterna som taggen `2.2.2` pekade
+på i GHCR** när vi bytte, inte till en tagg. Taggen i GHCR saknar `v`, till skillnad
+från releasen på GitHub. `/version` svarar `2.2.2-dev` — versionssträngen i den
+släppta imagen är byggd så, det är inte ett utvecklingsbygge.
 
 ### Proxyn, och varför den behövs
 
@@ -154,12 +153,22 @@ hela installationen i ett skript och en variabel färre mot compose-filen. Vill 
 riktig operatorhanterad databas med backup är det bytet nästa steg, inte en
 ommöblering.
 
-**`/app/data` och `/tmp` delas inte mellan backend och worker.** I compose är de
-gemensamma volymer. Lagringsklassen här (`rook-ceph-block`) är ReadWriteOnce, och två
-poddar kan inte montera samma volym — så båda har var sin `emptyDir`. Följden:
-**exporterade revisionsloggar går inte att ladda ner**, eftersom worker skriver filen
-i sin podd och backend läser i sin. Behövs den funktionen är lösningen antingen en
-delad ReadWriteMany-volym eller att objektlagring kopplas in.
+**Backend och worker kör i samma podd.** I compose är de två tjänster som delar
+volymerna `/app/data` och `/tmp`. Lagringsklassen här (`rook-ceph-block`) är
+ReadWriteOnce, och två poddar kan inte montera samma volym — men två containrar i en
+podd kan dela en `emptyDir`. Delningen är inte valfri: backend skriver en uppladdad
+fil till `/tmp` och lägger bara *sökvägen* i jobbkön, och workern öppnar sedan samma
+sökväg. Det gäller fortfarande i 2.2.2, även med objektlagring inkopplad.
+
+Fram till 2026-10-12 körde de i var sin podd med var sin `emptyDir`. Då misslyckades
+**varje uppladdning till en kunskapskälla** — backend loggade att allt gick bra,
+workern loggade `FileNotFoundError: [Errno 2] No such file or directory:
+'/tmp/<id>'`, och i gränssnittet syntes bara att filen aldrig dök upp. Exporterade
+revisionsloggar gick inte heller att ladda ner, av samma skäl. Se
+[minnesbanken](../../minnesbank/verktyg/eneo-backend-och-worker-delar-tmp.md).
+
+Priset är att backend och worker startas om och skalas tillsammans. Med en användare
+spelar det ingen roll.
 
 **Webbkryparen är avstängd** (`USING_CRAWL=false`). Den drar långa jobb och mycket
 minne, och det är inte den vi jämför plattformar på.
@@ -237,6 +246,51 @@ på plattformens modeller.
 medvetet försiktiga. Plattformens modellista säger ingenting om kontextfönster, och
 Eneo trunkerar själv utifrån värdet.
 
+## Byte till 2.2.2
+
+**Har du installerat Eneo från det här repot före 2026-10-12 kör du 2.1.1, och
+kunskapsuppladdningen fungerar inte hos dig.** Enklaste vägen är att ta bort och
+installera om — då hoppar du över 2.2:s engångsmigrering helt. Kontona, spacen,
+assistenterna och modellkopplingarna försvinner och måste läggas upp igen.
+
+```bash
+git pull                                   # den här versionen av repot
+# Skriv ner det du vill behålla: assistenternas promptar, spaces, grupper
+verktyg/ta-bort-eneo.sh                    # raderar databasen
+verktyg/kor.sh installera eneo
+verktyg/kor.sh starta eneo
+verktyg/konfigurera-eneo.py --skriv        # leverantör, chatt- och embeddingmodell
+verktyg/koppla-mcp-till-eneo.py <tjänst> --skriv   # för varje MCP-server du använde
+```
+
+Det som ändrats och som du märker:
+
+- **Lösenordet är `arkai-labb-2026`.** 2.2 kräver minst 12 tecken. Har du satt
+  `ENEO_ADMIN_LOSEN` själv måste det också vara minst 12 tecken.
+- **Ingen `eneo-worker` längre.** Workern är en container i `eneo-backend`-podden.
+  Loggarna läses med `kubectl logs deploy/eneo-backend -c worker`.
+- **Personliga spaces** får alla aktiverade modeller och MCP-servrar automatiskt
+  och går inte att ändra via API:et (403). Det gjorde de i 2.1.1.
+- **Organisationens space** skapas av Eneo och nås via
+  `/api/v1/spaces/type/organization/`. Skapa inte ett eget med samma namn.
+- MCP-servrar som pekade på en tidigare VS Code-podds värdnamn (Hello-MCP på port
+  8081) slutade fungera när podden byttes ut. De behöver kopplas in på nytt mot den
+  nya podden.
+
+Vill du i stället uppgradera med datan kvar gäller Eneos egen
+[uppgraderingsguide](https://docs.eneo.ai/guides/file-icon-storage-upgrade):
+skrivskyddad kontroll med den nya imagen, backup, stoppa alla gamla backend- och
+workerprocesser, kör `db-init`, starta den nya. Konfigurationen i repot är redan
+anpassad. Vi har inte provat den vägen.
+
+Konfiguration som ändrade betydelse i 2.2 och som stoppade installationen:
+
+| Variabel | 2.1.1 | 2.2.2 |
+|---|---|---|
+| `JWT_EXPIRY_TIME` | `86400` i Eneos mall | Minuter, högst `43200`. `86400` stoppar migreringen med ett felmeddelande. Nu `1440` |
+| `FEDERATION_PER_TENANT_ENABLED` | Används | Utfasad, varnar vid start. Ersatt av `FEDERATION_ENABLED` |
+| `ENEO_SUPER_DUPER_API_KEY` | Används | Läses inte. Skapas inte längre |
+
 ## Ta bort Eneo igen
 
 Eneo kör i namnrymden, inte i podden. **Stoppar du VS Code-tjänsten fortsätter Eneo
@@ -248,7 +302,7 @@ Två olika saker, och skillnaden är inte kosmetisk:
 
 | | Vad som händer | Poddar kvar | Data |
 |---|---|---|---|
-| **Stoppa** | Proxyn ner, alla sex arbetslaster skalas till noll | Nej — inga | Kvar på volymerna |
+| **Stoppa** | Proxyn ner, alla arbetslaster skalas till noll | Nej — inga | Kvar på volymerna |
 | **Ta bort** | Allt märkt `app.kubernetes.io/part-of=eneo` raderas | Nej | Borta |
 
 *Stoppa* är alltså den normala vägen när man är klar för dagen: **inga poddar kör,
@@ -297,19 +351,23 @@ det tar, så att det går att se att något står kvar utan att leta i `kubectl`
 - **Backup.** Databasen ligger på en volym utan säkerhetskopiering. Med CNPG hade det
   följt med. Det är den enda kopian av assistenter och kunskapskällor — se
   [Assistenterna, och vad som överlever](#assistenterna-och-vad-som-överlever).
-- **Uppgradering.** Byte till en ny Eneo-version är att ändra digesterna i
-  installationsskriptet och köra om det. Migreringarna kör i jobbet. Inte provat.
+- **Uppgradering på plats.** Byte från 2.1.x till 2.2.x är inte ett digestbyte —
+  se [Byte till 2.2.2](#byte-till-222). Vi har bara provat att ta bort och
+  installera om. Inom 2.2.x är det enligt Eneo ett digestbyte; inte provat.
 - **OIDC och SCIM** — se ovan.
 - **WebSocket genom proxyn.** Strömmande svar via SSE är verifierat. Eneo använder
   enligt dokumentationen även WebSocket; det har inte prövats separat.
-- **Objektlagring.** Eneo kan lägga filer i en S3-kompatibel tjänst i stället för i
-  databasen. Plattformen har S3 — det är ett rimligt nästa steg, och det skulle
-  samtidigt lösa den delade volymen.
+- **Objektlagring.** Från 2.2.0 kan en administratör koppla in en S3-kompatibel
+  tjänst för filinnehåll (Admin → Fillagring); i 2.1.1 fanns det inte. Det löser
+  *inte* den delade `/tmp` — se ovan. Anslutningen tar bara access key och secret,
+  ingen session token, så Onyxias `AWS_*`-uppgifter duger inte: de är STS-uppgifter
+  som går ut efter sju dagar. Det skulle krävas en serviceaccount-nyckel i MinIO.
+  Hälsokontrollen svarar `object_content: NOT_CONFIGURED`, och det är väntat.
 
 ## Källor
 
 - <https://docs.eneo.ai/docs/getting-started>
 - <https://docs.eneo.ai/guides/deployment>
 - <https://docs.eneo.ai/docs/architecture>
-- <https://github.com/eneo-ai/eneo> — `docs/deployment/` på taggen `v2.1.1` är det
+- <https://github.com/eneo-ai/eneo> — `docs/deployment/` på taggen `v2.2.2` är det
   som faktiskt gäller. Dokumentationssajten ligger efter koden.

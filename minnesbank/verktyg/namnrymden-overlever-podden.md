@@ -11,7 +11,7 @@ fortsätter räknas mot kvoten (poddar och lagring) tills någon aktivt tar bort
 Det är avsiktligt — det är därför man deployar i namnrymden i stället för i podden —
 men det betyder att uppstädningen är ett eget steg som ingenting påminner om.
 
-**Varför:** Eneo kör som sex arbetslaster och två volymer i namnrymden. Startar man
+**Varför:** Eneo kör som fem arbetslaster och två volymer i namnrymden. Startar man
 en ny labbmiljö varje gång man vill prova något, och stoppar den gamla, blir kvoten
 uppäten av installationer vars VS Code-tjänst inte längre finns.
 
