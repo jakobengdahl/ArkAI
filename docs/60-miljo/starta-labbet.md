@@ -40,6 +40,34 @@ Byter du nyckel räcker det att uppdatera hemligheten och starta om tjänsten.
 
 ## URL:en
 
+**Klicka på länken** — du behöver ha gjort steget ovan med Vault först:
+
+- **[Starta labbet med Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%20eneo%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) ** — rekommenderad. Profil `bas eneo`.
+  Eneo installeras, startas och får plattformens modeller inkopplade, utan att du
+  öppnar VS Code.
+- [Starta labbet utan Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) — profil `bas`. Bara panelen och
+  grundverktygen. Eneo installeras med en knapp i panelen när du behöver det.
+
+### Efter att du klickat
+
+1. Onyxia startar tjänsten. Vänta tills den står som *Running* — under en minut.
+2. Vänta ytterligare **5–10 minuter** första gången. Eneo installeras i bakgrunden.
+3. Öppna tjänsten i Onyxia (*Open*) och klicka på länken **Port 8084**.
+   Ger den `502 Bad Gateway` är installationen inte klar — vänta och ladda om.
+4. Logga in med `arkai@arkai.se` som både användarnamn och lösenord.
+   Modellerna finns redan: `gemma4-26b-moe` (standard), `qwen3-8-27b`,
+   `qwen3-6-35b-moe` och embeddingmodellen `qwen3-embedding-8b`.
+
+Saknas modellerna har nyckeln inte kommit med från Vault. Kontrollera hemligheten,
+och tryck *Koppla in modellerna* på Eneos kort i panelen — eller starta om tjänsten.
+
+VS Code behövs bara om du vill se installationen, läsa dokumentationen i panelen
+eller arbeta i repot. Panelen nås från VS Code; adressen skrivs ut i terminalen.
+
+### Vad länken innehåller
+
+Uppdelad på rader:
+
 ```
 https://datalab.sspcloud.fr/launcher/ide/vscode-python
   ?autoLaunch=true
@@ -47,7 +75,7 @@ https://datalab.sspcloud.fr/launcher/ide/vscode-python
   &version=2.6.2
   &s3=default
   &init.personalInit=«https://raw.githubusercontent.com/jakobengdahl/ArkAI/main/verktyg/onyxia-init.sh»
-  &init.personalInitArgs=«bas»
+  &init.personalInitArgs=«bas eneo»
   &git.repository=«https://github.com/jakobengdahl/ArkAI.git»
   &git.branch=«main»
   &git.asCodeServerRoot=true
@@ -85,8 +113,8 @@ Argumentet till startskriptet styr vad som installeras automatiskt:
 
 | Profil | Vad du får |
 |---|---|
-| `bas` | Panelen, Node, gh, git-auth. Under en minut. **Standardvalet** |
-| `bas eneo` | Dessutom Eneo, deployat i namnrymden (~3 min) |
+| `bas` | Panelen, Node, gh, git-auth. Under en minut |
+| `bas eneo` | Dessutom Eneo, startat och med modellerna inkopplade (~5–10 min). **Rekommenderad** |
 | `bas eneo hello-mcp` | Dessutom MCP-servern, redo att kopplas in i Eneo |
 | `minimal` | Bara panelen — installera resten själv därifrån |
 
@@ -95,10 +123,11 @@ Orden är tjänst-id ur [`verktyg/labb.toml`](../../verktyg/labb.toml), så
 ändå, eftersom den har `steg = "auto"` i manifestet. `minimal` är det enda ordet
 med särskild betydelse: det hoppar över allt.
 
-**Standardprofilen installerar inte Eneo.** Det är ett medvetet val: Eneo är sex
-poddar i namnrymden som fortsätter kosta även när ingen använder dem, och en miljö
-som startas för att titta på något annat ska inte dra igång dem. Ett klick i panelen
-räcker när du vill ha dem — och *Stoppa* tar ner dem igen utan att förlora något.
+**`bas eneo` är den rekommenderade profilen**, eftersom Eneo är det de flesta vill
+prova. Eneo är fem arbetslaster i namnrymden som fortsätter kosta även när ingen
+använder dem — även efter att VS Code-tjänsten stoppats. Startar du miljön för att
+titta på något annat, använd länken utan Eneo. *Stoppa* på Eneos kort tar ner
+poddarna utan att förlora något, och *Ta bort* tar bort allt.
 Tjänster med `avvecklas = true` installeras aldrig automatiskt, inte ens om profilen
 räknar upp dem.
 
@@ -126,14 +155,20 @@ läggs där behöver sitt eget skydd: Eneo har sin inloggning, Hello-MCP en toke
 
 | När | Vad | Hur lång tid |
 |---|---|---|
-| Tjänsten startar | `onyxia-init.sh` skriver inställningar och startar panelen | ~2 sekunder |
-| VS Code öppnas | En terminal öppnas automatiskt och installerar grunden | ~10 sekunder |
-| Strax därefter | Samma terminal installerar det profilen ber om — med enbart `bas` finns inget mer att göra | ~0–3 minuter |
-| Hela tiden | Panelen är igång och visar vad som pågår | — |
+| Tjänsten startar | `onyxia-init.sh` skriver inställningar, startar panelen och sätter igång installationen i bakgrunden | ~2 sekunder |
+| Direkt därefter | Grunden och det profilen ber om installeras — **utan att du öppnar VS Code** | ~10 sekunder till ~5 minuter |
+| Samma körning | Det som är installerat startas, och Eneo får sina modeller inkopplade | ~30 sekunder |
+| Öppnar du VS Code | En terminal visar samma körning — den startar ingen ny | — |
 
-Startskriptet gör med flit **ingenting tungt**. Tjänsten blir inte tillgänglig
-förrän det är klart, så allt som tar tid ligger i terminalfönstret i stället — där
-du kan se det, och där det inte hindrar dig från att börja jobba.
+Startskriptet gör med flit **ingenting tungt** själv: det startar installationen
+frånkopplad och avslutar. Tjänsten blir alltså tillgänglig efter några sekunder,
+och installationen fortsätter i bakgrunden. Loggen ligger i
+`~/work/.labb/logg/labb-start.log`.
+
+**Med profilen `bas eneo` behöver du inte öppna VS Code alls.** När installationen
+är klar fungerar länken *Port 8084* på tjänstens sida i Onyxia — den går direkt till
+Eneos inloggning. Innan dess ger den `502 Bad Gateway`; vänta och ladda om.
+Inloggningen står i [eneo.md](eneo.md#köra-det).
 
 Öppna panelen med `Ctrl+Shift+P` → *Simple Browser: Show* och URL:en som skrivs ut
 i terminalen. Se [panelen.md](panelen.md).
@@ -147,8 +182,8 @@ inställningen åt dig, men skulle den inte ha slagit igenom:
 Ctrl+Shift+P → "Tasks: Run Task" → "Labbet: installera"
 ```
 
-Panelen kör ändå — den startas av startskriptet, inte av tasken — och har en knapp
-för grundinstallationen.
+Panelen och installationen kör ändå — de startas av startskriptet, inte av
+tasken. Tasken visar bara körningen.
 
 ## Utan URL
 

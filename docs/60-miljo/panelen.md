@@ -212,6 +212,22 @@ Kommandot går genom samma `kor.sh`, tar samma lås och skriver samma sorts logg
 tjänsternas övriga handlingar. Det ska gå att köra om: efter ett nyckelbyte, efter
 att en server startats om, eller efter att Eneo installerats på nytt.
 
+Vilka modeller Eneos knapp lägger upp står också i manifestet, så att alla som
+installerar labbet får samma uppsättning:
+
+```toml
+[tjanst.eneo]
+modeller = ["gemma4-26b-moe", "qwen3-8-27b", "qwen3-6-35b-moe"]   # den första blir standard
+embedding_modell = "qwen3-embedding-8b"
+efter_installation = ["starta", "koppla_eneo"]
+inloggning = { anvandare = "arkai@arkai.se" }
+```
+
+`efter_installation` gör att **Installera** lämnar en tjänst som går att använda:
+`kor.sh` kör handlingarna i tur och ordning när installationen lyckats. Misslyckas
+någon av dem står installationen kvar, och knappen finns kvar på kortet.
+`inloggning` och adressen skrivs ut som text på kortet när tjänsten kör.
+
 ## Starta och stoppa panelen
 
 ```bash

@@ -112,6 +112,10 @@ namn = "Livscykelhantering"
 #                 knappen bara när Eneo svarar — den skriver mot Eneos API
 #   avvecklas     true = på väg ut. Installeras inte automatiskt och visas
 #                 inte bland verktygen. Skripten finns kvar
+#   efter_installation  handlingar som kor.sh kör direkt efter en lyckad
+#                 installation, t.ex. ["starta", "koppla_eneo"]
+#   inloggning    { anvandare, losenord } — visas som text på kortet när
+#                 tjänsten kör, bredvid adressen
 #   avinstallera  kommando som tar bort tjänsten. Panelen visar knappen "Ta
 #                 bort", frågar först och kör aldrig det direkt från kortet
 #   avinstallera_varning  vad som går förlorat — visas på bekräftelsesidan
@@ -133,6 +137,13 @@ driftmiljon = { lage = "inbyggd", not = "Podden allt annat kör i. Det som insta
 namn = "Eneo"
 beskrivning = "Öppen AI-plattform för svensk offentlig sektor, med behörighetsmodell, revisionslogg och OIDC. Labbets huvudspår när frågan är drift, inte demo."
 dok = "docs/60-miljo/eneo.md"
+# Modellerna som "Koppla in modellerna" lägger upp, för alla som installerar
+# labbet. Den första chattmodellen blir standard. Finns en modell inte hos
+# plattformen hoppas den över.
+modeller = ["gemma4-26b-moe", "qwen3-8-27b", "qwen3-6-35b-moe"]
+embedding_modell = "qwen3-embedding-8b"
+# Visas på kortet i panelen när tjänsten kör, bredvid adressen.
+inloggning = { anvandare = "arkai@arkai.se" }
 # Delvis lokal: själva Eneo kör som arbetslaster i namnrymden och överlever en
 # poddomstart. Det som kör här i podden är proxyn som lägger frontend och
 # backend på samma origin — och den behöver den exponerade porten.
@@ -141,6 +152,10 @@ steg = "begaran"
 port = 8084
 finns = "command -v caddy && kubectl get deployment eneo-backend"
 installera = "verktyg/installera/eneo.sh"
+# Installera ska lämna ett Eneo som går att logga in i och chatta med: proxyn
+# startad och modellerna inkopplade. Det gör att Ta bort + Installera i
+# panelen räcker för att byta version.
+efter_installation = ["starta", "koppla_eneo"]
 starta = "verktyg/starta-eneo.sh --bakgrund"
 stoppa = "verktyg/starta-eneo.sh --stoppa"
 koppla_eneo = "verktyg/konfigurera-eneo.py --skriv"
@@ -157,7 +172,7 @@ avinstallera_visa = "kubectl get deployments,statefulsets,jobs,services,pvc -l a
 applikationslagret = { lage = "inbyggd", not = "Chatt, assistenter, spaces och admingränssnitt. Det är produkten — den går inte att koppla bort." }
 sakerhet-och-behorighet = { lage = "inbyggd", not = "Roller, organisationer, spaces och revisionslogg ingår. OIDC och SCIM finns i produkten men är inte påslaget här — det kräver en identitetsleverantör att federera mot." }
 api-lagret = { lage = "inbyggd", not = "Eneos eget API, och LiteLLM bakom modellhanteringen. Det är därför vilken OpenAI-kompatibel leverantör som helst duger." }
-driftmiljon = { lage = "konfig", not = "Sex arbetslaster i namnrymden. Imager, minne och volymstorlekar står i verktyg/eneo/ och ändras genom att köra om installationen." }
+driftmiljon = { lage = "konfig", not = "Fem arbetslaster i namnrymden. Imager, minne och volymstorlekar står i verktyg/eneo/ och ändras genom att köra om installationen." }
 modellen = { lage = "konfig", not = "Ingen modell från början. Läggs upp per organisation: en leverantör med bas-URL och nyckel, sedan chatt- och embeddingmodell. Knappen Koppla in modellerna gör det åt dig." }
 verktygslagret = { lage = "tillval", not = "Ingen MCP-server från början, och ingen inbyggd verktygslåda. Adminen lägger upp MCP-servrar — bara Streamable HTTP, varken stdio eller SSE — och varje assistent väljer sedan vilka av deras verktyg den får använda." }
 kontext-och-minne = { lage = "tillval", not = "Kunskapskällor per space: filer och webbsidor, indexerade med embeddingmodellen. Kräver alltså att en embeddingmodell är upplagd. Webbkryparen är avstängd här." }

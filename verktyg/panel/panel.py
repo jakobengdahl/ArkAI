@@ -104,9 +104,17 @@ form { display:inline; }
 .logg { background:#0d0d0f; color:#d8d8d8; padding:14px; border-radius:6px;
   overflow-x:auto; font-size:12.5px; line-height:1.5; max-height:70vh; }
 .tabellsvag td { color:var(--svag); }
-.stenar { margin:8px 0 10px; line-height:2.1; }
-.sten { font-size:12px; padding:2px 8px; border-radius:20px; border:1px solid currentColor;
-  margin-right:5px; white-space:nowrap; }
+.kort { min-width:0; overflow-wrap:anywhere; }
+/* Flex med wrap, inte inline-spann: chipsen skrivs ut utan mellanslag mellan
+   sig, och då finns det ingen radbrytningspunkt — de rann ut över grannkorten. */
+.stenar, .teckenforklaring { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+.stenar { margin:8px 0 10px; }
+.sten { font-size:12px; line-height:1.5; padding:1px 8px; border-radius:20px;
+  border:1px solid currentColor; white-space:nowrap; }
+.kort form, .kort .knapp { margin-bottom:6px; }
+.inloggning { display:table; width:auto; margin:6px 0 10px; font-size:13px; }
+.inloggning td { border:none; padding:1px 10px 1px 0; font-size:13px; }
+.inloggning td:first-child { color:var(--svag); white-space:nowrap; overflow-wrap:normal; }
 .sten.inbyggd { color:var(--gron); } .sten.konfig { color:var(--bla); }
 .sten.tillval { color:var(--svag); } .sten.begransad { color:var(--gul); }
 .sten.saknas { color:var(--rod); opacity:.75; }
@@ -114,8 +122,13 @@ details { margin:4px 0 12px; }
 details summary { cursor:pointer; font-size:13.5px; color:var(--svag); }
 details table { margin:8px 0 0; }
 details td:first-child { white-space:nowrap; }
+.byggposter { margin-top:8px; }
+.byggpost { padding:7px 0; border-top:1px solid var(--kant); font-size:13.5px; }
+.byggpost:first-child { border-top:none; }
+.byggpost span { font-size:13px; }
+.byggnot { color:var(--svag); font-size:13px; margin-top:2px; line-height:1.45; }
 .teckenforklaring { font-size:13px; color:var(--svag); margin:6px 0 16px; }
-.teckenforklaring .sten { margin-right:3px; }
+
 """
 
 
@@ -311,15 +324,20 @@ def _byggstenar(tjid: str) -> str:
     chips = "".join(
         f'<span class="sten {e(b["lage"])}">{e(b["namn"])}</span>' for b in stenar
     )
-    rader = "".join(
-        f'<tr><td>{e(b["namn"])}</td><td class="{e(b["lage"])}">'
-        f'{e(LAGETEXT.get(b["lage"], b["lage"]))}</td><td>{e(b["not"])}</td></tr>'
+    # En post per byggsten, staplad: namn och läge på en rad, noten under.
+    # En tabell med tre kolumner fick inte plats i ett kort på ~300 px —
+    # noten blev en smal remsa med ett par ord per rad.
+    poster = "".join(
+        f'<div class="byggpost"><div><strong>{e(b["namn"])}</strong> '
+        f'<span class="{e(b["lage"])}">· {e(LAGETEXT.get(b["lage"], b["lage"]))}</span></div>'
+        + (f'<div class="byggnot">{e(b["not"])}</div>' if b.get("not") else "")
+        + "</div>"
         for b in stenar
     )
     return (
         f'<p class="stenar">{chips}</p>'
         "<details><summary>Vad som ingår, och vad som går att ställa in</summary>"
-        f"<table><tr><th>Byggsten</th><th>Läge</th><th></th></tr>{rader}</table>"
+        f'<div class="byggposter">{poster}</div>'
         "</details>"
     )
 
@@ -341,6 +359,17 @@ def _tjanstekort(tjid: str, s: dict, eneo_uppe: bool = False) -> str:
         # och andra klienter utifrån ska peka på.
         adress = (f'<p style="font-size:13px"><code>'
                   f'{e(s["url"].rstrip("/") + t.get("mcp_http_sokvag", ""))}</code></p>')
+    elif s.get("url") and t.get("egen_ingress") and s["tillstand"] == "kor":
+        # Eget värdnamn går att dela och bokmärka — skriv ut det, inte bara
+        # en knapp. Inloggningen står i manifestet (fältet inloggning).
+        inl = t.get("inloggning") or {}
+        rader = [("Adress", f'<a href="{e(s["url"])}" target="_blank">{e(s["url"])}</a>')]
+        if inl.get("anvandare"):
+            rader.append(("Användare", f"<code>{e(inl['anvandare'])}</code>"))
+        if inl.get("losenord"):
+            rader.append(("Lösenord", f"<code>{e(inl['losenord'])}</code>"))
+        adress = ('<table class="inloggning">' + "".join(
+            f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in rader) + "</table>")
     return (
         f'<div class="kort"><h3>{e(t.get("namn", tjid))}'
         f'<span class="märke {s["tillstand"]}">{text}</span></h3>'

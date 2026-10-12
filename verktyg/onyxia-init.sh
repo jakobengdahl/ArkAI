@@ -8,9 +8,10 @@
 #       init.personalInitArgs  bas
 #
 # Skriptet gör med flit ingenting tungt. Allt det gör tar ett par sekunder, för
-# tjänsten blir inte tillgänglig förrän det är klart. Installationerna sker i
-# stället i ett synligt terminalfönster när VS Code öppnas — se
-# verktyg/labb-start.sh och docs/60-miljo/starta-labbet.md.
+# tjänsten blir inte tillgänglig förrän det är klart. Installationerna startas
+# frånkopplat i bakgrunden och fortsätter efter att skriptet avslutats — utan
+# att någon behöver öppna VS Code. Öppnar man VS Code följer terminalen samma
+# körning. Se verktyg/labb-start.sh och docs/60-miljo/starta-labbet.md.
 #
 # Avslutar alltid med 0. Ett trasigt startskript ska inte kunna hindra tjänsten
 # från att starta; panelen får i stället visa vad som saknas.
@@ -73,7 +74,7 @@ cat > "$VSK/tasks.json" <<SLUT
     {
       "label": "Labbet: installera",
       "type": "shell",
-      "command": "$REPO/verktyg/labb-start.sh",
+      "command": "$REPO/verktyg/labb-start.sh --folj",
       "presentation": { "reveal": "always", "panel": "dedicated", "group": "labb", "focus": false },
       "runOptions": { "runOn": "folderOpen" },
       "problemMatcher": []
@@ -107,13 +108,21 @@ if command -v jq >/dev/null 2>&1 && [ -f "$INST" ]; then
   fi
 fi
 
-# ── 5. Starta panelen ─────────────────────────────────────────────────────
-# uv med varm cache tar en tredjedels sekund. Vi väntar inte in den ändå.
+# ── 5. Starta panelen och installationen ──────────────────────────────────
+# Båda frånkopplade: skriptet väntar inte in dem. labb-start.sh startar själv
+# panelen först, men panelen startas också direkt här — den ska vara uppe
+# även om installationen fastnar.
 if [ -f "$REPO/verktyg/panel/panel.py" ]; then
   ( cd "$REPO" && setsid nohup bash verktyg/starta-panelen.sh --bakgrund \
       >>"$LABB/logg/panel-start.log" 2>&1 & )
   logg "Panelen startas i bakgrunden"
 fi
+if [ -x "$REPO/verktyg/labb-start.sh" ]; then
+  : > "$LABB/logg/labb-start.log"
+  ( cd "$REPO" && setsid nohup bash verktyg/labb-start.sh \
+      >>"$LABB/logg/labb-start.log" 2>&1 < /dev/null & )
+  logg "Installationen startas i bakgrunden — logg: $LABB/logg/labb-start.log"
+fi
 
-logg "Klart. Resten sker i VS Code-terminalen."
+logg "Klart. VS Code-terminalen följer installationen om du öppnar den."
 exit 0

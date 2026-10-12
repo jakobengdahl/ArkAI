@@ -2,6 +2,15 @@
 #
 # Mall, renderas av verktyg/installera/eneo.sh. Läggs på först när jobbet i
 # 02-init.yaml är klart.
+#
+# Backend och worker är två containrar i *samma* podd. Det är inte en
+# förenkling utan ett krav: backend skriver en uppladdad fil till /tmp och
+# lägger bara sökvägen i jobbkön, och workern öppnar sedan samma sökväg. Eneos
+# compose-fil löser det med en delad volym. Här är lagringsklassen
+# ReadWriteOnce, så två poddar kan inte dela en volym — men två containrar i
+# en podd kan dela en emptyDir. Med separata poddar misslyckas varje
+# kunskapsuppladdning med FileNotFoundError i workerns logg, medan backend
+# loggar att allt gick bra.
 
 ---
 apiVersion: v1
@@ -30,6 +39,12 @@ spec:
       app.kubernetes.io/name: eneo-backend
   template:
     metadata:
+      # Ändras adressen — en ny VS Code-tjänst får ett nytt värdnamn för porten
+      # — ändras mallen, och då startas poddarna om med den nya konfigurationen.
+      # Utan det läser de kvar den gamla adressen ur miljön och inloggningen
+      # hamnar på fel origin.
+      annotations:
+        labb/public-origin: "${PUBLIC_ORIGIN}"
       labels:
         app.kubernetes.io/name: eneo-backend
         app.kubernetes.io/part-of: eneo
@@ -67,35 +82,7 @@ spec:
               mountPath: /app/data
             - name: temp
               mountPath: /tmp
-      volumes:
-        # Compose delar de här två volymerna mellan backend och worker. Det
-        # gör vi inte — lagringsklassen här är ReadWriteOnce, och två poddar
-        # kan inte montera samma volym. Följden står i dokumentationen.
-        - name: data
-          emptyDir: {}
-        - name: temp
-          emptyDir: {}
-
-# ── Worker ────────────────────────────────────────────────────────────────
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: eneo-worker
-  labels:
-    app.kubernetes.io/part-of: eneo
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: eneo-worker
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: eneo-worker
-        app.kubernetes.io/part-of: eneo
-    spec:
-      containers:
+        # Samma image, men run.sh startar ARQ-workern i stället för gunicorn.
         - name: worker
           image: ${BACKEND_IMAGE}
           env:
@@ -119,6 +106,7 @@ spec:
             - name: temp
               mountPath: /tmp
       volumes:
+        # Delas av backend och worker — se kommentaren överst i filen.
         - name: data
           emptyDir: {}
         - name: temp
@@ -152,6 +140,12 @@ spec:
       app.kubernetes.io/name: eneo-frontend
   template:
     metadata:
+      # Ändras adressen — en ny VS Code-tjänst får ett nytt värdnamn för porten
+      # — ändras mallen, och då startas poddarna om med den nya konfigurationen.
+      # Utan det läser de kvar den gamla adressen ur miljön och inloggningen
+      # hamnar på fel origin.
+      annotations:
+        labb/public-origin: "${PUBLIC_ORIGIN}"
       labels:
         app.kubernetes.io/name: eneo-frontend
         app.kubernetes.io/part-of: eneo
