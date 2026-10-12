@@ -245,9 +245,23 @@ ett riktigt anrop:
 det, och Eneo når den. Det betyder att kunskapskällor och RAG i Eneo kan köras helt
 på plattformens modeller.
 
-`max_input_tokens` och `max_output_tokens` är satta av oss (32768/4096) och
-medvetet försiktiga. Plattformens modellista säger ingenting om kontextfönster, och
-Eneo trunkerar själv utifrån värdet.
+`max_input_tokens` och `max_output_tokens` läses ut från plattformen när modellen
+läggs upp. Modellistan säger ingenting om kontextfönster, men en fråga om för många
+utdatatokens avvisas med modellens `max_model_len` i felet — se
+[minnesposten](../../minnesbank/verktyg/kontextlangd-syns-bara-i-felet.md). Max
+utdata är 8192 (`ENEO_MAX_OUTPUT`), max indata är gränsen minus det. Eneo trunkerar
+själv utifrån värdet, så ett för lågt tal kortar sammanhanget i onödan.
+
+| Modell | Gräns hos plattformen | Registrerat i Eneo |
+|---|---|---|
+| gemma4-26b-moe | 131072 | 122880 in / 8192 ut |
+| qwen3-8-27b | 196608 | 188416 in / 8192 ut |
+| qwen3-6-35b-moe | 131072 | 122880 in / 8192 ut |
+| qwen3-embedding-8b | 40960 | `max_input` 40960 |
+
+Uppmätt 2026-10-12. Före det registrerades fasta 32768/4096 för alla, och
+embeddingmodellen fick ingen `max_input` alls. "Koppla in modellerna" rättar
+modeller som redan finns, utan att röra andra fält.
 
 ## Byte till 2.2.2
 

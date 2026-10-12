@@ -26,7 +26,17 @@ if [ "${1:-}" = "--stoppa" ]; then
   exit 0
 fi
 
+# Två startare kan komma samtidigt: onyxia-init.sh startar panelen och
+# labb-start.sh direkt efter varandra, och båda anropar det här skriptet. Utan
+# lås ser båda att porten är ledig innan någon hunnit binda den, och båda
+# startar. Den som förlorar har dessutom kunnat bli hängande på uv:s cachelås
+# medan installationerna körde, och dog långt senare med "Address already in
+# use" i loggen. Låset hålls tills panelen svarar; panelen själv ärver det inte.
+exec 9>"$LABB/panel-start.lock"
+flock -w 30 9 || true
+
 if kor; then
+  exec 9>&-
   echo "Panelen kör redan på port $PORT."
   python3 -c "
 import sys; sys.path.insert(0,'verktyg'); import labb
@@ -41,7 +51,7 @@ print('  ' + (u or 'http://127.0.0.1:$PORT/'))"
 fi
 
 if [ "${1:-}" = "--bakgrund" ]; then
-  setsid nohup uv run --quiet verktyg/panel/panel.py >>"$LOGG" 2>&1 &
+  setsid nohup uv run --quiet verktyg/panel/panel.py >>"$LOGG" 2>&1 9>&- &
   for _ in $(seq 1 20); do
     sleep 0.5
     kor && { echo "Panelen kör på port $PORT. Logg: $LOGG"; exit 0; }
@@ -50,4 +60,5 @@ if [ "${1:-}" = "--bakgrund" ]; then
   exit 1
 fi
 
+exec 9>&-
 exec uv run --quiet verktyg/panel/panel.py
