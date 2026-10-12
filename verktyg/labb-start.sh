@@ -145,6 +145,11 @@ print(" ".join(tjid for tjid, t in labb.synliga_tjanster().items()
 SLUTPY
 )
   for tjid in $KOPPLA; do ./verktyg/kor.sh koppla_eneo "$tjid"; done
+elif [ -z "${OPENAI_API_KEY:-}" ]; then
+  rubrik "Modellerna kopplas inte in"
+  info "OPENAI_API_KEY saknas i miljön. Lägg den i Vault-hemligheten arkai-hemligheter"
+  info "(docs/60-miljo/starta-labbet.md) och starta om tjänsten, eller tryck"
+  info "\"Koppla in modellerna\" på Eneos kort i panelen."
 fi
 
 # ── Sammanfattning ────────────────────────────────────────────────────────

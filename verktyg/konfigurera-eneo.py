@@ -148,8 +148,15 @@ def redan_upplagd(token: str, vag: str, namn: str) -> bool:
 
 
 def validera(token: str, lev: str, namn: str, typ: str) -> None:
-    svar = anrop(f"/api/v1/admin/model-providers/{lev}/validate-model/", token,
-                 data={"model_name": namn, "model_type": typ})
+    # Kontrollen är en provfråga till modellen. En kall modell hos plattformen
+    # kan ta över en minut — det är inte ett fel i kopplingen, som redan är
+    # gjord, så det ska inte få hela steget att misslyckas.
+    try:
+        svar = anrop(f"/api/v1/admin/model-providers/{lev}/validate-model/", token,
+                     data={"model_name": namn, "model_type": typ})
+    except (TimeoutError, OSError) as fel_:
+        print(f"  {namn}: svarade inte inom tidsgränsen ({fel_}) — upplagd ändå, prova i Eneo")
+        return
     if svar.get("success"):
         print(f"  {namn}: svarar ({typ})")
     else:

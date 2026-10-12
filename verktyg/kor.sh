@@ -212,6 +212,11 @@ import labb
 print(" ".join(labb.tjanst(sys.argv[1]).get("efter_installation", [])))
 SLUTPY
       ); do
+        # Kör proxyn redan (installation ovanpå en befintlig) är starten gjord.
+        if [ "$efter" = "starta" ] && python3 verktyg/labb.py levande "$2" 2>/dev/null; then
+          klar "✓ $2 kör redan"
+          continue
+        fi
         utfor "$efter" "$2" || info "  $efter $2 gick inte — gör det från panelen"
       done
     fi

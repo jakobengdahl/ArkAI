@@ -59,10 +59,11 @@ Labbet körs i SSP Cloud och startas med en **URL** som har alla inställningar
 förifyllda — port, minne, startskript, hemligheter. Se
 [docs/60-miljo/starta-labbet.md](docs/60-miljo/starta-labbet.md).
 
-När miljön är uppe installerar den sig själv i ett synligt terminalfönster, och
-**labbpanelen** öppnas i VS Code: repots dokumentation renderad, plus knappar för
-att installera och starta tjänster. Se
-[docs/60-miljo/panelen.md](docs/60-miljo/panelen.md).
+Miljön installerar sig själv i bakgrunden. Med den rekommenderade länken får du
+Eneo med plattformens modeller inkopplade, och når det direkt från tjänstens sida i
+Onyxia via *Port 8084* — utan att öppna VS Code. I VS Code finns
+**labbpanelen**: repots dokumentation renderad, plus knappar för att installera och
+starta tjänster. Se [docs/60-miljo/panelen.md](docs/60-miljo/panelen.md).
 
 Utanför SSP Cloud, eller om du hellre skriver kommandon:
 

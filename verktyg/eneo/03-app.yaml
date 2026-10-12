@@ -39,6 +39,12 @@ spec:
       app.kubernetes.io/name: eneo-backend
   template:
     metadata:
+      # Ändras adressen — en ny VS Code-tjänst får ett nytt värdnamn för porten
+      # — ändras mallen, och då startas poddarna om med den nya konfigurationen.
+      # Utan det läser de kvar den gamla adressen ur miljön och inloggningen
+      # hamnar på fel origin.
+      annotations:
+        labb/public-origin: "${PUBLIC_ORIGIN}"
       labels:
         app.kubernetes.io/name: eneo-backend
         app.kubernetes.io/part-of: eneo
@@ -134,6 +140,12 @@ spec:
       app.kubernetes.io/name: eneo-frontend
   template:
     metadata:
+      # Ändras adressen — en ny VS Code-tjänst får ett nytt värdnamn för porten
+      # — ändras mallen, och då startas poddarna om med den nya konfigurationen.
+      # Utan det läser de kvar den gamla adressen ur miljön och inloggningen
+      # hamnar på fel origin.
+      annotations:
+        labb/public-origin: "${PUBLIC_ORIGIN}"
       labels:
         app.kubernetes.io/name: eneo-frontend
         app.kubernetes.io/part-of: eneo

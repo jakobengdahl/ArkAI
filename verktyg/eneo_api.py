@@ -91,14 +91,23 @@ def logga_in() -> str:
     if not losen:
         fel("Hittade inget adminlösenord i eneo-hemligheter. Sätt ENEO_ADMIN_LOSEN.")
     kropp = urllib.parse.urlencode({"username": epost, "password": losen}).encode()
-    beg = urllib.request.Request(BAS + "/api/v1/users/login/token/", data=kropp)
-    beg.add_header("Content-Type", "application/x-www-form-urlencoded")
-    try:
-        with urllib.request.urlopen(beg, timeout=30) as svar:
-            return json.load(svar)["access_token"]
-    except urllib.error.HTTPError as e:
-        fel(f"Kunde inte logga in som {epost} ({e.code}).",
-            "Har du bytt lösenord i gränssnittet? Sätt ENEO_ADMIN_LOSEN.")
-    except urllib.error.URLError as e:
-        fel(f"Nådde inte Eneo på {BAS}: {e}", "Kör: verktyg/kor.sh starta eneo")
+    # Direkt efter en omstart av backend svarar första anropen ibland med 500
+    # (en databasanslutning som stängts) eller inte alls. Det går över på
+    # några sekunder, så vi försöker igen innan vi ger upp. 401 är däremot
+    # fel lösenord, och det blir inte bättre av att vänta.
+    import time
+    for forsok in range(6):
+        beg = urllib.request.Request(BAS + "/api/v1/users/login/token/", data=kropp)
+        beg.add_header("Content-Type", "application/x-www-form-urlencoded")
+        try:
+            with urllib.request.urlopen(beg, timeout=30) as svar:
+                return json.load(svar)["access_token"]
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or forsok == 5:
+                fel(f"Kunde inte logga in som {epost} ({e.code}).",
+                    "Har du bytt lösenord i gränssnittet? Sätt ENEO_ADMIN_LOSEN.")
+        except (urllib.error.URLError, TimeoutError) as e:
+            if forsok == 5:
+                fel(f"Nådde inte Eneo på {BAS}: {e}", "Kör: verktyg/kor.sh starta eneo")
+        time.sleep(5)
     return ""   # nås inte — fel() avslutar

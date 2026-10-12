@@ -25,6 +25,9 @@ Installationen tar knappt tre minuter och är ett kommando.
 
 ## Köra det
 
+Enklast är att starta miljön med [länken med Eneo](starta-labbet.md#urlen). Då
+installeras Eneo, startas och får modellerna inkopplade utan att du gör något mer.
+
 I panelen sitter knapparna på Eneos kort: *Installera*, *Starta*, *Koppla in
 modellerna*, *Stoppa*, *Ta bort*. I terminalen är det samma sak:
 

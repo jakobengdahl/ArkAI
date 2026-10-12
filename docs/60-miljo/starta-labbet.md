@@ -40,15 +40,33 @@ Byter du nyckel räcker det att uppdatera hemligheten och starta om tjänsten.
 
 ## URL:en
 
-**Klicka på en av länkarna** (du behöver ha gjort steget ovan med Vault först):
+**Klicka på länken** — du behöver ha gjort steget ovan med Vault först:
 
-- [Starta labbet med Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%20eneo%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) — profil `bas eneo`. Eneo
-  installeras, startas och får modellerna inkopplade. Efter några minuter går
-  länken *Port 8084* på tjänstens sida i Onyxia direkt till Eneos inloggning.
+- **[Starta labbet med Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%20eneo%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) ** — rekommenderad. Profil `bas eneo`.
+  Eneo installeras, startas och får plattformens modeller inkopplade, utan att du
+  öppnar VS Code.
 - [Starta labbet utan Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) — profil `bas`. Bara panelen och
   grundverktygen. Eneo installeras med en knapp i panelen när du behöver det.
 
-Uppdelad på rader, för att se vad den innehåller:
+### Efter att du klickat
+
+1. Onyxia startar tjänsten. Vänta tills den står som *Running* — under en minut.
+2. Vänta ytterligare **5–10 minuter** första gången. Eneo installeras i bakgrunden.
+3. Öppna tjänsten i Onyxia (*Open*) och klicka på länken **Port 8084**.
+   Ger den `502 Bad Gateway` är installationen inte klar — vänta och ladda om.
+4. Logga in med `arkai@arkai.se` som både användarnamn och lösenord.
+   Modellerna finns redan: `gemma4-26b-moe` (standard), `qwen3-8-27b`,
+   `qwen3-6-35b-moe` och embeddingmodellen `qwen3-embedding-8b`.
+
+Saknas modellerna har nyckeln inte kommit med från Vault. Kontrollera hemligheten,
+och tryck *Koppla in modellerna* på Eneos kort i panelen — eller starta om tjänsten.
+
+VS Code behövs bara om du vill se installationen, läsa dokumentationen i panelen
+eller arbeta i repot. Panelen nås från VS Code; adressen skrivs ut i terminalen.
+
+### Vad länken innehåller
+
+Uppdelad på rader:
 
 ```
 https://datalab.sspcloud.fr/launcher/ide/vscode-python
@@ -57,7 +75,7 @@ https://datalab.sspcloud.fr/launcher/ide/vscode-python
   &version=2.6.2
   &s3=default
   &init.personalInit=«https://raw.githubusercontent.com/jakobengdahl/ArkAI/main/verktyg/onyxia-init.sh»
-  &init.personalInitArgs=«bas»
+  &init.personalInitArgs=«bas eneo»
   &git.repository=«https://github.com/jakobengdahl/ArkAI.git»
   &git.branch=«main»
   &git.asCodeServerRoot=true
@@ -95,8 +113,8 @@ Argumentet till startskriptet styr vad som installeras automatiskt:
 
 | Profil | Vad du får |
 |---|---|
-| `bas` | Panelen, Node, gh, git-auth. Under en minut. **Standardvalet** |
-| `bas eneo` | Dessutom Eneo, deployat i namnrymden (~3 min) |
+| `bas` | Panelen, Node, gh, git-auth. Under en minut |
+| `bas eneo` | Dessutom Eneo, startat och med modellerna inkopplade (~5–10 min). **Rekommenderad** |
 | `bas eneo hello-mcp` | Dessutom MCP-servern, redo att kopplas in i Eneo |
 | `minimal` | Bara panelen — installera resten själv därifrån |
 
@@ -105,10 +123,11 @@ Orden är tjänst-id ur [`verktyg/labb.toml`](../../verktyg/labb.toml), så
 ändå, eftersom den har `steg = "auto"` i manifestet. `minimal` är det enda ordet
 med särskild betydelse: det hoppar över allt.
 
-**Standardprofilen installerar inte Eneo.** Det är ett medvetet val: Eneo är sex
-poddar i namnrymden som fortsätter kosta även när ingen använder dem, och en miljö
-som startas för att titta på något annat ska inte dra igång dem. Ett klick i panelen
-räcker när du vill ha dem — och *Stoppa* tar ner dem igen utan att förlora något.
+**`bas eneo` är den rekommenderade profilen**, eftersom Eneo är det de flesta vill
+prova. Eneo är fem arbetslaster i namnrymden som fortsätter kosta även när ingen
+använder dem — även efter att VS Code-tjänsten stoppats. Startar du miljön för att
+titta på något annat, använd länken utan Eneo. *Stoppa* på Eneos kort tar ner
+poddarna utan att förlora något, och *Ta bort* tar bort allt.
 Tjänster med `avvecklas = true` installeras aldrig automatiskt, inte ens om profilen
 räknar upp dem.
 
