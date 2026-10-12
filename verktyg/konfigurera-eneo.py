@@ -35,7 +35,9 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -46,10 +48,13 @@ from eneo_api import anrop, fel, logga_in, poster  # noqa: E402
 LEVERANTOR = "SSP Cloud"
 
 # Eneo behöver veta hur långt sammanhang modellen klarar — den trunkerar
-# själv innan den frågar. Plattformens modellista säger ingenting om det, så
-# värdena är satta av oss och medvetet försiktiga.
-MAX_IN = int(os.environ.get("ENEO_MAX_INPUT", "32768"))
-MAX_UT = int(os.environ.get("ENEO_MAX_OUTPUT", "4096"))
+# själv innan den frågar. Plattformens modellista (/models) säger ingenting om
+# det, men vLLM bakom den gör det: en fråga om fler utdatatokens än modellen
+# klarar avvisas med "max_tokens=… cannot be greater than max_model_len=N".
+# Gränsen gäller in- och utdata tillsammans, så indata blir N minus utdata.
+# Svarar plattformen inte på frågan används reservvärdet, som är försiktigt.
+MAX_UT = int(os.environ.get("ENEO_MAX_OUTPUT", "8192"))
+RESERV_KONTEXT = 32768
 
 
 # ── Plattformens sida ─────────────────────────────────────────────────────
@@ -73,6 +78,50 @@ def plattformens_modeller(koppling: dict) -> list[str]:
     )
     with urllib.request.urlopen(beg, timeout=15) as svar:
         return [m["id"] for m in json.load(svar).get("data", [])]
+
+
+def kontextlangd(koppling: dict, modell: str, embedding: bool = False) -> int | None:
+    """Modellens max_model_len enligt plattformen, eller None om den inte gick att läsa.
+
+    Frågan är byggd för att avvisas innan modellen gör något: för chatt en
+    orimligt hög max_tokens, för embedding en text längre än någon modell tar.
+    Felmeddelandet innehåller gränsen.
+    """
+    if embedding:
+        vag, data = "/embeddings", {"model": modell, "input": "ord " * 300_000}
+    else:
+        vag, data = "/chat/completions", {
+            "model": modell, "max_tokens": 1_000_000_000, "stream": False,
+            "messages": [{"role": "user", "content": "hej"}],
+        }
+    beg = urllib.request.Request(
+        koppling["bas"] + vag, data=json.dumps(data).encode(),
+        headers={"Authorization": "Bearer " + koppling["nyckel"],
+                 "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(beg, timeout=60) as svar:
+            text = svar.read().decode(errors="replace")
+    except urllib.error.HTTPError as svar:
+        text = svar.read().decode(errors="replace")
+    except (TimeoutError, OSError):
+        return None
+    m = (re.search(r"max_model_len=(?:max_total_tokens=)?(\d+)", text)
+         or re.search(r"maximum context length is (\d+)", text))
+    return int(m.group(1)) if m else None
+
+
+def tokengranser(koppling: dict, modell: str, embedding: bool = False) -> tuple[int, int]:
+    """(max indata, max utdata) att registrera i Eneo. Utdata är 0 för embedding."""
+    langd = kontextlangd(koppling, modell, embedding)
+    if langd is None:
+        print(f"  {modell}: plattformen sa inget om kontextlängden — "
+              f"använder reservvärdet {RESERV_KONTEXT}")
+        langd = RESERV_KONTEXT
+    if embedding:
+        return langd, 0
+    ut = min(MAX_UT, langd // 4)
+    return int(os.environ.get("ENEO_MAX_INPUT", "0")) or langd - ut, ut
 
 
 def valj_modeller(ider: list[str]) -> tuple[list[str], str | None]:
@@ -143,8 +192,8 @@ def leverantor(token: str, koppling: dict) -> str:
     return ny["id"]
 
 
-def redan_upplagd(token: str, vag: str, namn: str) -> bool:
-    return any(m.get("name") == namn for m in poster(anrop(vag, token)))
+def redan_upplagd(token: str, vag: str, namn: str) -> dict | None:
+    return next((m for m in poster(anrop(vag, token)) if m.get("name") == namn), None)
 
 
 def validera(token: str, lev: str, namn: str, typ: str) -> None:
@@ -168,27 +217,51 @@ def skriv(koppling: dict, chattmodeller: list[str], embedding: str | None) -> No
     lev = leverantor(token, koppling)
 
     for nr, chatt in enumerate(chattmodeller):
-        if redan_upplagd(token, "/api/v1/completion-models/", chatt):
-            print(f"  chattmodell {chatt}: fanns redan")
+        max_in, max_ut = tokengranser(koppling, chatt)
+        granser = f"{max_in} in / {max_ut} ut"
+        fanns = redan_upplagd(token, "/api/v1/completion-models/", chatt)
+        if fanns:
+            # Modeller som lades upp av en äldre version av skriptet fick fasta
+            # gränser. Rätta dem, men rör inget annat som någon kan ha ändrat.
+            if (fanns.get("max_input_tokens"), fanns.get("max_output_tokens")) == (max_in, max_ut):
+                print(f"  chattmodell {chatt}: fanns redan ({granser})")
+                continue
+            svar = anrop(f"/api/v1/admin/tenant-models/completion/{fanns['id']}/", token,
+                         metod="PUT", data={"max_input_tokens": max_in,
+                                            "max_output_tokens": max_ut})
+            print(f"  chattmodell {chatt}: " + (
+                f"fanns, gränserna ändrade från {fanns.get('max_input_tokens')} in / "
+                f"{fanns.get('max_output_tokens')} ut till {granser}" if "_fel" not in svar
+                else f"FEL {svar['_fel']} {svar['_text']}"))
             continue
         svar = anrop("/api/v1/admin/tenant-models/completion/", token, data={
             "provider_id": lev, "name": chatt, "display_name": chatt,
-            "max_input_tokens": MAX_IN, "max_output_tokens": MAX_UT,
+            "max_input_tokens": max_in, "max_output_tokens": max_ut,
             "supports_tool_calling": True, "hosting": "eu", "family": "openai",
             "is_active": True, "is_default": nr == 0,
         })
-        print(f"  chattmodell {chatt}: " + ("upplagd" if "_fel" not in svar
+        print(f"  chattmodell {chatt}: " + (f"upplagd ({granser})" if "_fel" not in svar
                                             else f"FEL {svar['_fel']} {svar['_text']}"))
 
-    if embedding and not redan_upplagd(token, "/api/v1/embedding-models/", embedding):
-        svar = anrop("/api/v1/admin/tenant-models/embedding/", token, data={
-            "provider_id": lev, "name": embedding, "display_name": embedding,
-            "hosting": "eu", "family": "openai", "is_active": True, "is_default": True,
-        })
-        print(f"  embeddingmodell {embedding}: " + ("upplagd" if "_fel" not in svar
-                                                    else f"FEL {svar['_fel']} {svar['_text']}"))
-    elif embedding:
-        print(f"  embeddingmodell {embedding}: fanns redan")
+    if embedding:
+        max_in, _ = tokengranser(koppling, embedding, embedding=True)
+        fanns = redan_upplagd(token, "/api/v1/embedding-models/", embedding)
+        if fanns and fanns.get("max_input") == max_in:
+            print(f"  embeddingmodell {embedding}: fanns redan ({max_in} in)")
+        elif fanns:
+            svar = anrop(f"/api/v1/admin/tenant-models/embedding/{fanns['id']}/", token,
+                         metod="PUT", data={"max_input": max_in})
+            print(f"  embeddingmodell {embedding}: " + (
+                f"fanns, max indata ändrad från {fanns.get('max_input')} till {max_in}"
+                if "_fel" not in svar else f"FEL {svar['_fel']} {svar['_text']}"))
+        else:
+            svar = anrop("/api/v1/admin/tenant-models/embedding/", token, data={
+                "provider_id": lev, "name": embedding, "display_name": embedding,
+                "max_input": max_in,
+                "hosting": "eu", "family": "openai", "is_active": True, "is_default": True,
+            })
+            print(f"  embeddingmodell {embedding}: " + (f"upplagd ({max_in} in)" if "_fel" not in svar
+                                                        else f"FEL {svar['_fel']} {svar['_text']}"))
 
     print("Kontrollerar att modellerna verkligen svarar:")
     for chatt in chattmodeller:
@@ -208,6 +281,12 @@ def main() -> None:
     print(f"Embedding  : {embedding or '(ingen hittad)'}")
     print(f"Eneo       : {api.BAS}")
     if lage != "--skriv":
+        print("\nTokengränser enligt plattformen:")
+        for c in chatt:
+            max_in, max_ut = tokengranser(koppling, c)
+            print(f"  {c}: {max_in} in / {max_ut} ut")
+        if embedding:
+            print(f"  {embedding}: {tokengranser(koppling, embedding, embedding=True)[0]} in")
         print("\nInget skrivet. Kör med --skriv för att lägga in det i Eneo.")
         return
     print()

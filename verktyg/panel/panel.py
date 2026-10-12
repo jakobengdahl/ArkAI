@@ -23,6 +23,7 @@ Kör:
 
 from __future__ import annotations
 
+import errno
 import html
 import http.server
 import os
@@ -765,9 +766,19 @@ class Panel(http.server.BaseHTTPRequestHandler):
 
 
 def main() -> int:
+    # I bakgrunden går stdout till panel.log, och utan radbuffring hamnar
+    # startraderna aldrig där — loggen ser då tom ut fast panelen kör.
+    sys.stdout.reconfigure(line_buffering=True)
     port = labb.panelport()
     labb.se_till_att_kataloger_finns()
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Panel)
+    try:
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Panel)
+    except OSError as e:
+        if e.errno != errno.EADDRINUSE:
+            raise
+        print(f"Port {port} är redan upptagen — panelen kör troligen redan. "
+              "Startar inte en till.", file=sys.stderr)
+        return 1
     proxy = labb.proxy_url(port)
     print(f"Labbpanelen kör på http://127.0.0.1:{port}/")
     if proxy:

@@ -19,6 +19,7 @@ en fil; ta bort raden när du tar bort filen.
 - [Onyxia bakar in git-token i remote-URL:en](verktyg/onyxia-token-i-remote-url.md) — flytta den till gh:s credential helper
 - [API-nycklar ligger i klartext i hemkatalogen](verktyg/api-nycklar-i-hemkatalogen.md) — rensa innan du delar konfigurationsfiler
 - [SSP Cloud har egen LLM-inferens](verktyg/sspcloud-llm-inferens.md) — OpenAI-kompatibelt API, personlig nyckel
+- [Kontextlängden syns bara i felmeddelandet](verktyg/kontextlangd-syns-bara-i-felet.md) — /models säger inget, för hög max_tokens avslöjar max_model_len
 - [Open WebUI kräver Python 3.11](verktyg/openwebui-kraver-python-311.md) — imagen har 3.13, lös det med uv
 - [Webbappar fungerar inte bakom code-servers /proxy/](verktyg/spa-fungerar-inte-bakom-sokvagsproxy.md) — exponera porten med eget värdnamn vid start
 - [Query-strängen överlever proxyn](verktyg/query-strang-overlever-proxyn.md) — bygger du själv slipper du portexponering helt
