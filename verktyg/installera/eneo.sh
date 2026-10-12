@@ -41,7 +41,7 @@ ENEO_PORT="${ENEO_PORT:-8084}"
 # det ingen användare att logga in med. Därför kontrolleras loggen i steg 5.
 ADMIN_EPOST="${ENEO_ADMIN_EPOST:-arkai@arkai.se}"
 ADMIN_NAMN="${ENEO_ADMIN_NAMN:-arkai}"
-ADMIN_LOSEN="${ENEO_ADMIN_LOSEN:-arkai-labb-2026}"
+ADMIN_LOSEN="${ENEO_ADMIN_LOSEN:-arkai@arkai.se}"
 
 export ENEO_VERSION BACKEND_IMAGE FRONTEND_IMAGE DB_IMAGE REDIS_IMAGE \
        DB_STORLEK ADMIN_EPOST ADMIN_NAMN

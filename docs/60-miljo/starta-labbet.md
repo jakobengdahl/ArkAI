@@ -40,6 +40,16 @@ Byter du nyckel räcker det att uppdatera hemligheten och starta om tjänsten.
 
 ## URL:en
 
+**Klicka på en av länkarna** (du behöver ha gjort steget ovan med Vault först):
+
+- [Starta labbet med Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%20eneo%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) — profil `bas eneo`. Eneo
+  installeras, startas och får modellerna inkopplade. Efter några minuter går
+  länken *Port 8084* på tjänstens sida i Onyxia direkt till Eneos inloggning.
+- [Starta labbet utan Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) — profil `bas`. Bara panelen och
+  grundverktygen. Eneo installeras med en knapp i panelen när du behöver det.
+
+Uppdelad på rader, för att se vad den innehåller:
+
 ```
 https://datalab.sspcloud.fr/launcher/ide/vscode-python
   ?autoLaunch=true

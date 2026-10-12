@@ -122,6 +122,11 @@ details { margin:4px 0 12px; }
 details summary { cursor:pointer; font-size:13.5px; color:var(--svag); }
 details table { margin:8px 0 0; }
 details td:first-child { white-space:nowrap; }
+.byggposter { margin-top:8px; }
+.byggpost { padding:7px 0; border-top:1px solid var(--kant); font-size:13.5px; }
+.byggpost:first-child { border-top:none; }
+.byggpost span { font-size:13px; }
+.byggnot { color:var(--svag); font-size:13px; margin-top:2px; line-height:1.45; }
 .teckenforklaring { font-size:13px; color:var(--svag); margin:6px 0 16px; }
 
 """
@@ -319,15 +324,20 @@ def _byggstenar(tjid: str) -> str:
     chips = "".join(
         f'<span class="sten {e(b["lage"])}">{e(b["namn"])}</span>' for b in stenar
     )
-    rader = "".join(
-        f'<tr><td>{e(b["namn"])}</td><td class="{e(b["lage"])}">'
-        f'{e(LAGETEXT.get(b["lage"], b["lage"]))}</td><td>{e(b["not"])}</td></tr>'
+    # En post per byggsten, staplad: namn och läge på en rad, noten under.
+    # En tabell med tre kolumner fick inte plats i ett kort på ~300 px —
+    # noten blev en smal remsa med ett par ord per rad.
+    poster = "".join(
+        f'<div class="byggpost"><div><strong>{e(b["namn"])}</strong> '
+        f'<span class="{e(b["lage"])}">· {e(LAGETEXT.get(b["lage"], b["lage"]))}</span></div>'
+        + (f'<div class="byggnot">{e(b["not"])}</div>' if b.get("not") else "")
+        + "</div>"
         for b in stenar
     )
     return (
         f'<p class="stenar">{chips}</p>'
         "<details><summary>Vad som ingår, och vad som går att ställa in</summary>"
-        f"<table><tr><th>Byggsten</th><th>Läge</th><th></th></tr>{rader}</table>"
+        f'<div class="byggposter">{poster}</div>'
         "</details>"
     )
 

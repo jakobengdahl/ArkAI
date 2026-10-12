@@ -39,7 +39,7 @@ verktyg/kor.sh uppsattning eneo-plattform   # allt utom det sista, i ordning
 ```
 
 Adressen är värdnamnet för port 8084, och panelen visar den. Inloggningen är
-`arkai@arkai.se` / `arkai-labb-2026` — samma i varje ny installation, satt av
+`arkai@arkai.se` / `arkai@arkai.se` — användarnamn och lösenord är samma, i varje ny installation, satt av
 installationsskriptet och lagrad i `eneo-hemligheter` (`DEFAULT_USER_PASSWORD`)
 och `eneo-backend-konfig` (`DEFAULT_USER_EMAIL`).
 
@@ -278,7 +278,8 @@ verktyg/kor.sh installera eneo             # installerar, startar och kopplar in
 
 Det som ändrats och som du märker:
 
-- **Lösenordet är `arkai-labb-2026`.** 2.2 kräver minst 12 tecken. Har du satt
+- **Lösenordet är `arkai@arkai.se`, samma som användarnamnet.** Det tidigare
+  `arkai2026` är för kort: 2.2 kräver minst 12 tecken. Har du satt
   `ENEO_ADMIN_LOSEN` själv måste det också vara minst 12 tecken.
 - **Ingen `eneo-worker` längre.** Workern är en container i `eneo-backend`-podden.
   Loggarna läses med `kubectl logs deploy/eneo-backend -c worker`.

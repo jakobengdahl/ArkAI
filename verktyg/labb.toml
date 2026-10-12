@@ -172,7 +172,7 @@ avinstallera_visa = "kubectl get deployments,statefulsets,jobs,services,pvc -l a
 applikationslagret = { lage = "inbyggd", not = "Chatt, assistenter, spaces och admingränssnitt. Det är produkten — den går inte att koppla bort." }
 sakerhet-och-behorighet = { lage = "inbyggd", not = "Roller, organisationer, spaces och revisionslogg ingår. OIDC och SCIM finns i produkten men är inte påslaget här — det kräver en identitetsleverantör att federera mot." }
 api-lagret = { lage = "inbyggd", not = "Eneos eget API, och LiteLLM bakom modellhanteringen. Det är därför vilken OpenAI-kompatibel leverantör som helst duger." }
-driftmiljon = { lage = "konfig", not = "Sex arbetslaster i namnrymden. Imager, minne och volymstorlekar står i verktyg/eneo/ och ändras genom att köra om installationen." }
+driftmiljon = { lage = "konfig", not = "Fem arbetslaster i namnrymden. Imager, minne och volymstorlekar står i verktyg/eneo/ och ändras genom att köra om installationen." }
 modellen = { lage = "konfig", not = "Ingen modell från början. Läggs upp per organisation: en leverantör med bas-URL och nyckel, sedan chatt- och embeddingmodell. Knappen Koppla in modellerna gör det åt dig." }
 verktygslagret = { lage = "tillval", not = "Ingen MCP-server från början, och ingen inbyggd verktygslåda. Adminen lägger upp MCP-servrar — bara Streamable HTTP, varken stdio eller SSE — och varje assistent väljer sedan vilka av deras verktyg den får använda." }
 kontext-och-minne = { lage = "tillval", not = "Kunskapskällor per space: filer och webbsidor, indexerade med embeddingmodellen. Kräver alltså att en embeddingmodell är upplagd. Webbkryparen är avstängd här." }
