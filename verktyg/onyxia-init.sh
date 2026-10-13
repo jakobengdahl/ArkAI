@@ -86,6 +86,22 @@ cat > "$VSK/tasks.json" <<SLUT
       "presentation": { "reveal": "always", "panel": "dedicated", "group": "labb", "focus": false },
       "runOptions": { "runOn": "folderOpen" },
       "problemMatcher": []
+    },
+    {
+      "label": "Grafen: seeda från öppen fil",
+      "detail": "Ersätter den egna grafens data med filen som är öppen i editorn. Frågar först.",
+      "type": "shell",
+      "command": "$REPO/verktyg/seeda-graf.sh \"\${file}\"",
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Grafen: starta om (läs in schemat)",
+      "detail": "Startar om den egna grafen, som då läser ~/work/graf-config på nytt.",
+      "type": "shell",
+      "command": "$REPO/verktyg/starta-graf.sh --starta-om",
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": false },
+      "problemMatcher": []
     }
   ]
 }

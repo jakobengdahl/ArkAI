@@ -13,6 +13,7 @@ Allt om SSP Cloud/Onyxia, verktygen och hur man får saker att köra.
 | [ai-verktyg-i-imagen.md](ai-verktyg-i-imagen.md) | opencode och Continue är förinstallerade |
 | [openwebui.md](openwebui.md) | Open WebUI: installation, start, åtkomst |
 | [eneo.md](eneo.md) | Eneo: installerad i namnrymden, med proxy i podden. Kräver `kubernetes.role=edit` vid start |
+| [egen-graf.md](egen-graf.md) | Egen instans av grafappen, i podden, med eget schema i `~/work/graf-config`. Port 8085 vid start för webbgränssnittet |
 | [metadatagrafen.md](metadatagrafen.md) | Pilotinstansen med metadata som graf, och dess MCP-server |
 | [delade-resurser.md](delade-resurser.md) | Projekt, S3, Vault — hur vi delar med varandra |
 

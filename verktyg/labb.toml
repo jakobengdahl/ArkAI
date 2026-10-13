@@ -272,6 +272,44 @@ kontext-och-minne = { lage = "inbyggd", not = "Metadata som graf: inte vad som s
 verktygslagret = { lage = "inbyggd", not = "Ett sextiotal verktyg över MCP — sök, hämta noder, följ relationer." }
 sakerhet-och-behorighet = { lage = "konfig", not = "Bearer-token, utdelad av den som driver piloten. Den ligger i miljöns Vault-hemlighet, aldrig i repot." }
 
+[tjanst.graf]
+namn = "Egen graf"
+beskrivning = "En egen instans av grafappen (CommunityOverview) med eget schema och egna objekt. Schemat redigeras i ~/work/graf-config, grafen ligger i ~/work/graf-data. Rör inte metadatagrafens pilot."
+dok = "docs/60-miljo/egen-graf.md"
+inloggning = { anvandare = "arkai", losenord = "arkai@arkai.se" }
+# Kör här i podden, från källkod. Första försöket var en egen arbetslast i
+# namnrymden, men klustret skapade ingen volym åt den — se dokumentationen.
+typ = "lokal"
+steg = "begaran"
+port = 8085
+finns = "test -x ~/work/.labb/graf/venv/bin/python && test -f ~/work/.labb/graf/kod/frontend/web/dist/index.html"
+installera = "verktyg/installera/graf.sh"
+efter_installation = ["starta", "koppla_eneo"]
+# Appen läser schemat när den startar. Stoppa + Starta räcker alltså för att
+# pröva ett ändrat schema.
+starta = "verktyg/starta-graf.sh --bakgrund"
+stoppa = "verktyg/starta-graf.sh --stoppa"
+halsa = "http://127.0.0.1:8085/health"
+egen_ingress = true
+koppla_eneo = "verktyg/koppla-mcp-till-eneo.py graf --skriv"
+koppla_eneo_knapp = "Koppla in i Eneo"
+# Eneo kör i en annan podd. Servicen arkai-graf pekar på den här podden, så
+# adressen är stabil även när poddens IP byts. Går den inte provas ingressen.
+mcp_http_intern_url = "http://arkai-graf:8000/mcp/"
+mcp_http_port = 8085
+mcp_http_sokvag = "/mcp/"
+mcp_http_token_fil = "graf-token"
+# För klienter i podden (Claude Code m.fl.) via ~/work/.labb/mcp.json.
+mcp_sokvag = "/mcp/sse"
+avinstallera = "verktyg/ta-bort-graf.sh"
+avinstallera_varning = "Grafens data i ~/work/graf-data raderas, med arkivet av tidigare grafer. Schemat i ~/work/graf-config ligger kvar. Vill du bara stänga av, använd Stoppa."
+avinstallera_visa = "du -sh ~/work/graf-data ~/work/.labb/graf 2>/dev/null; ls ~/work/graf-data/arkiv 2>/dev/null"
+[tjanst.graf.byggstenar]
+kontext-och-minne = { lage = "konfig", not = "Domänminne som graf, med ditt eget schema. Startdata seedas ur ~/work/graf-config/graph.json när grafen saknas, och kan bytas mot valfri fil med verktyg/seeda-graf.sh." }
+verktygslagret = { lage = "inbyggd", not = "Samma sextiotal MCP-verktyg som metadatagrafen. Eneo når dem inne i namnrymden, via Servicen arkai-graf." }
+sakerhet-och-behorighet = { lage = "begransad", not = "En gemensam inloggning för webbgränssnittet och en token för MCP. Porten är publik, och lösenordet står i repot." }
+driftmiljon = { lage = "konfig", not = "En process i podden, från källkod på samma commit som prod-imagen. Python 3.11 och beroenden som de var när imagen byggdes. Version och profil sätts med GRAF_COMMIT och GRAF_PROFIL." }
+
 [tjanst.openwebui]
 namn = "Open WebUI"
 beskrivning = "Chattgränssnitt med dokumentuppladdning, RAG och verktygsanrop. Var labbets testbänk innan Eneo — på väg ut, se dokumentationen."
@@ -316,6 +354,12 @@ namn = "Eneo med verktyg"
 beskrivning = "Eneo, plus labbets två MCP-servrar inkopplade som verktygsservrar. Frågan: var går gränsen mellan att modellen svarar och att modellen gör — när verktygen ligger bakom en behörighetsmodell?"
 tjanster = ["eneo", "hello-mcp", "metadatagraf"]
 dok = "docs/20-tekniker/chattbot-plus-verktyg.md"
+
+[uppsattning.eneo-med-egen-graf]
+namn = "Eneo med egen graf"
+beskrivning = "Eneo, plus en egen instans av grafappen med eget schema, inkopplad som verktygsserver. Frågan: vad behöver schemat innehålla för att en assistent ska kunna använda grafen — och vad märks först när man själv äger det?"
+tjanster = ["eneo", "graf"]
+dok = "docs/60-miljo/egen-graf.md"
 
 [uppsattning.graf-och-agent]
 namn = "Metadatagraf + agent"
