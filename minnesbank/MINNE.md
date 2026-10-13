@@ -37,6 +37,8 @@ en fil; ta bort raden när du tar bort filen.
 - [Två portar är två origins](verktyg/tva-portar-ar-tva-origins.md) — frontend och API hör ihop, proxya på sökväg i podden
 - [Förbjudet är inte samma sak som saknas](verktyg/forbjudet-ar-inte-saknat.md) — klusterbreda kubectl-frågor svarar Forbidden, fråga med api-resources
 - [Namnrymden överlever podden](verktyg/namnrymden-overlever-podden.md) — det du deployat kör vidare och äter kvot när tjänsten stoppas
+- [Namnrymden delas med andras grafer](verktyg/namnrymden-delas-med-andras-grafer.md) — våra resurser heter arkai-*, ta bort på etikett, aldrig på namn
+- [En ny volym kan fastna i Pending](verktyg/ny-volym-kan-fastna-i-pending.md) — klustrets provisioner, inte manifestet. Prova en provvolym, bygg hellre på ~/work
 
 ## Domänkunskap
 

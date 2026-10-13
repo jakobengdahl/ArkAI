@@ -14,6 +14,10 @@ publikt värdnamn och behöver en token. Se docs/60-miljo/eneo.md.
 
 Vad som ska kopplas in står i verktyg/labb.toml, inte här:
 
+    mcp_http_intern_url  adress inne i namnrymden (Service-DNS), för en server
+                       som kör som egen arbetslast. Provas först — då slipper
+                       trafiken gå ut via ingressen. Svarar den inte för Eneo
+                       provas ingressen för mcp_http_port, om den finns
     mcp_http_port      porten servern kör på i den här podden — URL:en hämtas
                        ur ingressen, för det är den adressen Eneo kan nå
     mcp_http_url_env   för en server som kör någon annanstans: miljövariabeln
@@ -33,6 +37,18 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import eneo_api as api  # noqa: E402
 import labb  # noqa: E402
+
+
+def adresser(tjid: str, t: dict) -> list[str]:
+    """URL:erna att pröva, i ordning. Den interna först, om den finns."""
+    if not t.get("mcp_http_intern_url"):
+        return [adress(tjid, t)]
+    lista = [t["mcp_http_intern_url"]]
+    if t.get("mcp_http_port"):
+        url = labb.egen_ingress_for(int(t["mcp_http_port"]))
+        if url:
+            lista.append(url.rstrip("/") + t.get("mcp_http_sokvag", "/mcp"))
+    return lista
 
 
 def adress(tjid: str, t: dict) -> str:
@@ -119,18 +135,27 @@ def main() -> int:
         api.fel(f"Okänd tjänst: {tjid}")
     t = labb.tjanst(tjid)
     namn = t.get("namn", tjid)
-    url = adress(tjid, t)
+    urler = adresser(tjid, t)
     hemlig = token(t)
 
     print(f"MCP-server : {namn}")
-    print(f"Adress     : {url}")
+    print(f"Adress     : {urler[0]}")
+    for reserv in urler[1:]:
+        print(f"  reserv   : {reserv}")
     print(f"Token      : {'ja' if hemlig else 'nej — servern är öppen'}")
     print(f"Eneo       : {api.BAS}")
     if "--skriv" not in sys.argv:
         print("\nInget skrivet. Kör med --skriv för att lägga in det i Eneo.")
         return 0
     print()
-    return skriv(namn, url, hemlig, t.get("beskrivning", ""))
+    kod = 1
+    for i, url in enumerate(urler):
+        if i:
+            print(f"  provar i stället {url}")
+        kod = skriv(namn, url, hemlig, t.get("beskrivning", ""))
+        if kod == 0:
+            break
+    return kod
 
 
 if __name__ == "__main__":

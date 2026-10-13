@@ -7,6 +7,9 @@ den intressant här.
 
 Vi installerar den inte. Vi kopplar upp oss mot instansen som redan kör.
 
+Vill du ha en graf med eget schema som du själv får ändra i, finns
+[den egna grafen](egen-graf.md): samma app, men en egen instans.
+
 ## Varför den hör hemma i det här repot
 
 Grafen kommer ur ett eget innovationsspår med ett eget behov: att få ordning på den

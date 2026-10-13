@@ -497,9 +497,15 @@ def skriv_mcp_json() -> Path:
                 delar = [d.replace("{rot}", str(ROT))
                          for d in shlex.split(t["mcp_kommando"])]
                 servrar[tjid] = {"type": "stdio", "command": delar[0], "args": delar[1:]}
-        elif t.get("mcp_sokvag") and s.get("url") and s["tillstand"] == "kor":
-            post = {"type": "sse", "url": s["url"].rstrip("/") + t["mcp_sokvag"]}
+        elif t.get("mcp_sokvag") and s["tillstand"] == "kor" and (
+                s.get("url") or (t.get("typ") == "lokal" and t.get("port"))):
+            # En lokal tjänst utan exponerad port nås ändå av klienter i podden.
+            bas = s.get("url") or f"http://127.0.0.1:{t['port']}/"
+            post = {"type": "sse", "url": bas.rstrip("/") + t["mcp_sokvag"]}
             token = os.environ.get(t.get("token_env", "")) if t.get("token_env") else None
+            tokenfil = LABB / t["mcp_http_token_fil"] if t.get("mcp_http_token_fil") else None
+            if not token and tokenfil and tokenfil.is_file():
+                token = tokenfil.read_text().strip()
             if token:
                 post["headers"] = {"Authorization": f"Bearer {token}"}
             servrar[tjid] = post
