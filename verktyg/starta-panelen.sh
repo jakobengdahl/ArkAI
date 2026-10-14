@@ -7,7 +7,8 @@
 #
 # Panelen binder till 127.0.0.1 med flit. Den kan starta processer, och ska
 # därför bara gå att nå av den som har den här VS Code-sessionen — via
-# code-servers proxy. Se docs/60-miljo/panelen.md.
+# code-servers proxy. Med PANEL_LOSEN i Vault lyssnar den också på 8086, bakom
+# inloggning. Se docs/60-miljo/panelen.md.
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 export PATH="$HOME/.local/bin:$PATH"

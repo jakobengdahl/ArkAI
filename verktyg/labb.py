@@ -132,6 +132,18 @@ def panelport() -> int:
     return int(os.environ.get("PANEL_PORT") or katalog().get("panel", {}).get("port", 8082))
 
 
+def panel_publik_port() -> int | None:
+    """Porten där panelen nås utifrån, bakom inloggning. None stänger av den."""
+    varde = os.environ.get("PANEL_PUBLIK_PORT", katalog().get("panel", {}).get("publik_port"))
+    return int(varde) if varde not in (None, "", "0") else None
+
+
+def panel_inloggning() -> tuple[str, str]:
+    """Användare ur manifestet, lösenord ur Vault (PANEL_LOSEN). Aldrig ur repot."""
+    anv = os.environ.get("PANEL_ANVANDARE") or katalog().get("panel", {}).get("publik_anvandare", "")
+    return anv, os.environ.get("PANEL_LOSEN", "")
+
+
 def kommando(tjid: str, handling: str) -> str | None:
     """Kommandot för en handling, eller None om tjänsten inte stöder den."""
     return tjanst(tjid).get(handling)

@@ -9,6 +9,12 @@
 
 [panel]
 port = 8082
+# Samma panel på en exponerad port, så att den nås direkt från Onyxia ("Port 8086")
+# utan VS Code. Bakom inloggning: användaren står här, lösenordet är PANEL_LOSEN
+# i Vault-hemligheten och står aldrig i repot. Saknas det startas porten inte.
+# 8082 ovan är kvar, utan inloggning, och nås bara via code-servers proxy.
+publik_port = 8086
+publik_anvandare = "arkai@arkai.se"
 startsida = "docs/START.md"
 
 # Vänsterspalten i panelen. Titel + markdownfil.
