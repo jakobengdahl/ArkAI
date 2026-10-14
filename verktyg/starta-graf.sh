@@ -27,7 +27,7 @@ VENV="$GRAF/venv"
 LOGG="$LABB/graf.log"
 PIDFIL="$GRAF/graf.pid"
 # Samma enkla inloggning som Eneo, av samma skäl — se docs/60-miljo/egen-graf.md.
-GRAF_ANVANDARE="${GRAF_ANVANDARE:-arkai}"
+GRAF_ANVANDARE="${GRAF_ANVANDARE:-arkai@arkai.se}"
 GRAF_LOSEN="${GRAF_LOSEN:-arkai@arkai.se}"
 # Unikt nog att stoppa på utan att träffa något annat i podden.
 MONSTER="uvicorn backend.api_host.server:get_app --factory --host 0.0.0.0 --port $PORT"
