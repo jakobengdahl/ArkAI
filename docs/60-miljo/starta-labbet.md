@@ -28,8 +28,9 @@ labbet **utan att någonsin ligga i repot**.
    | `METADATAGRAF_URL` | adressen till pilotinstansen av metadatagrafen |
    | `METADATAGRAF_TOKEN` | bearer-token för dess MCP-server |
    | `METADATAGRAF_BASIC` | `användare:lösenord` till dess webbgränssnitt |
+   | `PANEL_LOSEN` | ett eget lösenord till panelen på port 8086, minst 12 tecken |
 
-   De tre sista behövs bara om du ska jobba mot metadatagrafen — se
+   Utan `PANEL_LOSEN` nås panelen bara via VS Code. De tre metadatagraf-raderna behövs bara om du ska jobba mot metadatagrafen — se
    [metadatagrafen.md](metadatagrafen.md). Uppgifterna delas ut av den som driver
    piloten; de står inte här, eftersom repot är publikt.
 
@@ -42,13 +43,13 @@ Byter du nyckel räcker det att uppdatera hemligheten och starta om tjänsten.
 
 **Klicka på länken** — du behöver ha gjort steget ovan med Vault först:
 
-- **[Starta labbet med Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%20eneo%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&networking.user.ports[2]=8085&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) ** — rekommenderad. Profil `bas eneo`.
+- **[Starta labbet med Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%20eneo%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&networking.user.ports[2]=8085&networking.user.ports[3]=8086&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) ** — rekommenderad. Profil `bas eneo`.
   Eneo installeras, startas och får plattformens modeller inkopplade, utan att du
   öppnar VS Code.
-- [Starta labbet med Eneo och egen graf](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%20eneo%20graf%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&networking.user.ports[2]=8085&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) — profil `bas eneo graf`. Som
+- [Starta labbet med Eneo och egen graf](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%20eneo%20graf%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&networking.user.ports[2]=8085&networking.user.ports[3]=8086&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) — profil `bas eneo graf`. Som
   ovan, plus en egen instans av grafappen med eget schema, inkopplad i Eneo. Se
   [egen-graf.md](egen-graf.md).
-- [Starta labbet utan Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&networking.user.ports[2]=8085&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) — profil `bas`. Bara panelen och
+- [Starta labbet utan Eneo](https://datalab.sspcloud.fr/launcher/ide/vscode-python?autoLaunch=true&name=%C2%ABarkai%C2%BB&version=2.6.2&s3=default&init.personalInit=%C2%ABhttps%3A%2F%2Fraw.githubusercontent.com%2Fjakobengdahl%2FArkAI%2Fmain%2Fverktyg%2Fonyxia-init.sh%C2%BB&init.personalInitArgs=%C2%ABbas%C2%BB&git.repository=%C2%ABhttps%3A%2F%2Fgithub.com%2Fjakobengdahl%2FArkAI.git%C2%BB&git.branch=%C2%ABmain%C2%BB&git.asCodeServerRoot=true&vault.secret=%C2%ABarkai-hemligheter%C2%BB&kubernetes.role=%C2%ABedit%C2%BB&networking.user.enabled=true&networking.user.ports[0]=8081&networking.user.ports[1]=8084&networking.user.ports[2]=8085&networking.user.ports[3]=8086&resources.requests.memory=%C2%AB6Gi%C2%BB&resources.limits.cpu=%C2%AB15600m%C2%BB&persistence.size=%C2%AB50Gi%C2%BB) — profil `bas`. Bara panelen och
   grundverktygen. Eneo installeras med en knapp i panelen när du behöver det.
 
 ### Efter att du klickat
@@ -64,8 +65,9 @@ Byter du nyckel räcker det att uppdatera hemligheten och starta om tjänsten.
 Saknas modellerna har nyckeln inte kommit med från Vault. Kontrollera hemligheten,
 och tryck *Koppla in modellerna* på Eneos kort i panelen — eller starta om tjänsten.
 
-VS Code behövs bara om du vill se installationen, läsa dokumentationen i panelen
-eller arbeta i repot. Panelen nås från VS Code; adressen skrivs ut i terminalen.
+Panelen nås via länken **Port 8086**, med `arkai@arkai.se` och lösenordet
+`PANEL_LOSEN` från Vault. Saknas det lösenordet nås panelen bara från VS Code;
+adressen skrivs ut i terminalen. VS Code behövs annars bara om du vill arbeta i repot.
 
 ### Vad länken innehåller
 
@@ -88,6 +90,7 @@ https://datalab.sspcloud.fr/launcher/ide/vscode-python
   &networking.user.ports[0]=8081
   &networking.user.ports[1]=8084
   &networking.user.ports[2]=8085
+  &networking.user.ports[3]=8086
   &resources.requests.memory=«6Gi»
   &resources.limits.cpu=«15600m»
   &persistence.size=«50Gi»
@@ -107,6 +110,7 @@ launcher-länkar följer samma mönster som andra projekt i SSP Cloud använder.
 | `networking.user.ports[0]` | **8081 för Hello-MCP över HTTP** — det är så Eneo når den. Går inte att ändra i efterhand |
 | `networking.user.ports[1]` | **8084 för Eneo.** Detsamma |
 | `networking.user.ports[2]` | **8085 för den egna grafen.** Med i alla länkar, eftersom den inte går att lägga till senare |
+| `networking.user.ports[3]` | **8086 för panelen**, bakom inloggning med `PANEL_LOSEN`. Detsamma |
 | `version` | Chart-versionen. Pinnad så att alla får samma tjänst |
 | `s3` | Kopplar in plattformens objektlagring |
 | `resources.*` | 6 GiB begärt minne och gott om CPU. Eneo kör i namnrymden och tar inte av podden |
@@ -151,7 +155,8 @@ En port måste exponeras **vid start** för att bli nåbar utifrån. Lägg till 
 | 8084 | Eneo | **Ja** — och det är där hela Eneo ligger, både gränssnitt och API |
 | 8085 | Egen graf | Ja, för webbgränssnittet. Eneo försöker först nå grafen inne i namnrymden |
 | 18789 | OpenClaw gateway | Ja, om du vill nå dess gränssnitt |
-| 8082 | Labbpanelen | Nej — nås via code-servers proxy, och ska inte ligga öppet |
+| 8082 | Labbpanelen, utan inloggning | Nej — nås via code-servers proxy, och ska inte ligga öppet |
+| 8086 | Labbpanelen, bakom inloggning | Ja, för att nå panelen utan VS Code. Öppnas bara om `PANEL_LOSEN` finns |
 | 8083 | MCP-bryggan (mcpo) | Nej — bara klienter i samma podd anropar den |
 
 En exponerad port är ett **publikt värdnamn**, inte bara en väg in för dig. Allt som

@@ -23,6 +23,7 @@ Kör:
 
 from __future__ import annotations
 
+import base64
 import errno
 import html
 import http.server
@@ -31,6 +32,7 @@ import re
 import secrets
 import subprocess
 import sys
+import threading
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -441,6 +443,10 @@ def block_miljo(_: str) -> str:
         ("Startad", m.get("startad", "—")),
         ("Panelen", labb.proxy_url(labb.panelport()) or f"http://127.0.0.1:{labb.panelport()}/"),
     ]
+    publik = labb.panel_publik_port()
+    if publik:
+        rader.append(("Panelen utifrån", labb.egen_ingress_for(publik)
+                      or f"port {publik} exponerades inte vid start"))
     tabell = "".join(f"<tr><td>{e(k)}</td><td>{e(v)}</td></tr>" for k, v in rader)
     knapp = (
         f'<form method="post" action=""><input type="hidden" name="nonce" value="{NONCE}">'
@@ -765,6 +771,72 @@ class Panel(http.server.BaseHTTPRequestHandler):
         sys.stderr.write("  %s\n" % (format % args))
 
 
+# Ett lösenord kortare än så här öppnar inte porten. Den är ett publikt värdnamn.
+MINSTA_LOSEN = 12
+
+
+class PublikPanel(Panel):
+    """Samma panel på den exponerade porten, bakom Basic auth.
+
+    Porten är ett publikt värdnamn, och panelen kan starta, stoppa och ta bort
+    tjänster. Inget svar — inte ens en bild — lämnas ut utan inloggning.
+    Lösenordet kommer ur Vault (PANEL_LOSEN), aldrig ur repot.
+    """
+
+    def _inloggad(self) -> bool:
+        anv, losen = labb.panel_inloggning()
+        typ, _, data = (self.headers.get("Authorization") or "").partition(" ")
+        if typ.lower() != "basic":
+            return False
+        try:
+            givet = base64.b64decode(data, validate=True)
+        except ValueError:
+            return False
+        return secrets.compare_digest(givet, f"{anv}:{losen}".encode("utf-8"))
+
+    def _neka(self) -> None:
+        kropp = "Logga in. Lösenordet är PANEL_LOSEN i din Vault-hemlighet.\n".encode()
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="Labbet", charset="UTF-8"')
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(kropp)))
+        self.end_headers()
+        self.wfile.write(kropp)
+
+    def do_GET(self) -> None:  # noqa: N802
+        if not self._inloggad():
+            return self._neka()
+        super().do_GET()
+
+    def do_POST(self) -> None:  # noqa: N802
+        if not self._inloggad():
+            return self._neka()
+        super().do_POST()
+
+
+def starta_publik(port: int) -> None:
+    """Startar den publika lyssnaren i bakgrunden. Går den inte, kör 127.0.0.1 ändå."""
+    anv, losen = labb.panel_inloggning()
+    if not anv or len(losen) < MINSTA_LOSEN:
+        print(f"PANEL_LOSEN saknas i Vault, eller är kortare än {MINSTA_LOSEN} tecken — "
+              f"panelen startas inte på port {port}. Se docs/60-miljo/starta-labbet.md.",
+              file=sys.stderr)
+        return
+    try:
+        server = http.server.ThreadingHTTPServer(("0.0.0.0", port), PublikPanel)
+    except OSError as e:
+        print(f"Port {port} gick inte att öppna ({e.strerror}) — panelen nås bara via VS Code.",
+              file=sys.stderr)
+        return
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = labb.egen_ingress_for(port)
+    if url:
+        print(f"Utifrån:        {url}  (användare {anv}, lösenord PANEL_LOSEN)")
+    else:
+        print(f"Port {port} lyssnar, men exponerades inte när tjänsten startade — "
+              "den nås inte utifrån. Se docs/60-miljo/starta-labbet.md.")
+
+
 def main() -> int:
     # I bakgrunden går stdout till panel.log, och utan radbuffring hamnar
     # startraderna aldrig där — loggen ser då tom ut fast panelen kör.
@@ -784,6 +856,9 @@ def main() -> int:
     if proxy:
         print(f"I webbläsaren:  {proxy}")
         print("I VS Code:      Ctrl+Shift+P → Simple Browser: Show → klistra in URL:en")
+    publik = labb.panel_publik_port()
+    if publik:
+        starta_publik(publik)
     print("Avsluta med Ctrl+C.\n")
     try:
         server.serve_forever()

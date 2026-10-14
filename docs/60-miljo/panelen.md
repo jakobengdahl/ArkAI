@@ -32,6 +32,22 @@ tjänsten. Den binder till `127.0.0.1` och kan bara nås av den som har den här
 VS Code-sessionen — vilket är hela behörighetsmodellen för något som kan starta
 processer.
 
+## Utan VS Code: port 8086
+
+Samma panel lyssnar också på port 8086, som exponeras i startlänkarna och syns som
+**Port 8086** i Onyxia. Det är ett publikt värdnamn, och panelen kan installera,
+stoppa och ta bort tjänster — avinstallation raderar data. Därför:
+
+- Varje svar på 8086 kräver inloggning, även bilder. Användaren är `arkai@arkai.se`
+  (`publik_anvandare` i manifestet), lösenordet är `PANEL_LOSEN` i Vault-hemligheten.
+- Lösenordet står **inte** i repot, till skillnad från Eneos och grafens. Där kan den
+  som kan lösenordet använda en app; här kan den styra hela namnrymden.
+- Saknas `PANEL_LOSEN`, eller är det kortare än 12 tecken, öppnas inte porten alls.
+  Panelen kör då bara på 8082, och loggen säger varför.
+- Nonce-skyddet mot förfalskade formulär gäller på båda portarna.
+
+Bytt lösenord gäller efter att tjänsten startats om, eftersom Vault läses vid start.
+
 ## Vad du kan göra i den
 
 | I panelen | I terminalen |
