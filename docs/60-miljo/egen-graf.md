@@ -42,15 +42,63 @@ göra något mer.
   LAS-MIG.md
 ```
 
-Första installationen fyller katalogen med en profil ur källkoden. Standardprofilen
-är `default`. Vill du utgå från en annan väljer du den vid första installationen:
+Första installationen fyller katalogen med en profil. Standardprofilen är `arkai`,
+som ligger i repot under
+[`verktyg/graf/profiler/arkai/`](../../verktyg/graf/profiler/arkai/). Vill du utgå
+från en annan väljer du den vid första installationen:
 
 ```bash
 GRAF_PROFIL=stat-metadata verktyg/kor.sh installera graf
 ```
 
-Profilerna i den pinnade versionen är `default`, `stat-metadata`, `scb` och `test`.
-Filer som redan finns i katalogen skrivs aldrig över. Formatet beskrivs i
+Övriga profiler kommer ur källkoden. I den pinnade versionen är det `default`,
+`stat-metadata`, `scb` och `test`. En profil i repot går före källkodens profil
+med samma namn, och det som profilen saknar (här `federation_config.json`) tas ur
+`default`. Filer som redan finns i katalogen skrivs aldrig över, så en graf som
+redan är installerad får inte de nya typerna av sig själv — se nedan.
+
+### Profilen `arkai`
+
+`arkai` är källkodens `default` på den pinnade commiten, med fler nodtyper. Den har
+ingen startdata, så grafen börjar tom.
+
+| Nodtyp | På svenska | Ikon | Anmärkning |
+|---|---|---|---|
+| Actor | Aktör | `PersonFill` | Kunder och partner är aktörer med subtypen `Customer` eller `Partner` |
+| Initiative, Capability, Resource, Legislation, Theme, Goal, Event, Risk | | | Oförändrade från `default` |
+| Information | Information | `DatabaseFill` | Ersätter `Data`. Subtyper: `Dataset`, `Hållpunkt`, `Informationsobjekt` (det som rör sig mellan processer) |
+| Process | Process | `GearWideConnected` | |
+| Task | Uppgift | `KanbanFill` | Fälten `status` och `due_date` |
+| Principle | Princip | `CompassFill` | |
+| ValueProposition | Värdeerbjudande | `StarFill` | |
+| Effect | Effekt | `GraphUpArrow` | |
+| Decision | Beslut | `ClipboardCheckFill` | Fältet `decided_date` |
+| Component | Komponent | `MotherboardFill` | Fältet `identifier` för t.ex. repo-URL |
+| Feature | Funktion | `PuzzleFill` | |
+| Cost | Kostnad | `PieChartFill` | Registret har ingen ikon för pengar |
+| Metric | Mått | `BarChartFill` | Fälten `unit`, `target_value` och `current_value` |
+| Requirement | Krav | `CardChecklist` | Fältet `status` |
+| Concept | Begrepp | `LightbulbFill` | |
+| Channel | Kanal | `MegaphoneFill` | |
+
+Ikonerna går bara att välja bland dem som finns i appens `ICON_REGISTRY`. Listan
+står i `docs/ICONS.md` i CommunityOverview, och ingen ikon används av två typer.
+Subtyper är fri text i appen, inte en lista i schemat. De föreslagna subtyperna
+står därför i typens beskrivning, som assistenten läser.
+
+Relationerna är desamma som i `default`, med två ändringar: `PRODUCES` pekar på
+`Information` i stället för `Data`, och en `Process` kan också vara källa. Övriga
+kopplingar mellan de nya typerna görs med `RELATES_TO` och `PART_OF`, som inte är
+begränsade.
+
+**Vill du ha de nya typerna i en graf som redan är installerad:** kopiera filen och
+starta om grafen. Den gamla schemafilen skrivs då över. Noder av typen `Data` får
+du byta till `Information` själv.
+
+```bash
+cp verktyg/graf/profiler/arkai/schema_config.json ~/work/graf-config/
+verktyg/starta-graf.sh --starta-om
+``` Formatet beskrivs i
 `docs/PROFILES.md` i CommunityOverview.
 
 **Ändrat schemat?** Appen läser schemat när den startar, så det räcker att starta

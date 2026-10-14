@@ -26,8 +26,9 @@ export PATH="$HOME/.local/bin:$HOME/.local/node/bin:$PATH"
 # inte låsta, så de löses som de såg ut när imagen byggdes (--exclude-newer).
 GRAF_COMMIT="${GRAF_COMMIT:-021685b690150c87bb3b3d78d70c88539a9f4544}"
 GRAF_BYGGD="${GRAF_BYGGD:-2026-09-16T06:00:00Z}"
-# Profilen ~/work/graf-config fylls med första gången: default, stat-metadata, scb, test.
-GRAF_PROFIL="${GRAF_PROFIL:-default}"
+# Profilen ~/work/graf-config fylls med första gången. arkai ligger i repot
+# (verktyg/graf/profiler/), övriga i källkoden: default, stat-metadata, scb, test.
+GRAF_PROFIL="${GRAF_PROFIL:-arkai}"
 # torch och sentence-transformers: embeddings för nya noder. Utan dem fungerar
 # appen, men semantisk sökning bara på förberäknade embeddings.
 GRAF_ML="${GRAF_ML:-ja}"
@@ -95,21 +96,25 @@ fi
 # ── 4. Schemat ────────────────────────────────────────────────────────────
 #
 # Filer som redan finns rörs inte — de är någons arbete. Bara det som saknas
-# kopieras, ur profilen och annars ur default, som appen själv gör.
+# kopieras, ur profilen och annars ur default, som appen själv gör. En profil
+# i repot går före källkodens profil med samma namn.
 
-echo "4/5  Schemat i $GRAF_KONFIG"
+PROFILKATALOG="$KOD/config/$GRAF_PROFIL"
+[ -d "verktyg/graf/profiler/$GRAF_PROFIL" ] && PROFILKATALOG="$PWD/verktyg/graf/profiler/$GRAF_PROFIL"
+
+echo "4/5  Schemat i $GRAF_KONFIG (profilen $GRAF_PROFIL)"
 mkdir -p "$GRAF_KONFIG"
 for fil in schema_config.json federation_config.json graph.json; do
   if [ -s "$GRAF_KONFIG/$fil" ]; then
     echo "     $fil finns, rörs inte"
     continue
   fi
-  for kalla in "$GRAF_PROFIL" default; do
+  for katalog in "$PROFILKATALOG" "$KOD/config/default"; do
     # graph.json har ingen fallback: default har ingen startdata.
-    [ "$fil" = "graph.json" ] && [ "$kalla" = "default" ] && [ "$GRAF_PROFIL" != "default" ] && break
-    if [ -s "$KOD/config/$kalla/$fil" ]; then
-      cp "$KOD/config/$kalla/$fil" "$GRAF_KONFIG/$fil"
-      echo "     $fil kopierad ur profilen $kalla"
+    [ "$fil" = "graph.json" ] && [ "$katalog" = "$KOD/config/default" ] && [ "$GRAF_PROFIL" != "default" ] && break
+    if [ -s "$katalog/$fil" ]; then
+      cp "$katalog/$fil" "$GRAF_KONFIG/$fil"
+      echo "     $fil kopierad ur ${katalog#"$PWD/"}"
       break
     fi
   done
@@ -119,9 +124,9 @@ done
 # Schemat för den egna grafen
 
 Den här katalogen är grafappens konfiguration. Den skapades av
-verktyg/installera/graf.sh ur profilen \`$GRAF_PROFIL\` i CommunityOverview
-(commit ${GRAF_COMMIT:0:7}). Redigera filerna här — installationen skriver aldrig
-över en fil som finns.
+verktyg/installera/graf.sh ur profilen \`$GRAF_PROFIL\` (${PROFILKATALOG#"$PWD/"}),
+med CommunityOverview på commit ${GRAF_COMMIT:0:7}. Redigera filerna här —
+installationen skriver aldrig över en fil som finns.
 
 | Fil | Vad |
 |---|---|
