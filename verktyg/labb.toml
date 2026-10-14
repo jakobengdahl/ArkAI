@@ -276,7 +276,7 @@ sakerhet-och-behorighet = { lage = "konfig", not = "Bearer-token, utdelad av den
 namn = "Egen graf"
 beskrivning = "En egen instans av grafappen (CommunityOverview) med eget schema och egna objekt. Schemat redigeras i ~/work/graf-config, grafen ligger i ~/work/graf-data. Rör inte metadatagrafens pilot."
 dok = "docs/60-miljo/egen-graf.md"
-inloggning = { anvandare = "arkai", losenord = "arkai@arkai.se" }
+inloggning = { anvandare = "arkai@arkai.se", losenord = "arkai@arkai.se" }
 # Kör här i podden, från källkod. Första försöket var en egen arbetslast i
 # namnrymden, men klustret skapade ingen volym åt den — se dokumentationen.
 typ = "lokal"

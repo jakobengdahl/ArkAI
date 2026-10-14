@@ -133,7 +133,9 @@ Se [minnesbanken](../../minnesbank/verktyg/namnrymden-delas-med-andras-grafer.md
 ## Inloggning
 
 Port 8085 är ett publikt värdnamn om den exponerades när tjänsten startade.
-Webbgränssnittet kräver inloggning med `arkai` / `arkai@arkai.se`, MCP kräver token.
+Webbgränssnittet kräver inloggning med `arkai@arkai.se` som både användarnamn och
+lösenord, samma som Eneo. MCP kräver token.
 Lösenordet står i repot med flit, precis som Eneos, eftersom labbet har en användare.
 Grafens inbyggda assistent använder din LLM-nyckel, så den som kan lösenordet kan
-använda nyckeln. Sätt `GRAF_LOSEN` före starten om du vill ha något annat.
+använda nyckeln. Sätt `GRAF_ANVANDARE` och `GRAF_LOSEN` före starten om du vill ha
+något annat.
